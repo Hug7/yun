@@ -1,7 +1,11 @@
 # vs code #
 ###################
 *.vscode
-./build
+build
+
+# conan #
+###################
+CMakeUserPresets.json
 
 # Compiled source #
 ###################
