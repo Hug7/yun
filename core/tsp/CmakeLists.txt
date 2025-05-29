@@ -1,0 +1,35 @@
+
+# include_directories(${CMAKE_SOURCE_DIR}/domain/include)
+# include_directories(${CMAKE_SOURCE_DIR}/common/include)
+# include_directories(${CMAKE_SOURCE_DIR}/core/tsp/include)
+
+# find_package(route_common REQUIRED)
+# find_package(route_domain REQUIRED)
+
+# add_executable(tsp_exec tsp_main.cpp)
+
+file(GLOB TSP_INCLUDE_HEADERS "${CMAKE_SOURCE_DIR}/core/tsp/include/*.h")
+file(GLOB TSP_SOURCES "${CMAKE_SOURCE_DIR}/core/tsp/*.cpp")
+
+add_library(route_tsp STATIC ${TSP_INCLUDE_HEADERS} ${TSP_SOURCES})
+
+# 链接依赖库
+target_link_libraries(route_tsp PUBLIC route_domain route_common)
+
+target_include_directories(route_tsp
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:include/wx_route/tsp>
+)
+
+# 安装静态库和头文件
+install(TARGETS route_tsp
+    EXPORT wxConfig
+    # EXPORT wxTargets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    PUBLIC_HEADER INCLUDES DESTINATION include
+)
+

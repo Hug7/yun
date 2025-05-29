@@ -1,0 +1,9 @@
+
+include_directories(${CMAKE_SOURCE_DIR}/domain/include)
+include_directories(${CMAKE_SOURCE_DIR}/common/include)
+include_directories(${CMAKE_SOURCE_DIR}/core/tsp/include)
+
+add_executable(tsp_exec tsp_main.cpp)
+
+target_link_libraries(tsp_exec PRIVATE route_tsp route_domain route_common)
+
