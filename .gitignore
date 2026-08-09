@@ -1,7 +1,12 @@
 # vs code #
 ###################
 *.vscode
+.VSCodeCounter
 build
+
+# jetbrains #
+###################
+.idea
 
 # conan #
 ###################

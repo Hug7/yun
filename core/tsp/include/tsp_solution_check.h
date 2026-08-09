@@ -9,7 +9,7 @@
 void do_check(TspSolRouteOperator *&tsp_operator, std::unique_ptr<TspSolutionRoute> &ori_route)
 {
     std::unique_ptr<TspSolutionRoute> route = ori_route->deep_copy();
-    CostMatrix *&cost_matrix = tsp_operator->tsp_context->cost_matrix;
+    DistMatrix *&cost_matrix = tsp_operator->tsp_context->cost_matrix;
 
     long total_cost_dist = 0;
     long total_cost_time = 0;

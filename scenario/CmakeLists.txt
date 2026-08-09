@@ -1,0 +1,36 @@
+# 1. file collection
+set(YUN_SCENARIO_DIR "${PROJECT_SOURCE_DIR}/scenario/")
+file(GLOB YUN_SCENARIO_INCLUDE_HEADERS CONFIGURE_DEPENDS
+        "${YUN_SCENARIO_DIR}/include/*.h"
+)
+file(GLOB YUN_SCENARIO_SOURCE_FILES CONFIGURE_DEPENDS
+        "${YUN_SCENARIO_DIR}/src/*.cpp"
+)
+
+# 2. library creation
+add_library(yun_scenario STATIC)
+target_sources(yun_scenario
+    PRIVATE ${YUN_SCENARIO_SOURCE_FILES}
+    PUBLIC FILE_SET public_scenario_headers TYPE HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        FILES ${YUN_SCENARIO_INCLUDE_HEADERS}
+)
+
+# 3. include directories
+target_include_directories(yun_scenario
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/yun/scenario>
+)
+
+# 4. linked dependencies
+target_link_libraries(yun_scenario PUBLIC yun_common yun_domain)
+
+# 5. install
+install(TARGETS yun_scenario
+    EXPORT yunConfig
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    FILE_SET public_scenario_headers DESTINATION include/yun/scenario
+)

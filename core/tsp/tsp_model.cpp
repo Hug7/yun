@@ -68,7 +68,7 @@ std::vector<TimeWindow *> intersection_time_windows(std::vector<TimeWindow *> ti
 //     return locations;
 // }
 
-CostMatrix *load_dist_matrix(int matrix_type_prefix, std::string &file_path, std::vector<Location *> &locations, std::unordered_map<std::string, int> &loc_id_to_ind_map)
+DistMatrix *load_dist_matrix(int matrix_type_prefix, std::string &file_path, std::vector<Location *> &locations, std::unordered_map<std::string, int> &loc_id_to_ind_map)
 {
     std::unordered_map<std::string, std::unordered_map<std::string, std::pair<long, long>>> dist_time_matrix_map;
 
@@ -104,7 +104,7 @@ CostMatrix *load_dist_matrix(int matrix_type_prefix, std::string &file_path, std
         dist_arr[from_node_ind][to_node_ind] = doc.GetCell<long>(distance_col, u);
         time_arr[from_node_ind][to_node_ind] = doc.GetCell<long>(duration_col, u);
     }
-    CostMatrix *cost_matrix = new CostMatrix(dist_arr, time_arr);
+    DistMatrix *cost_matrix = new DistMatrix(dist_arr, time_arr);
     spdlog::info("Load distance & time matrix successfully, matrix type = {}", matrix_type_prefix);
     return std::move(cost_matrix);
 }
@@ -147,7 +147,7 @@ void TspModel::load_file(std::string &file_path)
 {
     for (int matrix_type = 0; matrix_type < 4; matrix_type++)
     {
-        CostMatrix *cost_matrix = load_dist_matrix(matrix_type, file_path, this->locations, this->loc_id_to_ind_map);
+        DistMatrix *cost_matrix = load_dist_matrix(matrix_type, file_path, this->locations, this->loc_id_to_ind_map);
         if (cost_matrix == nullptr)
         {
             continue;

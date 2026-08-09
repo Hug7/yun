@@ -10,7 +10,7 @@ int TspContext::random_priority()
     return this->prioritiy_list[ind];
 }
 
-TspContext::TspContext(std::vector<TspLocation *> &locations, CostMatrix *cost_matrix, TspParam *tsp_param)
+TspContext::TspContext(std::vector<TspLocation *> &locations, DistMatrix *cost_matrix, TspParam *tsp_param)
 {
     this->locations = std::vector<TspLocation *>(locations.begin(), locations.end());
     this->cost_matrix = cost_matrix;
@@ -19,7 +19,7 @@ TspContext::TspContext(std::vector<TspLocation *> &locations, CostMatrix *cost_m
     this->random_utils = std::make_unique<RandomUtils>(100);
 }
 
-TspContext *TspContext::create_tsp_context(std::vector<TspLocation *> &locations, CostMatrix *cost_matrix, TspParam *tsp_param, TspLocation *start_loc, TspLocation *last_loc)
+TspContext *TspContext::create_tsp_context(std::vector<TspLocation *> &locations, DistMatrix *cost_matrix, TspParam *tsp_param, TspLocation *start_loc, TspLocation *last_loc)
 {
     TspContext *tsp_context = new TspContext(locations, cost_matrix, tsp_param);
     tsp_context->start_loc = start_loc;

@@ -1,9 +1,2 @@
-
-include_directories(${CMAKE_SOURCE_DIR}/domain/include)
-include_directories(${CMAKE_SOURCE_DIR}/common/include)
-include_directories(${CMAKE_SOURCE_DIR}/core/tsp/include)
-
-add_executable(tsp_exec tsp_main.cpp)
-
-target_link_libraries(tsp_exec PRIVATE route_tsp route_domain route_common)
-
+add_executable(vrp_exec vrp_main.cpp)
+target_link_libraries(vrp_exec PRIVATE yun_scenario)

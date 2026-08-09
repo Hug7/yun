@@ -33,7 +33,7 @@ private:
     std::unordered_map<std::string, int> loc_id_to_ind_map;   // <location_id, location_ind>
     std::unordered_map<int, std::string> loc_ind_to_id_map;   // <location_ind, location_id>
     std::unordered_map<std::string, int> order_id_to_ind_map; // <order_id, order_ind>
-    std::unordered_map<int, CostMatrix *> cost_matrixs;
+    std::unordered_map<int, DistMatrix *> cost_matrixs;
     TspParam *tsp_param;
     Location *virtual_loc;
 

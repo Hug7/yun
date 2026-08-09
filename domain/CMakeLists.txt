@@ -1,47 +1,37 @@
-
-set(ROUTE_PLAN_DOMAIN_DIR "${PROJECT_SOURCE_DIR}/domain/")
-file(GLOB ROUTE_PLAN_DOMAIN_INCLUDE_HEADERS
-        "${ROUTE_PLAN_DOMAIN_DIR}/include/*.h"
+# 1. file collection
+set(YUN_DOMAIN_DIR "${PROJECT_SOURCE_DIR}/domain/")
+file(GLOB YUN_DOMAIN_INCLUDE_HEADERS
+        "${YUN_DOMAIN_DIR}/include/*.h"
 )
-file(GLOB ROUTE_PLAN_DOMAIN_SOURCE_FILES
-        "${ROUTE_PLAN_DOMAIN_DIR}/*.cpp"
+file(GLOB YUN_DOMAIN_SOURCE_FILES
+        "${YUN_DOMAIN_DIR}/src/*.cpp"
 )
 
-if (NOT ROUTE_PLAN_DOMAIN_SOURCE_FILES)
-    message(WARNING "No domain source found")
-    file(WRITE "${ROUTE_PLAN_DOMAIN_DIR}/domain.cpp" " ")
-    file(GLOB ROUTE_PLAN_DOMAIN_SOURCE_FILES
-        "${ROUTE_PLAN_DOMAIN_DIR}/*.cpp"
-    )
-endif ()
+# 2. library creation
+add_library(yun_domain STATIC)
+target_sources(yun_domain
+    PRIVATE ${YUN_DOMAIN_SOURCE_FILES}
+    PUBLIC FILE_SET public_domain_headers TYPE HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        FILES ${YUN_DOMAIN_INCLUDE_HEADERS}
+)
 
-if (NOT ROUTE_PLAN_DOMAIN_INCLUDE_HEADERS)
-    message(FATAL_ERROR "No domain headers found")
-elseif (NOT ROUTE_PLAN_DOMAIN_SOURCE_FILES)
-    message(FATAL_ERROR "No domain source found")
-else ()
-    add_library(route_domain STATIC
-            ${ROUTE_PLAN_DOMAIN_INCLUDE_HEADERS}
-            ${ROUTE_PLAN_DOMAIN_SOURCE_FILES}
-    )
-endif ()
+# 3. linked dependencies
+target_link_libraries(yun_domain PUBLIC yun_common)
 
-target_include_directories(route_domain
+# 4. include directories
+target_include_directories(yun_domain
     PUBLIC 
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-        $<INSTALL_INTERFACE:include/wx_route/domain>
+        $<INSTALL_INTERFACE:include/yun/domain>
 )
 
-target_link_libraries(route_domain PUBLIC route_common)
-
-# 安装静态库和头文件
-install(TARGETS route_domain
-    EXPORT wxConfig
-    # EXPORT wxTargets
+# 5. install
+install(TARGETS yun_domain
+    EXPORT yunConfig
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
-    PUBLIC_HEADER INCLUDES DESTINATION include
+    FILE_SET public_domain_headers DESTINATION include/yun/domain
 )
 

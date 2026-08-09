@@ -64,7 +64,7 @@ void TspSolRouteOperator::temp_infer_time_windows(int pre_begin_route_ind, int n
     int view_route_ind = pre_begin_route_ind;
 
     std::vector<TspLocation *> &locations = this->tsp_context->locations;
-    CostMatrix *&cost_matrix = this->tsp_context->cost_matrix;
+    DistMatrix *&cost_matrix = this->tsp_context->cost_matrix;
     std::vector<std::unique_ptr<TspSolutionNode>> &nodes = route->nodes;
     std::vector<std::unique_ptr<TimeWindowPlan>> pre_node_time_windows = nodes[pre_begin_route_ind]->deep_copy_time_windows();
     int pre_matrix_ind = nodes[pre_begin_route_ind]->matrix_ind;

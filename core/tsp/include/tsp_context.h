@@ -17,14 +17,14 @@
 class TspContext
 {
 private:
-    TspContext(std::vector<TspLocation *> &locations, CostMatrix *cost_matrix, TspParam *tsp_param);
+    TspContext(std::vector<TspLocation *> &locations, DistMatrix *cost_matrix, TspParam *tsp_param);
 
 public:
     std::vector<TspLocation *> locations;
     int visit_loc_count;
     TspLocation *start_loc;
     TspLocation *last_loc;
-    CostMatrix *cost_matrix;
+    DistMatrix *cost_matrix;
     TspParam *tsp_param;
     // 工具类
     std::unique_ptr<RandomUtils> random_utils;
@@ -50,7 +50,7 @@ public:
     // 推导约束是否开启
     void post_init_infer_constraint();
 
-    static TspContext *create_tsp_context(std::vector<TspLocation *> &locations, CostMatrix *cost_matrix, TspParam *tsp_param, TspLocation *start_loc, TspLocation *last_loc);
+    static TspContext *create_tsp_context(std::vector<TspLocation *> &locations, DistMatrix *cost_matrix, TspParam *tsp_param, TspLocation *start_loc, TspLocation *last_loc);
 
     ~TspContext();
 };

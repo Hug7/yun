@@ -10,7 +10,7 @@ void TspSolRouteOperator::temp_k_opt(int begin_route_ind, int end_route_ind, std
     long total_cost_dist = route->attr->total_cost_dist;
     long total_cost_time = route->attr->total_cost_time;
 
-    CostMatrix *&cost_matrix = tsp_context->cost_matrix;
+    DistMatrix *&cost_matrix = tsp_context->cost_matrix;
     std::vector<std::unique_ptr<TspSolutionNode>> &nodes = route->nodes;
 
     // 计算拆除 和 插入节点的信息
@@ -69,7 +69,7 @@ void TspSolRouteOperator::k_opt(std::vector<std::vector<int>> &part_route_indice
 
     int wait_visited_count = end_route_ind - begin_route_ind + 2;
 
-    CostMatrix *&cost_matrix = tsp_context->cost_matrix;
+    DistMatrix *&cost_matrix = tsp_context->cost_matrix;
 
     // 先调整站点调整后的位置
     std::vector<std::unique_ptr<TspSolutionNode>> tmp_nodes(wait_visited_count);
