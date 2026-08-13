@@ -11,6 +11,9 @@
 #include "dm_order.h"
 #include "dm_load.h"
 #include "pr_pattern.h"
+#include "hc_manager.h"
+#include "sc_manager.h"
+#include "cc_manager.h"
 
 class Problem
 {
@@ -19,8 +22,20 @@ public:
 
     PickDropPattern *pd_pattern;
 
+    HardConstraintManager *hc_manager;
+
+    SoftConstraintManager *sc_manager;
+
+    CostConstraintManager *cc_manager;
+
     Problem(const Scenario *scenario);
 
+    /**
+     * @brief evaluate all constraints
+     */
+    virtual void eval_load(Load *load);
+
+    virtual LoadConstrProfile::UPtr tmp_eval_load(Load *load);
     /**
      * @brief construct a new Load object for best vehicle
      */

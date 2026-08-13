@@ -6,7 +6,7 @@
 #include "bd_time_window_plan.h"
 
 // ====== implement of TimeWindowPlan ======
-TimeWindowPlan::TimeWindowPlan(TimeWindow *time_window, int work_time)
+TimeWindowPlan::TimeWindowPlan(const TimeWindow *time_window, int work_time)
 {
     this->early_arr = time_window->early;
     this->late_arr = time_window->late;
@@ -16,9 +16,9 @@ TimeWindowPlan::TimeWindowPlan(TimeWindow *time_window, int work_time)
     this->over_time = 0;
 }
 
-TimeWindowPlan *TimeWindowPlan::deep_copy()
+TimeWindowPlan::UPtr TimeWindowPlan::deep_copy()
 {
-    return new TimeWindowPlan(
+    return std::make_unique<TimeWindowPlan>(
         this->early_arr, this->late_arr,
         this->early_dest, this->late_dest,
         this->wait_time, this->over_time

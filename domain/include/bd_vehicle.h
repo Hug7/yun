@@ -63,7 +63,6 @@ public:
     ~Vehicle() = default;
 
     inline const DistMatrixCode *get_dist_matrix_code() {return this->vehicle_model->dist_matrix_code;};
-
     inline const DistMatrix *get_dist_matrix() {return this->vehicle_model->dist_matrix;}
 };
 

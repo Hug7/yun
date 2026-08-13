@@ -7,13 +7,30 @@
 
 #include <string>
 
-#include "dm_load.h"
 #include "hc_constraint.h"
+
+/**
+ * @brief hard constraint for max pick node count
+ */
+class HcMaxPickNodeCount : public HardConstraint
+{
+public:
+    const int max_pick_node_count;
+
+    HcMaxPickNodeCount(const int max_pick_node_count)
+        : HardConstraint("MaxPickNodeCount", 0, false, false),
+          max_pick_node_count(max_pick_node_count) {};
+
+    /**
+     * @brief calculate the score of the hard constraint
+     */
+    HardConstrScore::UPtr eval(Load *load) override;
+};
 
 /**
  * @brief hard constraint for max drop node count
  */
-class HcMaxDropNodeCount : public HardConstraint<Load>
+class HcMaxDropNodeCount : public HardConstraint
 {
 public:
     const int max_drop_node_count;
@@ -25,5 +42,5 @@ public:
     /**
      * @brief calculate the score of the hard constraint
      */
-    std::unique_ptr<HardConstrScore> call(Load *t) override;
+    HardConstrScore::UPtr eval(Load *load) override;
 };

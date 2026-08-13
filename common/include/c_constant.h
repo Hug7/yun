@@ -103,3 +103,34 @@ enum class PickDropPatternType
     // pickup and delivery
     PDP,
 };
+
+namespace HardConstraintParameter
+{
+    /**
+     * @brief default hard constraint: max number of pick nodes in load
+     */
+    int const DEFAULT_MAX_PICK_NODE_COUNT = 0;
+    /**
+     * @brief default hard constraint: max number of drop nodes in load
+     */
+    int const DEFAULT_MAX_DROP_NODE_COUNT = 0;
+
+}
+
+namespace CostConstraintParameter
+{
+    /**
+     * @brief cost constraint "cc_dist" default distance factor
+     * @details enable constraint if greater than 0
+     */
+    int const CC_DIST_DEFAULT_DIST_FACTOR = 0;
+
+}
+
+namespace LoadParameter
+{
+    /**
+     * @brief default load object value
+     */
+    double const INIT_LOAD_OBJ_VAL = 1000000000.0;
+}

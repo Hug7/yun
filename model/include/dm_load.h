@@ -14,16 +14,20 @@
 #include "dm_node.h"
 
 /**
- * @brief: load
- * @details: a complete delivery plan for orders
+ * @brief load
+ * @details a complete delivery plan for orders
  */
 class Load
 {
 public:
     /**
-     * @brief: scenario
+     * @brief scenario
      */
     const Scenario *scenario;
+    /**
+     * @brief pervious dist matrix code
+     */
+    const DistMatrixCode *prev_dist_matrix_code;
     /**
      * @brief vehicle
      */
@@ -31,7 +35,7 @@ public:
     /**
      * @brief fisrt node of the load
      */
-    std::unique_ptr<Node> first_node;
+    Node::UPtr first_node;
     /**
      * @brief last node of the load
      */
@@ -39,11 +43,11 @@ public:
     /**
      * @brief route profile of the load
      */
-    std::unique_ptr<LoadRouteProfile> route_profile;
+    LoadRouteProfile::UPtr route_profile;
     /**
      * @brief constraint profile of the load
      */
-    std::unique_ptr<LoadConstraintProfile> constr_profile;
+    LoadConstrProfile::UPtr constr_profile;
 
     Load(const Scenario *scenario);
 
@@ -53,6 +57,10 @@ public:
 
     virtual void update_node_dist_time();
 
+    virtual void update_start_node_dist_time();
+
+    virtual void update_end_node_dist_time();
+
     virtual const std::vector<long> &get_peak_load_dims() = 0;
 
     virtual int get_pick_node_count() = 0;
@@ -61,7 +69,7 @@ public:
 };
 
 /**
- * @brief: the load of SPMD VRP pattern
+ * @brief the load of SPMD VRP pattern
  */
 class LoadSPMD : public Load
 {

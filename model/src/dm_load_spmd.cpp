@@ -15,8 +15,10 @@ int LoadSPMD::get_pick_node_count()
     Node *head_node = this->first_node->next.get();
     if (head_node->activity_type == ActivityType::PICK)
     {
+        this->route_profile->pick_node_count = 1;
         return 1;
     }
+    this->route_profile->pick_node_count = 0;
     return 0;
 }
 
@@ -33,6 +35,7 @@ int LoadSPMD::get_drop_node_count()
         ++drop_node_count;
         head_node = head_node->prev;
     }
+    this->route_profile->drop_node_count = drop_node_count;
     return drop_node_count;
 }
 

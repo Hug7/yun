@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 
+#include "c_constant.h"
 #include "bd_common.h"
 #include "bd_label.h"
 #include "bd_dist_matrix.h"
@@ -23,37 +24,39 @@ enum class LoadRouteProfileField
     AVAILABLE_VEHICLE_BITSET,
     PICK_NODE_COUNT,
     DROP_NODE_COUNT,
+    TOTAL_DIST,
     FIELDS_COUNT  // sentinel does not participate in dirty mark
 };
 
 /**
- * @brief: profile of a load
+ * @brief profile of a load
  */
 class LoadRouteProfile
 {
 public:
+    using UPtr = std::unique_ptr<LoadRouteProfile>;
     /**
-     * @brief: dirty mark of the profile
+     * @brief dirty mark of the profile
      */
     std::unique_ptr<Bitset> dirty_marks;
     /**
-     * @brief: peak loading value of all dimensions for the load
+     * @brief peak loading value of all dimensions for the load
      */
     std::vector<long> peak_load_dims;
     /**
-     * @brief: bitset of labelset value for the pick location
+     * @brief bitset of labelset value for the pick location
      */
     std::unique_ptr<LabelsetValueBitset> pick_loc_labelset_value_bitset;
     /**
-     * @brief: bitset of labelset value for the drop location
+     * @brief bitset of labelset value for the drop location
      */
     std::unique_ptr<LabelsetValueBitset> drop_loc_labelset_value_bitset;
     /**
-     * @brief: bitset of labelset value for the orders
+     * @brief bitset of labelset value for the orders
      */
     std::unique_ptr<LabelsetValueBitset> order_labelset_value_bitset;
     /**
-     * @brief: bitset of available vehicles
+     * @brief bitset of available vehicles
      */
     std::unique_ptr<Bitset> available_vehicle_bitset;
 
@@ -67,43 +70,57 @@ public:
 
     bool get_set_dirty_mark(LoadRouteProfileField field);
 
-    bool get_dirty_mark(const int field_ind);
+    bool get_dirty_mark(LoadRouteProfileField field);
 
-    void set_dirty_mark(const int field_ind);
-
+    void set_dirty_mark(LoadRouteProfileField field);
 
 };
 
 /**
- * @brief: constraint profile of a load
+ * @brief constraint profile of a load
  */
-class LoadConstraintProfile
+class LoadConstrProfile
 {
 public:
+    using UPtr = std::unique_ptr<LoadConstrProfile>;
     /**
-     * @brief: total penalty of hard constraint for load
+     * @brief total penalty of hard constraint for load
      */
-    double total_hard_penalty;
+    double total_hard_penalty{0};
     /**
-     * @brief: total penalty of soft constraint for load
+     * @brief total penalty of soft constraint for load
      */
-    double total_soft_penalty;
+    double total_soft_penalty{0};
     /**
-     * @brief: total penalty of cost constraint for load
+     * @brief total penalty of cost constraint for load
      */
-    double total_cost;
+    double total_cost{0};
+    /**
+     * @brief objective value of the load
+     * @details the objective value is the sum of the total hard penalty, total soft penalty and total cost
+     */
+    double obj_val{LoadParameter::INIT_LOAD_OBJ_VAL};
 
-    std::vector<std::unique_ptr<HardConstrScore>> hard_constr_scores;
+    bool infesible{false};
 
-    std::vector<std::unique_ptr<SoftConstrScore>> soft_constr_scores;
+    HardConstrScore::VecUPtr hard_constr_scores;
 
-    std::vector<std::unique_ptr<CostConstrScore>> cost_constr_scores;
+    SoftConstrScore::VecUPtr soft_constr_scores;
 
-    LoadConstraintProfile() {}
+    CostConstrScore::VecUPtr cost_constr_scores;
 
-    void add_hard_constr_score(std::unique_ptr<HardConstrScore> score);
+    LoadConstrProfile() {}
 
-    void add_soft_constr_score(std::unique_ptr<SoftConstrScore> score);
+    bool is_infesible() const { return this->infesible; }
 
-    void add_cost_constr_score(std::unique_ptr<CostConstrScore> score);
+    bool is_fesible() const { return !this->infesible; }
+
+    void set_infesible() noexcept { this->infesible = true; };
+
+    void reset();
+
+    void update_obj_val();
+
+    bool dominate(LoadConstrProfile::UPtr &other);
+
 };

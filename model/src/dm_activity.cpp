@@ -28,7 +28,7 @@ void Activity::set_prev(Activity *prev)
     this->prev = prev;
 }
 
-void Activity::set_next(std::unique_ptr<Activity> next)
+void Activity::set_next(Activity::UPtr next)
 {
     this->next = std::move(next);
 }
@@ -54,7 +54,7 @@ bool Activity::hase_prev()
 }
 
 // ====== implement of ActivityFactory ======
-std::pair<std::unique_ptr<Activity>, std::unique_ptr<Activity>> ActivityFactory::create_pair_activity(const Order *order)
+std::pair<Activity::UPtr, Activity::UPtr> ActivityFactory::create_pair_activity(const Order *order)
 {
     auto pick_activity = std::make_unique<Activity>(ActivityType::PICK, order);
     auto drop_activity = std::make_unique<Activity>(ActivityType::DROP, order);

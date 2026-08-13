@@ -9,11 +9,11 @@
 #include <memory>
 
 #include "dm_score.h"
+#include "dm_load.h"
 
 /**
  * @brief the attributes of hard constraint
  */
-template <typename T>
 class HardConstraint
 {
 public:
@@ -48,5 +48,5 @@ public:
     /**
      * @brief calculate the score of the hard constraint
      */
-    virtual std::unique_ptr<HardConstrScore> call(T *t) = 0;
+    virtual HardConstrScore::UPtr eval(Load *load) = 0;
 };

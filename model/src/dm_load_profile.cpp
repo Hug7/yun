@@ -27,35 +27,43 @@ bool LoadRouteProfile::get_set_dirty_mark(LoadRouteProfileField field)
     return false;
 }
 
-bool LoadRouteProfile::get_dirty_mark(const int field_ind)
+bool LoadRouteProfile::get_dirty_mark(LoadRouteProfileField field)
 {
+    const int field_ind = static_cast<int>(field);
     return this->dirty_marks->test(field_ind);
 }
 
-void LoadRouteProfile::set_dirty_mark(const int field_ind)
+void LoadRouteProfile::set_dirty_mark(LoadRouteProfileField field)
 {
+    const int field_ind = static_cast<int>(field);
     this->dirty_marks->set(field_ind);
 }
 
 // ====== implement of LoadConstraintProfile ======
-void LoadConstraintProfile::add_hard_constr_score(std::unique_ptr<HardConstrScore> score)
+void LoadConstrProfile::reset()
 {
-    if (score == nullptr)
+    this->total_hard_penalty = 0;
+    this->total_soft_penalty = 0;
+    this->total_cost = 0;
+    this->infesible = false;
+    this->hard_constr_scores.clear();
+    this->soft_constr_scores.clear();
+    this->cost_constr_scores.clear();
+}
+
+void LoadConstrProfile::update_obj_val()
+{
+    this->obj_val = this->total_hard_penalty + this->total_soft_penalty + this->total_cost;
+}
+
+bool LoadConstrProfile::dominate(LoadConstrProfile::UPtr &other)
+{
+    if (this->infesible ^ other->infesible)
     {
-        return;
+        return other->infesible;
     }
-    this->total_hard_penalty += score->get_score();
-    this->hard_constr_scores.push_back(std::move(score));
-}
-
-void LoadConstraintProfile::add_soft_constr_score(std::unique_ptr<SoftConstrScore> score)
-{
-    this->total_soft_penalty += score->get_score();
-    this->soft_constr_scores.push_back(std::move(score));
-}
-
-void LoadConstraintProfile::add_cost_constr_score(std::unique_ptr<CostConstrScore> score)
-{
-    this->total_cost += score->get_score();
-    this->cost_constr_scores.push_back(std::move(score));
+    else
+    {
+        return this->obj_val < other->obj_val;
+    }
 }

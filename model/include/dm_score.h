@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "dm_infeasible.h"
 
@@ -15,10 +16,16 @@
 class HardConstrScore
 {
 public:
+    using UPtr = std::unique_ptr<HardConstrScore>;
+    using VecUPtr = std::vector<UPtr>;
     /**
      * @brief unique encoding with constraints
      */
     const std::string code;
+    /**
+     * @brief is feasible
+     */
+    const bool feasible;
     /**
      * @brief weight of the constraint
      * @details default weigh=1
@@ -36,22 +43,35 @@ public:
 
     HardConstrScore(
         const std::string &code,
+        const bool feasible,
         const double weight,
         const double value,
         const InfeasibleReason reason) : code(code),
+                                         feasible(feasible),
                                          weight(weight),
                                          value(value),
                                          reason(reason) {}
+
     HardConstrScore(
-        const std::string &code,
-        const InfeasibleReason reason) : code(code),
-                                         weight(1),
-                                         value(0),
-                                         reason(reason) {}
+        const std::string &code) : code(code),
+                                   feasible(true),
+                                   weight(1),
+                                   value(0),
+                                   reason(InfeasibleReasonCollection::FEASIBLE) {}
 
     double get_score() const
     {
         return this->weight * this->value;
+    }
+
+    bool is_feasible() const
+    {
+        return this->feasible;
+    }
+
+    bool is_infeasible() const
+    {
+        return !this->feasible;
     }
 };
 
@@ -61,6 +81,8 @@ public:
 class SoftConstrScore
 {
 public:
+    using UPtr = std::unique_ptr<SoftConstrScore>;
+    using VecUPtr = std::vector<UPtr>;
     /**
      * @brief unique encoding with constraints
      */
@@ -91,10 +113,16 @@ public:
 class CostConstrScore
 {
 public:
+    using UPtr = std::unique_ptr<CostConstrScore>;
+    using VecUPtr = std::vector<UPtr>;
     /**
      * @brief unique encoding with constraints
      */
     const std::string code;
+    /**
+     * @brief is feasible
+     */
+    const bool feasible;
     /**
      * @brief weight of the constraint
      * @details default weigh=1
@@ -112,12 +140,33 @@ public:
 
     CostConstrScore(
         const std::string &code,
+        const bool feasible,
         const double weight,
         const double value,
         const InfeasibleReason reason) : code(code),
+                                         feasible(feasible),
                                          weight(weight),
                                          value(value),
                                          reason(reason) {}
 
+    CostConstrScore(
+        const std::string &code,
+        const double weight,
+        const double value) : code(code),
+                              feasible(true),
+                              weight(weight),
+                              value(value),
+                              reason(InfeasibleReasonCollection::FEASIBLE) {}
+
     double get_score() const { return this->weight * this->value; }
+
+    bool is_feasible() const
+    {
+        return this->feasible;
+    }
+
+    bool is_infeasible() const
+    {
+        return !this->feasible;
+    }
 };

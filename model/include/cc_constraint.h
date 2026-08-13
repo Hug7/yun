@@ -6,13 +6,14 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include "dm_score.h"
+#include "dm_load.h"
 
 /**
  * @brief the attributes of cost constraint
  */
-template <typename T>
 class CostConstraint
 {
 public:
@@ -45,7 +46,7 @@ public:
     virtual ~CostConstraint() = default;
 
     /**
-     * @brief calculate the score of the cost constraint
+     * @brief evaluate the score of the cost constraint
      */
-    virtual CostConstrScroe call(T *t) = 0;
+    virtual CostConstrScore::UPtr eval(Load *load) = 0;
 };

@@ -39,6 +39,6 @@ bool SPMD::add_order(Load *load, Order *order)
             load->last_node = drop_node_ptr;
         }
     }
-    
+
     return false;
 }

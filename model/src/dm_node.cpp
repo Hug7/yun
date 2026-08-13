@@ -66,7 +66,7 @@ bool Node::hase_prev()
     return this->prev != nullptr;
 }
 
-void Node::add_front_activity(std::unique_ptr<Activity> activity)
+void Node::add_front_activity(Activity::UPtr activity)
 {
     if (this->first != nullptr)
     {
@@ -81,7 +81,7 @@ void Node::add_front_activity(std::unique_ptr<Activity> activity)
     }
 }
 
-void Node::add_back_activity(std::unique_ptr<Activity> activity)
+void Node::add_back_activity(Activity::UPtr activity)
 {
     if (this->last != nullptr)
     {
@@ -99,18 +99,18 @@ void Node::add_back_activity(std::unique_ptr<Activity> activity)
 
 // ====== implement of NodeFactory ======
 std::unique_ptr<Node> NodeFactory::create_pick_node(
-    const Order *order, std::unique_ptr<Activity> activity)
+    const Order *order, Activity::UPtr activity)
 {
     return std::make_unique<Node>(ActivityType::PICK, order->pick_loc, std::move(activity));
 }
 
 std::unique_ptr<Node> NodeFactory::create_drop_node(
-    const Order *order, std::unique_ptr<Activity> activity)
+    const Order *order, Activity::UPtr activity)
 {
     return std::make_unique<Node>(ActivityType::DROP, order->drop_loc, std::move(activity));
 }
 
-std::pair<std::unique_ptr<Node>, std::unique_ptr<Node>> NodeFactory::create_pair_node(const Order *order)
+std::pair<Node::UPtr, Node::UPtr> NodeFactory::create_pair_node(const Order *order)
 {
     auto activities_it = ActivityFactory::create_pair_activity(order);
     auto pick_node = std::make_unique<Node>(ActivityType::PICK, order->pick_loc);
@@ -123,7 +123,7 @@ std::pair<std::unique_ptr<Node>, std::unique_ptr<Node>> NodeFactory::create_pair
 
 // ====== implement of NodeFactory ======
 Node *NodeOps::tail(
-    const std::unique_ptr<Node> &head)
+    Node::UPtr &head)
 {
     if (!head)
     {
@@ -139,8 +139,8 @@ Node *NodeOps::tail(
     return cur;
 }
 
-std::unique_ptr<Node> NodeOps::splice_out(
-    std::unique_ptr<Node> &from_ptr, Node *to)
+Node::UPtr NodeOps::splice_out(
+    Node::UPtr &from_ptr, Node *to)
 {
     auto subchain = std::move(from_ptr); // 摘下整段
     Node *pred = subchain->prev;         // 记住前驱
@@ -157,7 +157,7 @@ std::unique_ptr<Node> NodeOps::splice_out(
 }
 
 void NodeOps::splice_in_after(
-    Node *after, std::unique_ptr<Node> chain)
+    Node *after, Node::UPtr chain)
 {
     if (!chain)
     {
@@ -176,15 +176,15 @@ void NodeOps::splice_in_after(
     after->next = std::move(chain); // after 接 chain
 }
 
-std::unique_ptr<Node> NodeOps::reverse_chain(
-    std::unique_ptr<Node> chain)
+Node::UPtr NodeOps::reverse_chain(
+    Node::UPtr chain)
 {
     if (!chain || !chain->next)
     {
         return chain;
     }
-    std::unique_ptr<Node> prev_p;
-    std::unique_ptr<Node> curr = std::move(chain);
+    Node::UPtr prev_p;
+    Node::UPtr curr = std::move(chain);
     while (curr)
     {
         auto nxt = std::move(curr->next);

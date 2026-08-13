@@ -22,6 +22,16 @@ class DistMatrixCode : public Item
 {
 public:
     DistMatrixCode(const std::string &code, const std::string &name, const int ind) : Item(code, name, ind) {}
+
+    bool operator==(const DistMatrixCode *other) const noexcept
+    {
+        return ind == other->ind;
+    }
+
+    bool operator!=(const DistMatrixCode *other) const noexcept
+    {
+        return ind != other->ind;
+    }
 };
 
 struct DistTime

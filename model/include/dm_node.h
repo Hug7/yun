@@ -15,9 +15,14 @@
 #include "dm_predefine.h"
 #include "dm_activity.h"
 
+/**
+ * @brief node
+ */
 class Node
 {
 public:
+    using UPtr = std::unique_ptr<Node>;
+    using VecUPtr = std::vector<UPtr>;
     /**
      * @brief activity type
      */
@@ -29,11 +34,11 @@ public:
     /**
      * @brief plan time windows of the node
      */
-    std::vector<std::unique_ptr<TimeWindowPlan>> ptws;
+    TimeWindowPlan::VecUPtr ptws;
     /**
      * @brief first activity in the node
      */
-    std::unique_ptr<Activity> first;
+    Activity::UPtr first;
     /**
      * @brief last activity in the node
      */
@@ -45,7 +50,7 @@ public:
     /**
      * @brief next node
      */
-    std::unique_ptr<Node> next;
+    Node::UPtr next;
     /**
      * @brief distance for previous node to this node
      */
@@ -59,7 +64,7 @@ public:
 
     Node(const ActivityType activity_type, const Location *loc);
 
-    Node(const ActivityType activity_type, const Location *loc, std::unique_ptr<Activity> activity);
+    Node(const ActivityType activity_type, const Location *loc, Activity::UPtr activity);
 
     void set_travel_dist(long travel_dist);
 
@@ -69,40 +74,40 @@ public:
 
     bool hase_prev();
 
-    void add_front_activity(std::unique_ptr<Activity> activity);
+    void add_front_activity(Activity::UPtr activity);
 
-    void add_back_activity(std::unique_ptr<Activity> activity);
+    void add_back_activity(Activity::UPtr activity);
 };
 
 namespace NodeFactory
 {
-    std::unique_ptr<Node> create_pick_node(
-        const Order *order, std::unique_ptr<Activity> activity);
+    Node::UPtr create_pick_node(
+        const Order *order, Activity::UPtr activity);
 
-    std::unique_ptr<Node> create_drop_node(
-        const Order *order, std::unique_ptr<Activity> activity);
+    Node::UPtr create_drop_node(
+        const Order *order, Activity::UPtr activity);
 
-    std::pair<std::unique_ptr<Node>, std::unique_ptr<Node>> create_pair_node(const Order *order);
+    std::pair<Node::UPtr, Node::UPtr> create_pair_node(const Order *order);
 }
 
 struct NodeOps {
 
     static Node* tail(
-        const std::unique_ptr<Node> &head);
+        Node::UPtr &head);
 
     // 从链表中摘除子链 [from_ptr 指向的节点 ... to]
     // from_ptr: 即 Load::first_node 或 前驱节点->next
     // 执行后 from_ptr 指向 to 后面的节点
     // 返回: 被摘下的独立子链 (prev 已置 nullptr)
-    static std::unique_ptr<Node> splice_out(
-        std::unique_ptr<Node> &from_ptr, Node *to);
+    static Node::UPtr splice_out(
+        Node::UPtr &from_ptr, Node *to);
 
     // 将 chain 插入 after 后面
     // 自动修正 chain 内部所有 prev、以及 after->next 的 prev
     static void splice_in_after(
-        Node *after, std::unique_ptr<Node> chain);
+        Node *after, Node::UPtr chain);
 
     // 翻转独立链。返回新头 (原尾)。修正内部所有 prev
-    static std::unique_ptr<Node> reverse_chain(
-        std::unique_ptr<Node> chain);
+    static Node::UPtr reverse_chain(
+        Node::UPtr chain);
 };

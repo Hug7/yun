@@ -5,11 +5,16 @@
 
 #pragma once
 
+#include <vector>
+#include <memory>
+
 #include "bd_time_window.h"
 
 class TimeWindowPlan
 {
 public:
+    using UPtr = std::unique_ptr<TimeWindowPlan>;
+    using VecUPtr = std::vector<UPtr>;
     /**
      * early arrive time
      */
@@ -46,9 +51,9 @@ public:
                                                      wait_time(wait_time),
                                                      over_time(over_time) {};
 
-    TimeWindowPlan(TimeWindow *time_window, int work_time);
+    TimeWindowPlan(const TimeWindow *time_window, int work_time);
 
-    TimeWindowPlan *deep_copy();
+    TimeWindowPlan::UPtr deep_copy();
 
     bool is_zero_wait_over_time();
 

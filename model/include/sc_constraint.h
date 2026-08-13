@@ -6,13 +6,14 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include "dm_score.h"
+#include "dm_load.h"
 
 /**
  * @brief the attributes of soft constraint
  */
-template <typename T>
 class SoftConstraint
 {
 public:
@@ -34,7 +35,7 @@ public:
      */
     const bool is_vehicle;
 
-    SoftConstraint(const std::string code,
+    SoftConstraint(const std::string &code,
                    const int priority,
                    const bool is_seq,
                    const bool is_vehicle) : code(code),
@@ -45,7 +46,7 @@ public:
     virtual ~SoftConstraint() = default;
 
     /**
-     * @brief calculate the score of the soft constraint
+     * @brief evaluate the score of the soft constraint
      */
-    virtual SoftConstrScore call(T *t) = 0;
+    virtual SoftConstrScore::UPtr eval(Load *load) = 0;
 };

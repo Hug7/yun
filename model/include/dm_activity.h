@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <vector>
 #include <memory>
 
 #include "dm_predefine.h"
@@ -16,6 +17,8 @@
 class Activity
 {
 public:
+    using UPtr = std::unique_ptr<Activity>;
+    using VecUPtr = std::vector<UPtr>;
     /**
      * @brief activity type
      */
@@ -31,7 +34,7 @@ public:
     /**
      * @brief next activity
      */
-    std::unique_ptr<Activity> next;
+    Activity::UPtr next;
     /**
      * @brief related activity
      */
@@ -47,7 +50,7 @@ public:
 
     void set_prev(Activity *prev);
 
-    void set_next(std::unique_ptr<Activity> next);
+    void set_next(Activity::UPtr next);
 
     void set_related(Activity *related);
 
@@ -60,5 +63,5 @@ public:
 
 namespace ActivityFactory
 {
-    std::pair<std::unique_ptr<Activity>, std::unique_ptr<Activity>> create_pair_activity(const Order *order);
+    std::pair<Activity::UPtr, Activity::UPtr> create_pair_activity(const Order *order);
 }
