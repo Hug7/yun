@@ -3,9 +3,11 @@ cmake_policy(SET CMP0091 NEW)
 
 # include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
 
-project(yun_solver VERSION 0.1.0 LANGUAGES C CXX)
+project(yun VERSION 0.1.0 LANGUAGES C CXX)
 
-export(PACKAGE yun_solver)
+export(PACKAGE yun)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ── C++ 标准 ──────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 20)
@@ -63,9 +65,9 @@ endif()
 add_subdirectory(common)
 add_subdirectory(domain)
 add_subdirectory(scenario)
-add_subdirectory(model)
 add_subdirectory(algorithm)
-add_subdirectory(planner)
+add_subdirectory(plan)
+add_subdirectory(solver)
 add_subdirectory(tests)
 
 

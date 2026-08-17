@@ -1,2 +1,2 @@
 add_executable(vrp_exec vrp_main.cpp)
-target_link_libraries(vrp_exec PRIVATE yun_scenario)
+target_link_libraries(vrp_exec PRIVATE yun_solver)

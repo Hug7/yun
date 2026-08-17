@@ -16,7 +16,7 @@ class YunConan(ConanFile):
         "common/*",
         "domain/*",
         "core/*",
-        "model/*"
+        "plan/*"
         "tests/*",
     ]
 
@@ -49,7 +49,7 @@ class YunConan(ConanFile):
         # self.cpp_info.set_property("cmake_target_name", "yun::yun")
         # 根据实际生成的库文件配置
         self.cpp_info.requires = ["fmt::fmt", "spdlog::spdlog", "yaml-cpp::yaml-cpp"]  # 关键：声明依赖关系传递
-        self.cpp_info.libs = ["yun_domain", "yun_tsp"]  # 库名
+        self.cpp_info.libs = ["yun_domain", ]  # 库名
         self.cpp_info.includedirs = []
 
         # # self.cpp_info.components["common"].libs = ["yun_common"]
@@ -60,7 +60,7 @@ class YunConan(ConanFile):
         self.cpp_info.components["yun_domain"].includedirs = ["include/domain"]
         self.cpp_info.components["yun_domain"].requires = ["yun_common"]
 
-        self.cpp_info.components["yun_tsp"].libs = ["yun_tsp"]
-        self.cpp_info.components["yun_tsp"].includedirs = ["include/tsp"]
-        self.cpp_info.components["yun_tsp"].requires = ["yun_common", "yun_domain"]
+        # self.cpp_info.components["yun_tsp"].libs = ["yun_tsp"]
+        # self.cpp_info.components["yun_tsp"].includedirs = ["include/tsp"]
+        # self.cpp_info.components["yun_tsp"].requires = ["yun_common", "yun_domain"]
 
