@@ -419,7 +419,7 @@
 |---|---|---|---|---|---|
 | 1 | CarrierCode | string | 是 | 承运商编码 | 必须存在于 Carrier.Code |
 | 2 | VehicleModelCode | string | 是 | 车型编码 | 必须存在于 VehicleModel.Code |
-| 3 | Count | int | 是 | 车辆数量 | |
+| 3 | Count | int | 是 | 车辆数量 | 为0时代表不可用,小于0代表不限制 |
 | 4 | OriginLocationCode | string | 否 | 起始站点编码 | 不为空时, 必须存在于 Location.Code |
 | 5 | DestinationLocationCode | string | 否 | 目标站点编码 | 不为空时, 必须存在于 Location.Code |
 

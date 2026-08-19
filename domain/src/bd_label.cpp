@@ -62,10 +62,16 @@ void LabelsetValueBitset::add_label_value(int label_ind, LabelValue* label_value
   this->bitsets[label_ind]->set(label_value->ind);
 }
 
-void LabelsetValueBitset::merge(LabelsetValueBitset::UPtr& labelset_value_bitset) {
+void LabelsetValueBitset::merge(const LabelsetValueBitset::UPtr& labelset_value_bitset) {
   const int len = this->bitsets.size();
   for (int u = 0; u < len; ++u) {
     this->bitsets[u]->call_union(labelset_value_bitset->bitsets[u].get());
+  }
+}
+
+void LabelsetValueBitset::clear_bitsets() {
+  for (auto &cur_bitset : this->bitsets) {
+    cur_bitset->clear_all();
   }
 }
 

@@ -20,9 +20,6 @@ Problem::Problem(const Scenario* scenario) : scenario(scenario) {
     case PickDropPatternType::MPMD:
       throw std::invalid_argument("unsupported pick drop pattern!");
       break;
-    case PickDropPatternType::PDP:
-      throw std::invalid_argument("unsupported pick drop pattern!");
-      break;
     default:
       throw std::invalid_argument("invalid pick drop pattern!");
       break;
@@ -89,6 +86,7 @@ LoadConstrProfile::UPtr Problem::tmp_eval_load(Load* load) {
 }
 
 InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_order) {
+  // construct order
   auto dim_vals = scenario->dimension_manager->empty_dim_values();
   auto labelset_value = scenario->label_manager->order_labelset->empty_labelset_value();
   auto labelset_value_bitset =
@@ -103,15 +101,34 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_or
   auto orders = std::vector<Order*>({order});
 
   auto infeasible_cargo_order = std::make_unique<InfeasibleCargoOrder>(cargo_orders);
-
+  
+  // try all vehicles
   const auto& vehicles = scenario->carrier_manager->vehicles;
   bool has_feasible_flag = false;
-  for (auto &vehicle : vehicles) {
+  for (auto& vehicle : vehicles) {
+    // check vehicle resource
+    if (vehicle->unusable()) {
+      infeasible_cargo_order->record_vehicle_infeasible_reasons(
+          InfeasibleReasonCollection::VEHICLE_REOURCE, vehicle);
+      continue;
+    }
     auto cur_load = this->construct_load_by_order(orders, vehicle);
-    if (cur_load->constr_profile->infesible) {
-      // TODO 添加不可解原因
+    // check feasibility
+    if (cur_load->constr_profile->is_infesible()) {
+      auto& cur_constr_profile = cur_load->constr_profile;
+      // record hard constr scores
+      for (auto& hard_score : cur_constr_profile->hard_constr_scores) {
+        infeasible_cargo_order->record_hard_score(hard_score, vehicle);
+      }
+      // record cost constr scores
+      for (auto& cost_score : cur_constr_profile->cost_constr_scores) {
+        infeasible_cargo_order->record_cost_score(cost_score, vehicle);
+      }
     } else {
       has_feasible_flag = true;
+    }
+    delete cur_load;
+    if (has_feasible_flag) {
       break;
     }
   }

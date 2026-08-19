@@ -17,6 +17,13 @@ Load::Load(const Scenario* scenario) : scenario(scenario) {
   this->constr_profile = std::make_unique<LoadConstrProfile>();
 }
 
+Load::~Load() {
+  this->first_node.reset();
+  this->last_node = nullptr;
+  this->route_profile.reset();
+  this->constr_profile.reset();
+}
+
 void Load::change_vehicle(Vehicle* vehicle) {
   // check if the routing network has changed
   // if change, update the distance and time between nodes
@@ -67,6 +74,22 @@ long Load::get_total_dist() {
   }
   this->route_profile->total_dist = total_dist;
   return total_dist;
+}
+
+Bitset* Load::get_available_vehicle_bitset() {
+  if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::AVAILABLE_VEHICLE_BITSET)) {
+    return this->route_profile->available_vehicle_bitset.get();
+  }
+  this->route_profile->available_vehicle_bitset =
+      this->scenario->carrier_manager->full_vehicle_bitset();
+  Node* tail_node = this->last_node->prev;
+  while (tail_node->hase_prev()) {
+    this->route_profile->available_vehicle_bitset->call_intersection(
+        tail_node->loc->available_vehicle->vehicle_bitset);
+    tail_node = tail_node->prev;
+  }
+
+  return this->route_profile->available_vehicle_bitset.get();
 }
 
 void Load::update_node_dist_time() {

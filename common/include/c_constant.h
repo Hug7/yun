@@ -8,17 +8,6 @@
 #include <string>
 #include <unordered_map>
 
-namespace Delimiter {
-/**
- * @brief delimiter of calendar time range
- */
-inline constexpr std::string CALENDAR_TIME_RANGE = ";";
-/**
- * @brief delimiter of time window
- */
-inline constexpr std::string TIME_WINDOW = ";";
-}  // namespace Delimiter
-
 enum class CalendarType {
   PICK,
   DROP,
@@ -49,6 +38,36 @@ static inline const std::unordered_map<std::string, ActivityType> ActivityTypeMa
     {"DROP", ActivityType::DROP},
 };
 
+enum class PickDropPatternType {
+  // single pick location and single drop location
+  SPSD,
+  // single pick location and multi drop locations
+  SPMD,
+  // multi pick locations and multi drop locations
+  MPMD,
+  // multi pick locations and single drop locations
+  MPSD,
+};
+
+enum class LoadUnloadPolicyType {
+  // first pick last drop
+  FILO,
+  // first pick last drop
+  FIFO,
+  // umlimited
+  NONE,
+};
+
+namespace Delimiter {
+/**
+ * @brief delimiter of calendar time range
+ */
+inline constexpr std::string CALENDAR_TIME_RANGE = ";";
+/**
+ * @brief delimiter of time window
+ */
+inline constexpr std::string TIME_WINDOW = ";";
+}  // namespace Delimiter
 namespace DistMatrixParameter {
 /**
  * @brief maximum driving distance, unit: m
@@ -85,15 +104,6 @@ long const DEFAULT_LATE_TIME = 4003840810;
  */
 int const INTERVAL_SECS_CONTINUOUS_TIME_BUCKET = 600;
 }  // namespace TimeWindowParameter
-
-enum class PickDropPatternType {
-  // pick first and last drop, single pick and multi drop
-  SPMD,
-  // pick first and last drop, multi pick and multi drop
-  MPMD,
-  // pickup and delivery
-  PDP,
-};
 
 namespace HardConstraintParameter {
 /**

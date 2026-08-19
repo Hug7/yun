@@ -11,6 +11,8 @@
 
 // ====== implement of Load Solver ======
 void Solver::solve() {
+  // precheck
+  
   // create a new plan
   Plan *plan = new Plan(this->scenario);
   // distrubute vehicle resources and order resources

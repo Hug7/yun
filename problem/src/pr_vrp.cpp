@@ -8,14 +8,18 @@
 // ====== implement of ProblemVRP ======
 Load* ProblemVRP::construct_load_by_order(std::vector<Order*>& orders) {
   Load* load = this->pd_pattern->create_load(this->scenario);
-  for (auto& order : orders) {
+  for (auto order : orders) {
     this->pd_pattern->add_order(load, order);
   }
   // try using different vehicle
   const std::vector<Vehicle*>& vehicles = this->scenario->carrier_manager->vehicles;
   LoadConstrProfile::UPtr best_profile = nullptr;
   Vehicle* best_vehilce = nullptr;
-  for (auto& vehicle : vehicles) {
+  for (auto vehicle : vehicles) {
+    // check vehicle resource
+    if (vehicle->unusable()) {
+      continue;
+    }
     // change vehicle
     load->change_vehicle(vehicle);
     // temporary evaluate of load
@@ -33,6 +37,17 @@ Load* ProblemVRP::construct_load_by_order(std::vector<Order*>& orders) {
   }
   // change vehicle
   load->change_vehicle(best_vehilce);
+  this->eval_load(load);
+
+  return load;
+}
+
+Load* ProblemVRP::construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle) {
+  Load* load = this->pd_pattern->create_load(this->scenario);
+  for (auto order : orders) {
+    this->pd_pattern->add_order(load, order);
+  }
+  load->change_vehicle(vehicle);
   this->eval_load(load);
 
   return load;

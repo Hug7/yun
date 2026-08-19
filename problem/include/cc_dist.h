@@ -18,7 +18,7 @@ class CcDist : public CostConstraint {
   const double dist_factor;
 
   CcDist(const double dist_factor)
-      : CostConstraint("CcDist", 0, true, false), dist_factor(dist_factor) {}
+      : CostConstraint("CcDist", 0, true, true), dist_factor(dist_factor) {}
 
   /**
    * @brief evaluate the score of the cost constraint

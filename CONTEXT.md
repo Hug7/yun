@@ -1,6 +1,10 @@
-# yun — VRP Solver
+# yun — VRP
 
 车辆路径规划（VRP）求解器。输入基础数据（Scenario），构建规划模型（Load / Node / Activity），在约束下求解最优车次分配方案。
+
+## 设计思想
+
+场景层`scenario`记录“不可逆的客观事实”，问题层`problem`记录“可协商的规则与偏好”
 
 ## 语言
 

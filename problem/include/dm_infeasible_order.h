@@ -14,6 +14,7 @@
 #include "bd_vehicle.h"
 #include "dm_infeasible.h"
 #include "dm_order.h"
+#include "dm_score.h"
 
 class InfeasibleCargoOrder {
  public:
@@ -23,10 +24,18 @@ class InfeasibleCargoOrder {
 
   std::unordered_map<std::string, InfeasibleReason> common_infeasible_reasons;
 
-  std::unordered_map<Vehicle*, std::vector<InfeasibleReason>> vehicle_infeasible_reasons;
+  std::unordered_map<Vehicle*, std::unordered_map<std::string, InfeasibleReason>> vehicle_infeasible_reasons;
 
   InfeasibleCargoOrder(std::vector<const CargoOrder*>& cargo_orders)
       : cargo_orders(cargo_orders), common_infeasible_reasons(), vehicle_infeasible_reasons() {}
+
+  void record_common_infeasible_reasons(const InfeasibleReason &reason);
+
+  void record_vehicle_infeasible_reasons(const InfeasibleReason &reason, Vehicle* vehicle);
+
+  void record_hard_score(HardConstrScore::UPtr& hard_score, Vehicle* vehicle);
+
+  void record_cost_score(CostConstrScore::UPtr& cost_score, Vehicle* vehicle);
 };
 
 class InfeasibleOrder {

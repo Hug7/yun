@@ -36,19 +36,36 @@ class HardConstrScore {
    */
   const double value;
   /**
+   * @brief is the constraint score related to the sequence
+   */
+  const bool seq_type;
+  /**
+   * @brief is the constraint score related to the vehicle
+   */
+  const bool vehicle_type;
+  /**
    * @brief infeasible reason
    */
   const InfeasibleReason reason;
 
   HardConstrScore(const std::string& code, const bool feasible, const double weight,
-                  const double value, const InfeasibleReason reason)
-      : code(code), feasible(feasible), weight(weight), value(value), reason(reason) {}
+                  const double value, const bool seq_type, const bool vehicle_type,
+                  const InfeasibleReason reason)
+      : code(code),
+        feasible(feasible),
+        weight(weight),
+        value(value),
+        seq_type(seq_type),
+        vehicle_type(vehicle_type),
+        reason(reason) {}
 
   HardConstrScore(const std::string& code)
       : code(code),
         feasible(true),
         weight(1),
         value(0),
+        seq_type(false),
+        vehicle_type(false),
         reason(InfeasibleReasonCollection::FEASIBLE) {}
 
   double get_score() const { return this->weight * this->value; }
@@ -56,6 +73,10 @@ class HardConstrScore {
   bool is_feasible() const { return this->feasible; }
 
   bool is_infeasible() const { return !this->feasible; }
+
+  bool is_seq() const { return this->seq_type; }
+
+  bool is_vehicle() const { return this->vehicle_type; }
 };
 
 /**
@@ -112,19 +133,37 @@ class CostConstrScore {
    */
   const double value;
   /**
+   * @brief is the constraint score related to the sequence
+   */
+  const bool seq_type;
+  /**
+   * @brief is the constraint score related to the vehicle
+   */
+  const bool vehicle_type;
+  /**
    * @brief infeasible reason
    */
   const InfeasibleReason reason;
 
   CostConstrScore(const std::string& code, const bool feasible, const double weight,
-                  const double value, const InfeasibleReason reason)
-      : code(code), feasible(feasible), weight(weight), value(value), reason(reason) {}
+                  const double value, const bool seq_type, const bool vehicle_type,
+                  const InfeasibleReason reason)
+      : code(code),
+        feasible(feasible),
+        weight(weight),
+        value(value),
+        seq_type(seq_type),
+        vehicle_type(vehicle_type),
+        reason(reason) {}
 
-  CostConstrScore(const std::string& code, const double weight, const double value)
+  CostConstrScore(const std::string& code, const double weight, const double value,
+                  const bool seq_type, const bool vehicle_type)
       : code(code),
         feasible(true),
         weight(weight),
         value(value),
+        seq_type(seq_type),
+        vehicle_type(vehicle_type),
         reason(InfeasibleReasonCollection::FEASIBLE) {}
 
   double get_score() const { return this->weight * this->value; }
@@ -132,4 +171,8 @@ class CostConstrScore {
   bool is_feasible() const { return this->feasible; }
 
   bool is_infeasible() const { return !this->feasible; }
+
+  bool is_seq() const { return this->seq_type; }
+
+  bool is_vehicle() const { return this->vehicle_type; }
 };

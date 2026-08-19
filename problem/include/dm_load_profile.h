@@ -43,19 +43,19 @@ class LoadRouteProfile {
   /**
    * @brief bitset of labelset value for the pick location
    */
-  std::unique_ptr<LabelsetValueBitset> pick_loc_labelset_value_bitset;
+  LabelsetValueBitset::UPtr pick_loc_labelset_value_bitset;
   /**
    * @brief bitset of labelset value for the drop location
    */
-  std::unique_ptr<LabelsetValueBitset> drop_loc_labelset_value_bitset;
+  LabelsetValueBitset::UPtr drop_loc_labelset_value_bitset;
   /**
    * @brief bitset of labelset value for the orders
    */
-  std::unique_ptr<LabelsetValueBitset> order_labelset_value_bitset;
+  LabelsetValueBitset::UPtr order_labelset_value_bitset;
   /**
    * @brief bitset of available vehicles
    */
-  std::unique_ptr<Bitset> available_vehicle_bitset;
+  Bitset::UPtr available_vehicle_bitset;
 
   int pick_node_count;
 

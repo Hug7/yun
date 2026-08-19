@@ -166,7 +166,12 @@ class LabelsetValueBitset {
    * @brief 合并标签集合值位图
    * @param labelset_value_bitset 标签集合值位图对象指针
    */
-  void merge(LabelsetValueBitset::UPtr& labelset_value_bitset);
+  void merge(const LabelsetValueBitset::UPtr& labelset_value_bitset);
+
+  /**
+   * @brief 重置标签集合值位图
+   */
+  void clear_bitsets();
 };
 
 /**

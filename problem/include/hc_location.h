@@ -42,3 +42,18 @@ class HcMaxDropNodeCount : public HardConstraint {
    */
   HardConstrScore::UPtr eval(Load* load) override;
 };
+
+/**
+ * @brief hard constraint for available vehicle
+ */
+class HcAvailableVehicle : public HardConstraint {
+ public:
+
+  HcAvailableVehicle()
+      : HardConstraint("HcAvailableVehicle", 0, false, true) {};
+
+  /**
+   * @brief calculate the score of the hard constraint
+   */
+  HardConstrScore::UPtr eval(Load* load) override;
+};

@@ -24,7 +24,7 @@ target_include_directories(yun_solver
 )
 
 # 4. linked dependencies
-target_link_libraries(yun_solver PUBLIC yun_common yun_domain yun_scenario yun_plan)
+target_link_libraries(yun_solver PUBLIC yun_common yun_domain yun_scenario yun_problem)
 
 # 5. install
 install(TARGETS yun_solver

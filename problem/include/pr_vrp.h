@@ -17,4 +17,6 @@ class ProblemVRP : public Problem {
   ProblemVRP(Scenario* scenario) : Problem(scenario) {};
 
   Load* construct_load_by_order(std::vector<Order*>& orders) override;
+
+  Load* construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle) override;
 };

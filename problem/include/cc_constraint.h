@@ -27,15 +27,15 @@ class CostConstraint {
   /**
    * @brief is the constraint related to the sequence
    */
-  const bool is_seq;
+  const bool seq_type;
   /**
    * @brief is the constraint related to the vehicle
    */
-  const bool is_vehicle;
+  const bool vehicle_type;
 
-  CostConstraint(const std::string code, const int priority, const bool is_seq,
-                 const bool is_vehicle)
-      : code(code), priority(priority), is_seq(is_seq), is_vehicle(is_vehicle) {};
+  CostConstraint(const std::string code, const int priority, const bool seq_type,
+                 const bool vehicle_type)
+      : code(code), priority(priority), seq_type(seq_type), vehicle_type(vehicle_type) {};
 
   virtual ~CostConstraint() = default;
 
