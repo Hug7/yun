@@ -57,3 +57,19 @@ class HcAvailableVehicle : public HardConstraint {
    */
   HardConstrScore::UPtr eval(Load* load) override;
 };
+
+/**
+ * @brief hard constraint for time window
+ */
+class HcTimeWindow : public HardConstraint {
+ public:
+
+  HcTimeWindow()
+      : HardConstraint("HcTimeWindow", 0, true, true) {};
+
+  /**
+   * @brief calculate the score of the hard constraint
+   */
+  HardConstrScore::UPtr eval(Load* load) override;
+};
+

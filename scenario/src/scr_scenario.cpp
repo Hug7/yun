@@ -39,14 +39,11 @@ Scenario* StandardCsvReader::loading_scenario() {
   // 读取订单
   CargoOrderManager* cargo_order_manager =
       this->loading_cargo_order(location_manager, dimension_manager, label_manager);
-  // 读取参数
-  Parameter* parameter = this->loading_parameter();
 
   spdlog::info("Loading scenario finished!");
 
   // 构造模型
   Scenario* scenario = new Scenario();
-  scenario->set_parameter(parameter);
   scenario->set_dimension_manager(dimension_manager);
   scenario->set_label_manager(label_manager);
   scenario->set_location_manager(location_manager);

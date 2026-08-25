@@ -6,6 +6,8 @@
 #pragma once
 
 #include <ctime>
+#include <memory>
+#include <vector>
 
 #include "c_constant.h"
 
@@ -15,6 +17,8 @@
  */
 class TimeWindow {
  public:
+  using UPtr = std::unique_ptr<TimeWindow>;
+  using VecUPtr = std::vector<std::unique_ptr<TimeWindow>>;
   /**
    * @brief start time of the time window
    */
@@ -29,4 +33,6 @@ class TimeWindow {
         late(TimeWindowParameter::DEFAULT_LATE_TIME) {};
 
   TimeWindow(const long early, const long late) : early(early), late(late) {}
+
+  TimeWindow(TimeWindow* other) : early(other->early), late(other->late) {}
 };

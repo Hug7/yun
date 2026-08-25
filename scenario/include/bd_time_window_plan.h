@@ -61,3 +61,19 @@ class TimeWindowPlan {
 
   bool is_zero_over_time();
 };
+
+namespace TimeWindowPlanFactory {
+/**
+ * @brief 获取默认的时间窗计划
+ * @details 使用最宽的时间窗，即时间窗时间的取值上下限
+ * @return 时间窗计划
+ */
+TimeWindowPlan::UPtr default_time_window_plan();
+
+/**
+ * @brief 获取默认的时间窗计划列表
+ * @details 使用最宽的时间窗，即时间窗时间的取值上下限
+ * @return 时间窗计划列表
+ */
+TimeWindowPlan::VecUPtr default_time_window_plans();
+}  // namespace TimeWindowPlanFactory

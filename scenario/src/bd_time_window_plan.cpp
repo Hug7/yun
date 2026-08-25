@@ -4,6 +4,9 @@
  */
 
 #include "bd_time_window_plan.h"
+#include <vector>
+
+#include "c_constant.h"
 
 // ====== implement of TimeWindowPlan ======
 TimeWindowPlan::TimeWindowPlan(const TimeWindow* time_window, int work_time) {
@@ -27,3 +30,15 @@ bool TimeWindowPlan::is_zero_wait_over_time() {
 bool TimeWindowPlan::is_zero_wait_time() { return this->wait_time <= 0; }
 
 bool TimeWindowPlan::is_zero_over_time() { return this->over_time <= 0; }
+
+TimeWindowPlan::UPtr TimeWindowPlanFactory::default_time_window_plan() {
+  return std::make_unique<TimeWindowPlan>(
+      TimeWindowParameter::DEFAULT_EARLY_TIME, TimeWindowParameter::DEFAULT_LATE_TIME,
+      TimeWindowParameter::DEFAULT_EARLY_TIME, TimeWindowParameter::DEFAULT_LATE_TIME, 0, 0);
+}
+
+TimeWindowPlan::VecUPtr TimeWindowPlanFactory::default_time_window_plans() {
+  auto res = std::vector<TimeWindowPlan::UPtr>(1);
+  res[0] = default_time_window_plan();
+  return res;
+}

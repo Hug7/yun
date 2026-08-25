@@ -65,10 +65,15 @@ inline const InfeasibleReason DISTINCT_LABEL_VALUE_MAX_COUNT{
     "the distinct label value of the order exceeds the maximum quantity for load"};
 
 inline const InfeasibleReason FILO_LOAD_UNLOAD_POLICY{
-    "1008", "HcLoadUnloadPolicyFILO", "订单提卸货顺序不满足先入后出（FILO）",
+    "1008", "HcLoadUnloadPolicyFILO", "订单提卸货顺序不满足先入后出(FILO)",
     "the order pickup/drop sequence violates the FILO policy"};
 
 inline const InfeasibleReason FIFO_LOAD_UNLOAD_POLICY{
-    "1009", "HcLoadUnloadPolicyFIFO", "订单提卸货顺序不满足先入先出（FIFO）",
+    "1009", "HcLoadUnloadPolicyFIFO", "订单提卸货顺序不满足先入先出(FIFO)",
     "the order pickup/drop sequence violates the FIFO policy"};
+
+inline const InfeasibleReason TIME_WINDOW{
+    "1010", "HcTimeWindow", "不满足时间窗约束",
+    "not meet the time window constraint"};
+
 }  // namespace InfeasibleReasonCollection

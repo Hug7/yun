@@ -4,6 +4,7 @@
  */
 
 #include "dm_load.h"
+#include "bd_time_window_plan.h"
 
 // ====== implement of Load ======
 Load::Load(const Scenario* scenario) : scenario(scenario) {
@@ -125,4 +126,16 @@ void Load::update_end_node_dist_time() {
   this->last_node->travel_time = dist_time.time;
 
   // todo updata time window
+}
+
+void Load::update_time_window() {
+  Node* pre_node = this->first_node.get();
+  pre_node->ptws = TimeWindowPlanFactory::default_time_window_plans();
+  Node* head_node = pre_node->next.get();
+  this->last_node->ptws = TimeWindowPlanFactory::default_time_window_plans();
+  while (head_node != nullptr) {
+    head_node;
+    // pre_node->ptws
+    // head_node = head_node->next.get();
+  }
 }

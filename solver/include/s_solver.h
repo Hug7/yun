@@ -8,6 +8,7 @@
 #include <string>
 
 #include "se_scenario.h"
+#include "dm_parameter.h"
 #include "pr_problem.h"
 
 class Solver {
@@ -16,6 +17,8 @@ class Solver {
 
   Scenario *scenario;
 
+  Parameter *parameter;
+
   Problem *problem;
 
   Solver(const std::string &roo_dir) : roo_dir(roo_dir) {};
@@ -23,6 +26,8 @@ class Solver {
   ~Solver();
 
   void load_scenario();
+
+  void load_parameter();
 
   void create_problem();
 

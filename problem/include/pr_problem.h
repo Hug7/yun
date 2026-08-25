@@ -9,6 +9,7 @@
 
 #include "bd_cargo_order.h"
 #include "cc_manager.h"
+#include "dm_parameter.h"
 #include "dm_load.h"
 #include "dm_order.h"
 #include "dm_infeasible_order.h"
@@ -21,6 +22,8 @@ class Problem {
  public:
   const Scenario* scenario;
 
+  Parameter* parameter;
+
   PickDropPattern* pd_pattern;
 
   HardConstraintManager* hc_manager;
@@ -29,7 +32,9 @@ class Problem {
 
   CostConstraintManager* cc_manager;
 
-  Problem(const Scenario* scenario);
+  Problem(const Scenario* scenario, Parameter* parameter);
+
+  ~Problem();
 
   /**
    * @brief evaluate all constraints

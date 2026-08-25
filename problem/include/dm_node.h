@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "bd_location.h"
+#include "bd_time_window.h"
 #include "bd_time_window_plan.h"
 #include "c_constant.h"
 #include "dm_activity.h"
@@ -30,6 +31,10 @@ class Node {
    * @brief location of the node
    */
   const Location* loc;
+  /**
+   * @brief time windows of the node
+   */
+  TimeWindow::VecUPtr time_windows;
   /**
    * @brief plan time windows of the node
    */
@@ -76,6 +81,8 @@ class Node {
   void add_front_activity(Activity::UPtr activity);
 
   void add_back_activity(Activity::UPtr activity);
+
+  void intersection_time_windows();
 };
 
 namespace NodeFactory {

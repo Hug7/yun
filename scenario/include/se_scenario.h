@@ -11,7 +11,6 @@
 #include "bd_dist_matrix.h"
 #include "bd_label.h"
 #include "bd_location.h"
-#include "bd_parameter.h"
 #include "bd_vehicle_model.h"
 
 /**
@@ -20,7 +19,6 @@
  */
 class Scenario {
  public:
-  Parameter* parameter;
   /**
    * @brief 维度管理器
    */
@@ -53,8 +51,6 @@ class Scenario {
   Scenario() {};
 
   ~Scenario();
-
-  void set_parameter(Parameter* parameter);
 
   void set_dimension_manager(DimensionManager* dimension_manager);
 

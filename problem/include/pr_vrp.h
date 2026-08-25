@@ -14,7 +14,7 @@
 
 class ProblemVRP : public Problem {
  public:
-  ProblemVRP(Scenario* scenario) : Problem(scenario) {};
+  ProblemVRP(const Scenario* scenario, Parameter* parameter) : Problem(scenario, parameter) {};
 
   Load* construct_load_by_order(std::vector<Order*>& orders) override;
 

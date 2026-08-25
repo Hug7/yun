@@ -70,6 +70,17 @@ void Node::add_back_activity(Activity::UPtr activity) {
   }
 }
 
+void Node::intersection_time_windows() {
+  if (this->activity_type == ActivityType::PICK) {
+    // 仅有一段activity，则返回order的time window
+    if (!this->first->hase_next()) {
+      
+    }
+  } else if (this->activity_type == ActivityType::DROP) {
+
+  }
+}
+
 // ====== implement of NodeFactory ======
 std::unique_ptr<Node> NodeFactory::create_pick_node(const Order* order, Activity::UPtr activity) {
   return std::make_unique<Node>(ActivityType::PICK, order->pick_loc, std::move(activity));

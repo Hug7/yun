@@ -90,13 +90,18 @@ std::string const DEFAULT_LOCATION_CODE = "default";
 
 namespace TimeWindowParameter {
 /**
+ * @brief default paln datetime range (start/end), unit: s
+ * @details representative 1970-01-01 00:00
+ */
+long const DEFAULT_PLAN_DATETIME_RANGE = -28800;
+/**
  * @brief default early time, unit: s
- * @details representative 1970-01-01 00:00:00
+ * @details representative 1970-01-01 00:00
  */
 long const DEFAULT_EARLY_TIME = -28800;
 /**
  * @brief default early time, unit: s
- * @details representative 2096-11-16 02:00:00
+ * @details representative 2096-11-16 02:00
  */
 long const DEFAULT_LATE_TIME = 4003840810;
 /**
@@ -116,6 +121,15 @@ int const DEFAULT_MAX_PICK_NODE_COUNT = 0;
 int const DEFAULT_MAX_DROP_NODE_COUNT = 0;
 
 }  // namespace HardConstraintParameter
+
+namespace SoftConstraintParameter {
+/**
+ * @brief cost constraint "sc_dist" default distance factor
+ * @details enable constraint if greater than 0
+ */
+int const SC_DIST_DEFAULT_DIST_FACTOR = 0;
+
+}  // namespace CostConstraintParameter
 
 namespace CostConstraintParameter {
 /**

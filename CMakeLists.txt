@@ -63,7 +63,7 @@ endif()
 
 # add subdirectories
 add_subdirectory(common)
-add_subdirectory(domain)
+# add_subdirectory(domain)
 add_subdirectory(scenario)
 add_subdirectory(problem)
 add_subdirectory(algorithm)
@@ -73,7 +73,6 @@ add_subdirectory(tests)
 
 # 总安装配置
 install(DIRECTORY common/include/ DESTINATION include/yun/common)
-install(DIRECTORY domain/include/ DESTINATION include/yun/domain)
 # install(DIRECTORY core/tsp/include/ DESTINATION include/yun/tsp)
 
 # 生成 CMake 配置文件

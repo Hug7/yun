@@ -59,6 +59,8 @@ class Load {
 
   void update_end_node_dist_time();
 
+  void update_time_window();
+
   virtual ~Load();
 
   virtual const std::vector<long>& get_peak_load_dims() = 0;

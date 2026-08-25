@@ -6,7 +6,6 @@
 #include "se_scenario.h"
 
 Scenario::~Scenario() {
-  delete this->parameter;
   delete this->dimension_manager;
   delete this->label_manager;
   delete this->vehicle_model_manager;
@@ -15,8 +14,6 @@ Scenario::~Scenario() {
   delete this->dist_matrix_manager;
   delete this->cargo_order_manager;
 }
-
-void Scenario::set_parameter(Parameter* parameter) { this->parameter = parameter; }
 
 void Scenario::set_dimension_manager(DimensionManager* dimension_manager) {
   this->dimension_manager = dimension_manager;

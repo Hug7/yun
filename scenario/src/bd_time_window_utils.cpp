@@ -4,6 +4,7 @@
  */
 
 #include "bd_time_window_utils.h"
+#include "bd_time_window.h"
 
 // ====== implement of TimeWindowInfer ======
 TimeWindowPlan* TimeWindowInfer::forward_infer_s_s(const TimeWindowPlan* pre_node_plan_tw,
@@ -107,10 +108,6 @@ std::vector<TimeWindowPlan*> TimeWindowInfer::forward_infer(
   return plan_node_tws;
 }
 
-TimeWindow* TimeWindowUntils::copy_time_window(TimeWindow* tw) {
-  return new TimeWindow(tw->early, tw->late);
-}
-
 TimeWindow* TimeWindowUntils::intersection(TimeWindow* tw_a, TimeWindow* tw_b) {
   const long tmp_early = std::max(tw_a->early, tw_b->early);
   const long tmp_late = std::min(tw_a->late, tw_b->late);
@@ -120,11 +117,11 @@ TimeWindow* TimeWindowUntils::intersection(TimeWindow* tw_a, TimeWindow* tw_b) {
   return new TimeWindow(tmp_early, tmp_late);
 }
 
-std::vector<TimeWindow*> TimeWindowUntils::merge_time_windows(std::vector<TimeWindow*> tws) {
+std::vector<TimeWindow*> TimeWindowUntils::merge_time_windows(std::vector<TimeWindow*> &tws) {
   std::vector<TimeWindow*> res_tws;
   for (auto& tw : tws) {
     if (res_tws.size() == 0) {
-      res_tws.push_back(copy_time_window(tw));
+      res_tws.push_back(new TimeWindow(tw));
     } else {
       auto last_tw = res_tws.back();
       if ((tw->early - last_tw->late) <=
@@ -133,7 +130,7 @@ std::vector<TimeWindow*> TimeWindowUntils::merge_time_windows(std::vector<TimeWi
         res_tws.push_back(new TimeWindow(last_tw->early, tw->late));
         delete last_tw;
       } else {
-        res_tws.push_back(copy_time_window(tw));
+        res_tws.push_back(new TimeWindow(tw));
       }
     }
     delete tw;

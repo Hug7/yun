@@ -88,10 +88,6 @@ class StandardCsvReader {
    * @param dimension_manager 维度管理器
    */
   void loading_work_plan(LocationManager* location_manager, DimensionManager* dimension_manager);
-  /**
-   * @brief 读取参数
-   */
-  Parameter* loading_parameter();
 
  public:
   StandardCsvReader(const std::string& root_dir) : root_dir(root_dir) {}

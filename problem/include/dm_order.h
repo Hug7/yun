@@ -11,6 +11,8 @@
 #include "bd_cargo_order.h"
 #include "bd_common.h"
 #include "bd_location.h"
+#include "bd_time_window.h"
+#include "dm_parameter.h"
 
 class Order {
  public:
@@ -31,13 +33,21 @@ class Order {
    */
   const Location* drop_loc;
   /**
-   * @brief pick time window
+   * @brief pick time windows
    */
   std::vector<TimeWindow*> pick_time_windows;
   /**
-   * @brief drop time window
+   * @brief length of pick time windows
+   */
+  int pick_time_windows_len;
+  /**
+   * @brief drop time windows
    */
   std::vector<TimeWindow*> drop_time_windows;
+  /**
+   * @brief length of drop time windows
+   */
+  int drop_time_windows_len;
   /**
    * @brief 订单明细属性
    */
@@ -55,17 +65,22 @@ class Order {
    */
   Bitset::UPtr available_vehicle_bitset;
 
-  Order(const int ind, std::vector<const CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
+  Order(PlanDateTimeRange* plan_time_range, const int ind,
+        std::vector<const CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
         LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
         Bitset::UPtr available_vehicle_bitset);
 
-  Order(std::vector<const CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
-        LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
-        Bitset::UPtr available_vehicle_bitset)
-      : Order(-1, cargo_orders, dim_vals, labelset_value, std::move(labelset_value_bitset),
-              std::move(available_vehicle_bitset)) {};
+  Order(PlanDateTimeRange* plan_time_range, std::vector<const CargoOrder*>& cargo_orders,
+        std::vector<long>& dim_vals, LabelsetValue* labelset_value,
+        LabelsetValueBitset::UPtr labelset_value_bitset, Bitset::UPtr available_vehicle_bitset)
+      : Order(plan_time_range, -1, cargo_orders, dim_vals, labelset_value,
+              std::move(labelset_value_bitset), std::move(available_vehicle_bitset)) {};
 
   ~Order();
+
+  std::vector<TimeWindow*> copy_pick_time_windows() const;
+
+  std::vector<TimeWindow*> copy_drop_time_windows() const;
 };
 
 class OrderManager {

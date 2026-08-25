@@ -23,6 +23,7 @@ enum class LoadRouteProfileField {
   PICK_NODE_COUNT,
   DROP_NODE_COUNT,
   TOTAL_DIST,
+  TIME_WINDOW,
   FIELDS_COUNT  // sentinel does not participate in dirty mark
 };
 

@@ -25,10 +25,6 @@ std::vector<TimeWindowPlan*> forward_infer(std::vector<TimeWindowPlan*>& pre_nod
 
 namespace TimeWindowUntils {
 /**
- * @brief deep copy time window
- */
-TimeWindow* copy_time_window(TimeWindow* tw);
-/**
  * @brief get intersection of two time windows
  * @details if tw_a and tw_b are not intersected, return nullptr
  */
@@ -36,5 +32,5 @@ TimeWindow* intersection(TimeWindow* tw_a, TimeWindow* tw_b);
 /**
  * @brief merge continuous time windows
  */
-std::vector<TimeWindow*> merge_time_windows(std::vector<TimeWindow*> tws);
+std::vector<TimeWindow*> merge_time_windows(std::vector<TimeWindow*> &tws);
 }  // namespace TimeWindowUntils

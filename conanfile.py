@@ -14,7 +14,6 @@ class YunConan(ConanFile):
     exports_sources = [
         "CMakeLists.txt",
         "common/*",
-        "domain/*",
         "core/*",
         "plan/*"
         "tests/*",
@@ -35,8 +34,6 @@ class YunConan(ConanFile):
     def package(self):
         # 安装头文件
         copy(self, "*.h", src=os.path.join(self.source_folder, "common/include"), dst=os.path.join(self.package_folder, "include/common"))
-        copy(self, "*.h", src=os.path.join(self.source_folder, "domain/include"), dst=os.path.join(self.package_folder, "include/domain"))
-        copy(self, "*.h", src=os.path.join(self.source_folder, "core/tsp/include"), dst=os.path.join(self.package_folder, "include/tsp"))
         
         # 安装库文件（根据实际构建输出调整）
         copy(self, "*.lib", self.build_folder, os.path.join(self.package_folder, "lib"), keep_path=False)
@@ -56,9 +53,9 @@ class YunConan(ConanFile):
         self.cpp_info.components["yun_common"].includedirs = ["include/common"]
         self.cpp_info.components["yun_common"].requires = ["fmt::fmt", "spdlog::spdlog", "yaml-cpp::yaml-cpp"]
 
-        self.cpp_info.components["yun_domain"].libs = ["yun_domain"]
-        self.cpp_info.components["yun_domain"].includedirs = ["include/domain"]
-        self.cpp_info.components["yun_domain"].requires = ["yun_common"]
+        # self.cpp_info.components["yun_domain"].libs = ["yun_domain"]
+        # self.cpp_info.components["yun_domain"].includedirs = ["include/domain"]
+        # self.cpp_info.components["yun_domain"].requires = ["yun_common"]
 
         # self.cpp_info.components["yun_tsp"].libs = ["yun_tsp"]
         # self.cpp_info.components["yun_tsp"].includedirs = ["include/tsp"]

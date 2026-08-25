@@ -17,7 +17,7 @@ target_sources(yun_problem
 )
 
 # 3. linked dependencies
-target_link_libraries(yun_problem PUBLIC yun_common yun_domain yun_scenario)
+target_link_libraries(yun_problem PUBLIC yun_common yun_scenario)
 
 # 4. include directories
 target_include_directories(yun_problem

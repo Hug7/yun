@@ -7,13 +7,10 @@
 
 #include <memory>
 
-#include "cc_dist.h"
-#include "hc_location.h"
-#include "hc_vehicle.h"
-
 // ====== implement of Problem ======
-Problem::Problem(const Scenario* scenario) : scenario(scenario) {
-  switch (scenario->parameter->pick_drop_pattern) {
+Problem::Problem(const Scenario* scenario, Parameter* parameter)
+    : scenario(scenario), parameter(parameter) {
+  switch (this->parameter->pick_drop_pattern) {
     case PickDropPatternType::SPMD:
       this->pd_pattern = new SPMD(scenario);
       break;
@@ -25,31 +22,12 @@ Problem::Problem(const Scenario* scenario) : scenario(scenario) {
       break;
   }
 
-  const Parameter* parameter = scenario->parameter;
-
   this->hc_manager = new HardConstraintManager();
   this->sc_manager = new SoftConstraintManager();
   this->cc_manager = new CostConstraintManager();
-
-  // hard constraints: base
-  this->hc_manager->add_constr(new HcVehicleCapacity());
-  // todo add hard constraints by scenario
-
-  // == hard constraints: max drop node count
-  if (parameter->max_pick_node_count > HardConstraintParameter::DEFAULT_MAX_PICK_NODE_COUNT) {
-    this->hc_manager->add_constr(new HcMaxPickNodeCount(parameter->max_pick_node_count));
-  }
-  // == hard constraints: max pick node count
-  if (parameter->max_drop_node_count > HardConstraintParameter::DEFAULT_MAX_DROP_NODE_COUNT) {
-    this->hc_manager->add_constr(new HcMaxDropNodeCount(parameter->max_drop_node_count));
-  }
-
-  // cost constraints
-  // == cost constraints: dist
-  if (parameter->cc_constr_dist_factor > CostConstraintParameter::CC_DIST_DEFAULT_DIST_FACTOR) {
-    this->cc_manager->add_constr(new CcDist(parameter->cc_constr_dist_factor));
-  }
 }
+
+Problem::~Problem() { delete this->parameter; }
 
 void Problem::eval_load(Load* load) {
   // todo 是否需要重置待讨论
@@ -96,12 +74,12 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_or
   });
   auto available_vehicle_bitset = scenario->carrier_manager->full_vehicle_bitset();
 
-  auto order = new Order(cargo_orders, dim_vals, labelset_value, std::move(labelset_value_bitset),
-                         std::move(available_vehicle_bitset));
+  auto order = new Order(this->parameter->plan_time_range, cargo_orders, dim_vals, labelset_value,
+                         std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
   auto orders = std::vector<Order*>({order});
 
   auto infeasible_cargo_order = std::make_unique<InfeasibleCargoOrder>(cargo_orders);
-  
+
   // try all vehicles
   const auto& vehicles = scenario->carrier_manager->vehicles;
   bool has_feasible_flag = false;
