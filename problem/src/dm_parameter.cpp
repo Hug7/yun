@@ -9,20 +9,20 @@
 #include "c_time_utils.h"
 
 // ====== implement of PlanDateTimeRange ======
-void PlanDateTimeRange::set_start_datetime(const std::string& start_datetime) {
+void PlanDatetimeRange::set_start_datetime(const std::string& start_datetime) {
   this->start_time = TimeParse::parse_tm_to_sec(start_datetime, TimeParse::fmt_yyyymmddhhmm_1);
 }
 
-void PlanDateTimeRange::set_end_datetime(const std::string& end_datetime) {
+void PlanDatetimeRange::set_end_datetime(const std::string& end_datetime) {
   this->end_time = TimeParse::parse_tm_to_sec(end_datetime, TimeParse::fmt_yyyymmddhhmm_1);
 }
 
-TimeWindow* PlanDateTimeRange::create_default_time_window() {
+TimeWindow* PlanDatetimeRange::create_default_time_window() {
   return new TimeWindow(this->start_time, this->end_time);
 }
 
 // ====== implement of Parameter ======
-Parameter::Parameter() { this->plan_time_range = new PlanDateTimeRange(); }
+Parameter::Parameter() { this->plan_datetime_range = new PlanDatetimeRange(); }
 
 void Parameter::post_process(const Scenario* scenario) {
   // 根据订单时间范围，更新计划时间范围
@@ -34,12 +34,12 @@ void Parameter::post_process(const Scenario* scenario) {
     max_drop_time = std::max(max_drop_time, order->drop_time_window->late);
   }
   // --更新计划时间范围
-  if (this->plan_time_range->start_time < min_pick_time) {
-    this->plan_time_range->start_time = min_pick_time;
+  if (this->plan_datetime_range->start_time < min_pick_time) {
+    this->plan_datetime_range->start_time = min_pick_time;
   }
-  if (this->plan_time_range->end_time > max_drop_time) {
-    this->plan_time_range->end_time = max_drop_time;
+  if (this->plan_datetime_range->end_time > max_drop_time) {
+    this->plan_datetime_range->end_time = max_drop_time;
   }
 }
 
-Parameter::~Parameter() { delete this->plan_time_range; }
+Parameter::~Parameter() { delete this->plan_datetime_range; }

@@ -28,7 +28,12 @@ namespace TimeWindowUntils {
  * @brief get intersection of two time windows
  * @details if tw_a and tw_b are not intersected, return nullptr
  */
-TimeWindow* intersection(TimeWindow* tw_a, TimeWindow* tw_b);
+TimeWindow* intersection(const TimeWindow* tw_a, const TimeWindow* tw_b);
+/**
+ * @brief 对多段时间窗求交集
+ * @details 如果没有交集, 返回空数组. 已知std::vector<TimeWindow*>是时间连续的
+ */
+std::vector<TimeWindow*> intersection_tws_arr(std::vector<std::vector<TimeWindow*>> &tws_arr);
 /**
  * @brief merge continuous time windows
  */

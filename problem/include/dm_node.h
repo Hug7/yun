@@ -82,7 +82,9 @@ class Node {
 
   void add_back_activity(Activity::UPtr activity);
 
-  void intersection_time_windows();
+  std::vector<TimeWindow*> intersection_time_windows() const;
+
+  std::vector<const Order*> get_orders() const;
 };
 
 namespace NodeFactory {

@@ -4,6 +4,8 @@
  */
 
 #include "bd_time_window_utils.h"
+#include <algorithm>
+
 #include "bd_time_window.h"
 
 // ====== implement of TimeWindowInfer ======
@@ -108,7 +110,7 @@ std::vector<TimeWindowPlan*> TimeWindowInfer::forward_infer(
   return plan_node_tws;
 }
 
-TimeWindow* TimeWindowUntils::intersection(TimeWindow* tw_a, TimeWindow* tw_b) {
+TimeWindow* TimeWindowUntils::intersection(const TimeWindow* tw_a, const TimeWindow* tw_b) {
   const long tmp_early = std::max(tw_a->early, tw_b->early);
   const long tmp_late = std::min(tw_a->late, tw_b->late);
   if (tmp_early > tmp_late) {
@@ -117,7 +119,45 @@ TimeWindow* TimeWindowUntils::intersection(TimeWindow* tw_a, TimeWindow* tw_b) {
   return new TimeWindow(tmp_early, tmp_late);
 }
 
-std::vector<TimeWindow*> TimeWindowUntils::merge_time_windows(std::vector<TimeWindow*> &tws) {
+std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
+    std::vector<std::vector<TimeWindow*>>& tws_arr) {
+  if (tws_arr.empty()) {
+    return {};
+  }
+  // 时间窗集合大小
+  const std::size_t n = tws_arr.size();
+  // 每个向量当前的读取位置
+  std::vector<std::size_t> idx(n, 0);
+  // 时间窗交集结果
+  std::vector<TimeWindow*> result;
+
+  while (true) {
+    // 获取最大最小时间窗
+    long cur_max_early = tws_arr[0][idx[0]]->early;
+    long cur_min_late = tws_arr[0][idx[0]]->late;
+    long cur_min_late_ind = 0;
+    for (std::size_t u = 1; u < n; ++u) {
+      TimeWindow* cand = tws_arr[u][idx[u]];
+      cur_max_early = std::max(cur_max_early, cand->early);
+      if (cur_min_late > cand->late) {
+        cur_min_late = cand->late;
+        cur_min_late_ind = u;
+      }
+    }
+    // 记录交集时间窗
+    if (cur_min_late > cur_max_early) {
+      result.push_back(new TimeWindow(cur_max_early, cur_min_late));
+    }
+    // 推进选中的向量
+    if (++idx[cur_min_late_ind] >= tws_arr[cur_min_late_ind].size()) {
+      break;
+    }
+  }
+
+  return result;
+}
+
+std::vector<TimeWindow*> TimeWindowUntils::merge_time_windows(std::vector<TimeWindow*>& tws) {
   std::vector<TimeWindow*> res_tws;
   for (auto& tw : tws) {
     if (res_tws.size() == 0) {

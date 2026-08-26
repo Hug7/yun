@@ -7,15 +7,14 @@
 
 #include <memory>
 
-#include "pr_vrp.h"
-#include "standard_csv_reader.h"
-#include "pr_problem.h"
+#include "cc_dist.h"
 #include "hc_label.h"
 #include "hc_location.h"
 #include "hc_vehicle.h"
+#include "pr_problem.h"
+#include "pr_vrp.h"
 #include "sc_dist.h"
-#include "cc_dist.h"
-
+#include "standard_csv_reader.h"
 
 // ====== implement of Load Solver ======
 Solver::~Solver() {
@@ -29,13 +28,12 @@ void Solver::load_scenario() {
 }
 
 void Solver::load_parameter() {
-    this->parameter = new Parameter();
-    // TODO 实现读取参数
+  this->parameter = new Parameter();
+  // TODO 实现读取参数
 
-    // 参数后处理
-    this->parameter->post_process(this->scenario);
+  // 参数后处理
+  this->parameter->post_process(this->scenario);
 }
-
 
 void Solver::create_problem() {
   // TODO 先默认创建 VRP
@@ -43,9 +41,14 @@ void Solver::create_problem() {
 
   // hard constraints: base
   this->problem->hc_manager->add_constr(new HcVehicleCapacity());
-  this->problem->hc_manager->add_constr(new HcVehicleCapacity());
+  this->problem->hc_manager->add_constr(new HcAvailableVehicle());
+
   // add hard constraints by scenario
   auto parameter = this->problem->parameter;
+  // -- hard constraints: max pick node count
+  if (parameter->time_window_constr_enabled) {
+    this->problem->hc_manager->add_constr(new HcTimeWindow());
+  }
   // -- hard constraints: max drop node count
   if (parameter->max_pick_node_count > HardConstraintParameter::DEFAULT_MAX_PICK_NODE_COUNT) {
     this->problem->hc_manager->add_constr(new HcMaxPickNodeCount(parameter->max_pick_node_count));
@@ -57,7 +60,7 @@ void Solver::create_problem() {
   // soft constraints
   if (parameter->sc_constr_dist_factor > SoftConstraintParameter::SC_DIST_DEFAULT_DIST_FACTOR) {
     this->problem->sc_manager->add_constr(new ScDist(parameter->sc_constr_dist_factor));
-  }  
+  }
   // cost constraints
   // -- cost constraints: dist
   if (parameter->cc_constr_dist_factor > CostConstraintParameter::CC_DIST_DEFAULT_DIST_FACTOR) {
@@ -67,7 +70,5 @@ void Solver::create_problem() {
 
 void Solver::precheck() {
   for (const auto& cargo_order : this->scenario->cargo_order_manager->cargo_orders) {
-
   }
-  
 }

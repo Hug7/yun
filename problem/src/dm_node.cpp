@@ -4,6 +4,8 @@
  */
 
 #include "dm_node.h"
+#include "bd_time_window.h"
+#include "bd_time_window_utils.h"
 
 // ====== implement of Node ======
 Node::Node() : activity_type(ActivityType::NONE), loc(nullptr) {
@@ -70,15 +72,35 @@ void Node::add_back_activity(Activity::UPtr activity) {
   }
 }
 
-void Node::intersection_time_windows() {
+std::vector<TimeWindow*> Node::intersection_time_windows() const {
+  if (this->first == nullptr) {
+      return {};
+  }
+  std::vector<std::vector<TimeWindow*>> ori_tws_arr;
   if (this->activity_type == ActivityType::PICK) {
-    // 仅有一段activity，则返回order的time window
-    if (!this->first->hase_next()) {
-      
+    auto tail_activity = this->last;
+    while (tail_activity) {
+      ori_tws_arr.push_back(tail_activity->order->pick_time_windows);
+      tail_activity = tail_activity->prev;
     }
   } else if (this->activity_type == ActivityType::DROP) {
-
+    auto tail_activity = this->last;
+    while (tail_activity) {
+      ori_tws_arr.push_back(tail_activity->order->drop_time_windows);
+      tail_activity = tail_activity->prev;
+    }
   }
+  return TimeWindowUntils::intersection_tws_arr(ori_tws_arr);
+}
+
+std::vector<const Order*> Node::get_orders() const {
+  std::vector<const Order*> orders;
+  auto tail_activity = this->last;
+  while (tail_activity) {
+    orders.push_back(tail_activity->order);
+    tail_activity = tail_activity->prev;
+  }
+  return orders;
 }
 
 // ====== implement of NodeFactory ======

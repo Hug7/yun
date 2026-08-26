@@ -65,15 +65,15 @@ class Order {
    */
   Bitset::UPtr available_vehicle_bitset;
 
-  Order(PlanDateTimeRange* plan_time_range, const int ind,
+  Order(PlanDatetimeRange* plan_datetime_range, const int ind,
         std::vector<const CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
         LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
         Bitset::UPtr available_vehicle_bitset);
 
-  Order(PlanDateTimeRange* plan_time_range, std::vector<const CargoOrder*>& cargo_orders,
+  Order(PlanDatetimeRange* plan_datetime_range, std::vector<const CargoOrder*>& cargo_orders,
         std::vector<long>& dim_vals, LabelsetValue* labelset_value,
         LabelsetValueBitset::UPtr labelset_value_bitset, Bitset::UPtr available_vehicle_bitset)
-      : Order(plan_time_range, -1, cargo_orders, dim_vals, labelset_value,
+      : Order(plan_datetime_range, -1, cargo_orders, dim_vals, labelset_value,
               std::move(labelset_value_bitset), std::move(available_vehicle_bitset)) {};
 
   ~Order();

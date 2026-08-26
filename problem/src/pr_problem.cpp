@@ -74,7 +74,7 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_or
   });
   auto available_vehicle_bitset = scenario->carrier_manager->full_vehicle_bitset();
 
-  auto order = new Order(this->parameter->plan_time_range, cargo_orders, dim_vals, labelset_value,
+  auto order = new Order(this->parameter->plan_datetime_range, cargo_orders, dim_vals, labelset_value,
                          std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
   auto orders = std::vector<Order*>({order});
 

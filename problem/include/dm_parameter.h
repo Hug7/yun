@@ -15,7 +15,7 @@
  * @brief 计划时间范围
  * @details 
  */
-class PlanDateTimeRange {
+class PlanDatetimeRange {
  public:
   /**
    * @brief 开始时间
@@ -28,7 +28,7 @@ class PlanDateTimeRange {
    */
   long end_time{TimeWindowParameter::DEFAULT_PLAN_DATETIME_RANGE};
 
-  PlanDateTimeRange() {};
+  PlanDatetimeRange() {};
 
   void set_start_datetime(const std::string& start_datetime);
 
@@ -49,7 +49,7 @@ class Parameter {
   /**
    * @brief 计划时间范围
    */
-  PlanDateTimeRange *plan_time_range;
+  PlanDatetimeRange *plan_datetime_range;
   /**
    * @brief 提货和卸货站点的模式
    */
@@ -61,19 +61,23 @@ class Parameter {
 
   // constraints
   /**
-   * @brief the number of drop nodes in the load
+   * @brief hard constraint: load中的最大提货节点数
    */
   int max_pick_node_count{HardConstraintParameter::DEFAULT_MAX_PICK_NODE_COUNT};
   /**
-   * @brief the number of drop nodes in the load
+   * @brief hard constraint: load中的最大卸货节点数
    */
   int max_drop_node_count{HardConstraintParameter::DEFAULT_MAX_DROP_NODE_COUNT};
   /**
-   * @brief soft constraint "sc_dist" default distance factor
+   * @brief hard constraint: 时间窗约束开关
+   */
+  bool time_window_constr_enabled{true};
+  /**
+   * @brief soft constraint: "ScDist" default distance factor
    */
   double sc_constr_dist_factor{SoftConstraintParameter::SC_DIST_DEFAULT_DIST_FACTOR};
   /**
-   * @brief cost constraint "cc_dist" default distance factor
+   * @brief cost constraint: "CcDist" default distance factor
    */
   double cc_constr_dist_factor{CostConstraintParameter::CC_DIST_DEFAULT_DIST_FACTOR};
 
