@@ -26,11 +26,11 @@ enum class CalendarTimeRangeType {
 };
 
 enum class ActivityType {
-  NONE,
   PICK,
   DROP,
   START,
   END,
+  NONE, // 必须放在最后，在部分场景用于计数，如应用在WorkEffect
 };
 
 static inline const std::unordered_map<std::string, ActivityType> ActivityTypeMap = {
@@ -87,6 +87,17 @@ namespace LocationParameter {
  */
 std::string const DEFAULT_LOCATION_CODE = "default";
 }  // namespace LocationParameter
+
+namespace WorkPlanParameter {
+/**
+ * @brief default work effect quantity
+ */
+double const DEFAULT_WORK_EFFECT_QUANTITY = 0.0;
+/**
+ * @brief precision of work effect quantity
+ */
+int const WORK_EFFECT_QUANTITY_PRECISION = 4;
+}  // namespace WorkPlanParameter
 
 namespace TimeWindowParameter {
 /**

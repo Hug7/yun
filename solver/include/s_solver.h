@@ -21,6 +21,8 @@ class Solver {
 
   Problem *problem;
 
+  std::vector<InfeasibleCargoOrder::UPtr> infeasible_cargo_orders;
+
   Solver(const std::string &roo_dir) : roo_dir(roo_dir) {};
 
   ~Solver();

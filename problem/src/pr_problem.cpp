@@ -7,12 +7,14 @@
 
 #include <memory>
 
+#include "dm_order.h"
+
 // ====== implement of Problem ======
 Problem::Problem(const Scenario* scenario, Parameter* parameter)
     : scenario(scenario), parameter(parameter) {
   switch (this->parameter->pick_drop_pattern) {
     case PickDropPatternType::SPMD:
-      this->pd_pattern = new SPMD(scenario);
+      this->pd_pattern = new SPMD();
       break;
     case PickDropPatternType::MPMD:
       throw std::invalid_argument("unsupported pick drop pattern!");
@@ -21,6 +23,8 @@ Problem::Problem(const Scenario* scenario, Parameter* parameter)
       throw std::invalid_argument("invalid pick drop pattern!");
       break;
   }
+
+  this->load_context = new LoadContext(this->scenario, this->parameter->plan_datetime_range);
 
   this->hc_manager = new HardConstraintManager();
   this->sc_manager = new SoftConstraintManager();
@@ -65,7 +69,7 @@ LoadConstrProfile::UPtr Problem::tmp_eval_load(Load* load) {
 
 InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_order) {
   // construct order
-  auto dim_vals = scenario->dimension_manager->empty_dim_values();
+  auto dim_vals = scenario->dim_manager->empty_dim_values();
   auto labelset_value = scenario->label_manager->order_labelset->empty_labelset_value();
   auto labelset_value_bitset =
       scenario->label_manager->order_labelset->empty_labelset_value_bitset();
@@ -74,8 +78,9 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_or
   });
   auto available_vehicle_bitset = scenario->carrier_manager->full_vehicle_bitset();
 
-  auto order = new Order(this->parameter->plan_datetime_range, cargo_orders, dim_vals, labelset_value,
-                         std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
+  Order* order =
+      new Order(this->parameter->plan_datetime_range, cargo_orders, dim_vals, labelset_value,
+                std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
   auto orders = std::vector<Order*>({order});
 
   auto infeasible_cargo_order = std::make_unique<InfeasibleCargoOrder>(cargo_orders);
@@ -110,10 +115,11 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_or
       break;
     }
   }
-
+  // release order
   delete order;
 
   if (has_feasible_flag) {
+    // 有可行解，则返回空指针
     return nullptr;
   }
 

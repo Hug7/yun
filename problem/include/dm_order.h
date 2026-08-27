@@ -49,6 +49,14 @@ class Order {
    */
   int drop_time_windows_len;
   /**
+   * @brief pick work time
+   */
+  long pick_work_time;
+  /**
+   * @brief drop work time
+   */
+  long drop_work_time;
+  /**
    * @brief 订单明细属性
    */
   std::vector<long> dim_vals;

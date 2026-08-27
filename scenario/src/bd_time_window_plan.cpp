@@ -4,6 +4,8 @@
  */
 
 #include "bd_time_window_plan.h"
+
+#include <cstddef>
 #include <vector>
 
 #include "c_constant.h"
@@ -14,6 +16,15 @@ TimeWindowPlan::TimeWindowPlan(const TimeWindow* time_window, int work_time) {
   this->late_arr = time_window->late;
   this->early_dest = this->early_arr + work_time;
   this->late_dest = this->late_arr + work_time;
+  this->wait_time = 0;
+  this->over_time = 0;
+}
+
+TimeWindowPlan::TimeWindowPlan(const TimeWindow* time_window) {
+  this->early_arr = time_window->early;
+  this->late_arr = time_window->late;
+  this->early_dest = this->early_arr;
+  this->late_dest = this->late_arr;
   this->wait_time = 0;
   this->over_time = 0;
 }
@@ -40,5 +51,13 @@ TimeWindowPlan::UPtr TimeWindowPlanFactory::default_time_window_plan() {
 TimeWindowPlan::VecUPtr TimeWindowPlanFactory::default_time_window_plans() {
   auto res = std::vector<TimeWindowPlan::UPtr>(1);
   res[0] = default_time_window_plan();
+  return res;
+}
+
+TimeWindowPlan::VecUPtr TimeWindowPlanFactory::create_time_window_plans(const std::vector<TimeWindow*>& time_windows) {
+  auto res = std::vector<TimeWindowPlan::UPtr>(time_windows.size());
+  for (std::size_t u = 0; u < time_windows.size(); u++) {
+    res[u] = std::make_unique<TimeWindowPlan>(time_windows[u]);
+  }
   return res;
 }

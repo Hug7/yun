@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "bd_label.h"
+#include "bd_dimension.h"
 #include "bd_work_plan.h"
 #include "bd_predefine.h"
 
@@ -97,11 +98,15 @@ class LocationManager {
    */
   Labelset* labelset;
   /**
+   * @brief 维度管理器
+   */
+  const DimensionManager* dim_manager;
+  /**
    * @brief 位置数量
    */
   int len;
 
-  LocationManager(Labelset* labelset);
+  LocationManager(Labelset* labelset, const DimensionManager* dim_manager);
 
   ~LocationManager();
 

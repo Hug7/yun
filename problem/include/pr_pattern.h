@@ -10,11 +10,9 @@
 #include "dm_load.h"
 #include "dm_node.h"
 #include "dm_order.h"
-#include "se_scenario.h"
 
 class PickDropPattern {
  public:
-  const Scenario* scenario;
 
   virtual Node* find_first_pick_node(std::unique_ptr<Node>& node);
 
@@ -24,18 +22,18 @@ class PickDropPattern {
 
   virtual Node* find_last_drop_node(std::unique_ptr<Node>& node);
 
-  virtual Load* create_load(const Scenario* scenario) = 0;
+  virtual Load* create_load(LoadContext* context) = 0;
 
   virtual bool add_order(Load* load, Order* order) = 0;
 
-  PickDropPattern(const Scenario* scenario) : scenario(scenario) {}
+  PickDropPattern() {}
 };
 
 class SPMD : public PickDropPattern {
  public:
-  SPMD(const Scenario* scenario) : PickDropPattern(scenario) {}
+  SPMD() : PickDropPattern() {}
 
-  Load* create_load(const Scenario* scenario) override;
+  Load* create_load(LoadContext* context) override;
 
   bool add_order(Load* load, Order* order) override;
 };

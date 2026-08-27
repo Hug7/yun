@@ -51,15 +51,22 @@ class Calendar {
 
 class WorkEffect {
  public:
-  Dimension* dimension;
   /**
-   * @brief 工作效率
-   * @details 每小时的工作效率，单位/小时。没有做dimension的精度控制
-   * 例如: 10表示每小时可以处理10单位dimension的货物
+   * @brief 工作效率表
+   * @details 二维表<ActivityType, Dimension,
+   * Quantity>，表示该维度在不同作业类型和维度每小时处理的货物数量
    */
-  double value;
+  std::vector<std::vector<double>> effect_map;
+  /**
+   * @brief 维度数量
+   */
+  const int dims_len;
 
-  WorkEffect(Dimension* dimension, double value) : dimension(dimension), value(value) {}
+  WorkEffect(const DimensionManager* dim_manager);
+
+  void add(const Dimension* dim, ActivityType activity_type, double quantity);
+
+  long get_work_time(ActivityType activity_type, const std::vector<long>& dims_val) const;
 
   ~WorkEffect() = default;
 };
@@ -95,7 +102,7 @@ class WorkPlan {
    */
   WorkEffect* work_effect;
 
-  WorkPlan();
+  WorkPlan(const DimensionManager* dim_manager);
 
   ~WorkPlan();
   /**
@@ -108,12 +115,6 @@ class WorkPlan {
    * @param fixed_drop_time 固定卸货时间，单位: s
    */
   void set_fixed_drop_time(int fixed_drop_time);
-  /**
-   * @brief 设置作业效率
-   * @param dimension 作业效率的维度
-   * @param value 作业效率的值
-   */
-  void set_work_effect(WorkEffect* work_effect);
 
   /**
    * @brief 设置日历

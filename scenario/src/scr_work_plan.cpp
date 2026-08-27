@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <magic_enum/magic_enum.hpp>
+
 #include "c_constant.h"
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
@@ -81,6 +83,8 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
   for (int u = 0; u < work_effect_count; u++) {
     const std::string location_code = work_effect_doc.GetCell<std::string>(
         WorkEffectSchema::headers[WorkEffectSchema::LOCATION_CODE], u);
+    const std::string activity_type_code = work_effect_doc.GetCell<std::string>(
+        WorkEffectSchema::headers[WorkEffectSchema::ACTIVITY_TYPE], u);
     const std::string dimension_code = work_effect_doc.GetCell<std::string>(
         WorkEffectSchema::headers[WorkEffectSchema::DIMENSION_CODE], u);
     const double per_hour_process_quantity = work_effect_doc.GetCell<double>(
@@ -90,13 +94,18 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
       throw std::runtime_error("Location " + location_code + " was not found in " +
                                WorkEffectSchema::file_name);
     }
-    Dimension* dimension = dimension_manager->get_dimension(dimension_code);
-    if (dimension == nullptr) {
+    Dimension* dim = dimension_manager->get_dimension(dimension_code);
+    if (dim == nullptr) {
       throw std::runtime_error("Dimension " + dimension_code + " was not found in " +
                                WorkEffectSchema::file_name);
     }
 
-    location->work_plan->set_work_effect(new WorkEffect(dimension, per_hour_process_quantity));
+    auto activity_type = magic_enum::enum_cast<ActivityType>(activity_type_code);
+    if (!activity_type.has_value()) {
+      throw std::runtime_error("ActivityType " + activity_type_code + " was not support in " +
+                               WorkEffectSchema::file_name);
+    }
+    location->work_plan->work_effect->add(dim, activity_type.value(), per_hour_process_quantity);
   }
   work_effect_doc.Clear();
   spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",

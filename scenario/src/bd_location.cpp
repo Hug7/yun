@@ -23,11 +23,12 @@ void Location::set_available_vehicle(AvailableVehicle* available_vehicle) {
 }
 
 // ====== implement of LocationManager ======
-LocationManager::LocationManager(Labelset* labelset)
+LocationManager::LocationManager(Labelset* labelset, const DimensionManager* dim_manager)
     : generate_index(std::make_unique<GenerateIndex>()),
       locations(),
       location_map(),
       labelset(labelset),
+      dim_manager(dim_manager),
       len(0) {
   // add default location
   this->create_location(LocationParameter::DEFAULT_LOCATION_CODE,
@@ -48,7 +49,7 @@ Location* LocationManager::create_location(const std::string& code, const std::s
     throw std::runtime_error("Location " + code + " already exists in LocationManager");
   } else {
     const int ind = this->generate_index->next();
-    WorkPlan* work_plan = new WorkPlan();
+    WorkPlan* work_plan = new WorkPlan(this->dim_manager);
     LabelsetValue* labelset_value = this->labelset->empty_labelset_value();
     auto labelset_value_bitset = this->labelset->empty_labelset_value_bitset();
     Location* location = new Location(code, name, ind, lat, lng, work_plan, labelset_value,

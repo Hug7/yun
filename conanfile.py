@@ -29,6 +29,8 @@ class YunConan(ConanFile):
         self.requires("spdlog/1.17.0", transitive_headers=True, transitive_libs=True)
         # self.requires("date/3.0.3", transitive_headers=True, transitive_libs=True)
         self.requires("yaml-cpp/0.8.0", transitive_headers=True, transitive_libs=True)
+        self.requires("gtest/1.18.0", transitive_headers=True, transitive_libs=True)
+        self.requires("magic_enum/0.9.8", transitive_headers=True, transitive_libs=True)
         # self.requires("boost/1.91.0", transitive_headers=True, transitive_libs=True)
 
     def package(self):
@@ -45,8 +47,8 @@ class YunConan(ConanFile):
     def package_info(self):
         # self.cpp_info.set_property("cmake_target_name", "yun::yun")
         # 根据实际生成的库文件配置
-        self.cpp_info.requires = ["fmt::fmt", "spdlog::spdlog", "yaml-cpp::yaml-cpp"]  # 关键：声明依赖关系传递
-        self.cpp_info.libs = ["yun_domain", ]  # 库名
+        # self.cpp_info.requires = ["fmt::fmt", "spdlog::spdlog", "yaml-cpp::yaml-cpp"]  # 关键：声明依赖关系传递
+        # self.cpp_info.libs = ["yun_domain", ]  # 库名
         self.cpp_info.includedirs = []
 
         # # self.cpp_info.components["common"].libs = ["yun_common"]
@@ -60,4 +62,3 @@ class YunConan(ConanFile):
         # self.cpp_info.components["yun_tsp"].libs = ["yun_tsp"]
         # self.cpp_info.components["yun_tsp"].includedirs = ["include/tsp"]
         # self.cpp_info.components["yun_tsp"].requires = ["yun_common", "yun_domain"]
-

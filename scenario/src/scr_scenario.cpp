@@ -18,18 +18,18 @@ Scenario* StandardCsvReader::loading_scenario() {
                                         std::generic_category()));
   }
   // 读取维度管理器
-  DimensionManager* dimension_manager = this->loading_dimension();
+  DimensionManager* dim_manager = this->loading_dimension();
   // 读取标签管理器
   LabelManager* label_manager = this->loading_label();
   // 读取站点管理器
-  LocationManager* location_manager = this->loading_location(label_manager);
+  LocationManager* location_manager = this->loading_location(label_manager, dim_manager);
   // 读取work plan
-  this->loading_work_plan(location_manager, dimension_manager);
+  this->loading_work_plan(location_manager, dim_manager);
   // 读取距离矩阵
   DistMatrixManager* dist_matrix_manager = this->loading_dist_matrix(location_manager);
   // 读取车型管理器
   VehicleModelManager* vehicle_model_manager =
-      this->loading_vehicle_model(dimension_manager, label_manager, dist_matrix_manager);
+      this->loading_vehicle_model(dim_manager, label_manager, dist_matrix_manager);
   // 读取承运商
   CarrierManager* carrier_manager = this->loading_carrier(label_manager);
   // 读取车辆
@@ -38,13 +38,13 @@ Scenario* StandardCsvReader::loading_scenario() {
   this->loading_available_vehicle(carrier_manager, location_manager);
   // 读取订单
   CargoOrderManager* cargo_order_manager =
-      this->loading_cargo_order(location_manager, dimension_manager, label_manager);
+      this->loading_cargo_order(location_manager, dim_manager, label_manager);
 
   spdlog::info("Loading scenario finished!");
 
   // 构造模型
   Scenario* scenario = new Scenario();
-  scenario->set_dimension_manager(dimension_manager);
+  scenario->set_dim_manager(dim_manager);
   scenario->set_label_manager(label_manager);
   scenario->set_location_manager(location_manager);
   scenario->set_vehicle_model_manager(vehicle_model_manager);

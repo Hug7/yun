@@ -8,7 +8,28 @@
 #include "bd_vehicle.h"
 #include "dm_load_profile.h"
 #include "dm_node.h"
+#include "dm_parameter.h"
+#include "dm_time_window_cache.h"
 #include "se_scenario.h"
+
+/**
+ * @brief load context
+ */
+class LoadContext {
+ public:
+  /**
+   * @brief scenario
+   */
+  const Scenario* scenario;
+  /**
+   * @brief node time window cache
+   */
+  NodeTimeWindowCache* node_time_window_cache;
+
+  LoadContext(const Scenario* scenario, const PlanDatetimeRange* plan_datetime_range);
+
+  ~LoadContext();
+};
 
 /**
  * @brief load
@@ -17,9 +38,9 @@
 class Load {
  public:
   /**
-   * @brief scenario
+   * @brief load context
    */
-  const Scenario* scenario;
+  LoadContext* context;
   /**
    * @brief pervious dist matrix code
    */
@@ -45,7 +66,7 @@ class Load {
    */
   LoadConstrProfile::UPtr constr_profile;
 
-  Load(const Scenario* scenario);
+  Load(LoadContext* context);
 
   void change_vehicle(Vehicle* vehicle);
 
@@ -76,7 +97,6 @@ class Load {
   virtual LabelsetValueBitset* get_order_labelset_value_bitset() = 0;
 
  protected:
-
   const std::vector<long>& get_peak_load_dims_sp();
 
   const std::vector<long>& get_peak_load_dims_sd();
@@ -111,7 +131,7 @@ class Load {
  */
 class LoadSPMD : public Load {
  public:
-  LoadSPMD(const Scenario* scenario) : Load(scenario) {};
+  LoadSPMD(LoadContext* context) : Load(context) {};
 
   ~LoadSPMD() override;
 

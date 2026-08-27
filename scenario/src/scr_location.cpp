@@ -11,8 +11,8 @@
 #include "se_schema.h"
 #include "standard_csv_reader.h"
 
-LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager) {
-  LocationManager* location_manager = new LocationManager(label_manager->location_labelset);
+LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager, DimensionManager* dim_manager) {
+  LocationManager* location_manager = new LocationManager(label_manager->location_labelset, dim_manager);
   // === loading Location.csv ===
   spdlog::info("Loading {} ...", LocationSchema::file_name);
   const std::string location_file_name =

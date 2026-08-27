@@ -10,6 +10,7 @@
 #include "bd_available_vehicle.h"
 #include "bd_time_window.h"
 #include "bd_time_window_utils.h"
+#include "c_constant.h"
 
 Order::Order(PlanDatetimeRange* plan_datetime_range, const int ind,
              std::vector<const CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
@@ -22,6 +23,7 @@ Order::Order(PlanDatetimeRange* plan_datetime_range, const int ind,
   // intersection pick and drop time windows of all cargo orders
   this->pick_time_windows.push_back(plan_datetime_range->create_default_time_window());
   this->drop_time_windows.push_back(plan_datetime_range->create_default_time_window());
+
   for (const auto cargo_order : cargo_orders) {
     // process pick time window
     std::vector<TimeWindow*> tmp_pick_time_windows;
@@ -91,6 +93,12 @@ Order::Order(PlanDatetimeRange* plan_datetime_range, const int ind,
       this->labelset_value_bitset->merge(sub_order->labelset_value_bitset);
     }
   }
+
+  // process pick and drop work time
+  this->pick_work_time = cargo_orders[0]->pick_loc->work_plan->work_effect->get_work_time(
+      ActivityType::PICK, this->dim_vals);
+  this->drop_work_time = cargo_orders[0]->drop_loc->work_plan->work_effect->get_work_time(
+      ActivityType::DROP, this->dim_vals);
 
   // intersection available vehicle bitset
   for (const auto cargo_order : cargo_orders) {

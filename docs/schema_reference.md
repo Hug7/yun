@@ -281,8 +281,9 @@
 | # | 字段名 | 数据类型 | 必填 | 说明 | 可选值 / 取值范围 |
 |---|---|---|---|---|---|
 | 1 | LocationCode | string | 是 | 站点编码 | 必须存在于 Location.Code |
-| 2 | DimensionCode | string | 是 | 维度编码 | 必须存在于 Dimension.Code |
-| 3 | PerHourProcessQuantity | double | 是 | 每小时处理量, 单位: 单位/小时, 最大支持小数点后4位 | |
+| 2 | ActivityType | string | 是 | 作业类型 | {PICK, DROP} |
+| 3 | DimensionCode | string | 是 | 维度编码 | 必须存在于 Dimension.Code |
+| 4 | PerHourProcessQuantity | double | 是 | 每小时处理量, 单位: 单位/小时, 最大支持小数点后4位 | |
 
 **外键依赖**:
 | 本表字段 | 引用表 | 引用字段 |

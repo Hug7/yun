@@ -22,7 +22,7 @@ class Scenario {
   /**
    * @brief 维度管理器
    */
-  DimensionManager* dimension_manager;
+  DimensionManager* dim_manager;
   /**
    * @brief 标签管理器
    */
@@ -52,7 +52,7 @@ class Scenario {
 
   ~Scenario();
 
-  void set_dimension_manager(DimensionManager* dimension_manager);
+  void set_dim_manager(DimensionManager* dimension_manager);
 
   void set_label_manager(LabelManager* label_manager);
 

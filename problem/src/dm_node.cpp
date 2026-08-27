@@ -4,6 +4,7 @@
  */
 
 #include "dm_node.h"
+
 #include "bd_time_window.h"
 #include "bd_time_window_utils.h"
 
@@ -74,7 +75,7 @@ void Node::add_back_activity(Activity::UPtr activity) {
 
 std::vector<TimeWindow*> Node::intersection_time_windows() const {
   if (this->first == nullptr) {
-      return {};
+    return {};
   }
   std::vector<std::vector<TimeWindow*>> ori_tws_arr;
   if (this->activity_type == ActivityType::PICK) {
@@ -101,6 +102,26 @@ std::vector<const Order*> Node::get_orders() const {
     tail_activity = tail_activity->prev;
   }
   return orders;
+}
+
+long Node::get_work_time() const {
+  long work_time = 0;
+  if (this->activity_type == ActivityType::DROP) {
+    work_time += this->loc->work_plan->fixed_drop_time;
+    auto tail_activity = this->last;
+    while (tail_activity) {
+      work_time += tail_activity->order->drop_work_time;
+      tail_activity = tail_activity->prev;
+    }
+  } else if (this->activity_type == ActivityType::PICK) {
+    work_time += this->loc->work_plan->fixed_pick_time;
+    auto tail_activity = this->last;
+    while (tail_activity) {
+      work_time += tail_activity->order->pick_work_time;
+      tail_activity = tail_activity->prev;
+    }
+  }
+  return work_time;
 }
 
 // ====== implement of NodeFactory ======

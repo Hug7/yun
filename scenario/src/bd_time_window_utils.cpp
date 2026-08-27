@@ -4,15 +4,18 @@
  */
 
 #include "bd_time_window_utils.h"
+
 #include <algorithm>
+#include <memory>
 
 #include "bd_time_window.h"
+#include "bd_time_window_plan.h"
 
 // ====== implement of TimeWindowInfer ======
-TimeWindowPlan* TimeWindowInfer::forward_infer_s_s(const TimeWindowPlan* pre_node_plan_tw,
-                                                   long cost_time, long work_time,
-                                                   TimeWindow* ori_tw) {
-  TimeWindowPlan* cur_tw = new TimeWindowPlan();
+TimeWindowPlan::UPtr TimeWindowInfer::forward_s_s(TimeWindowPlan::UPtr& pre_node_plan_tw,
+                                                  const long cost_time, const long work_time,
+                                                  const TimeWindow* ori_tw) {
+  TimeWindowPlan::UPtr cur_tw = std::make_unique<TimeWindowPlan>();
 
   long plan_early_arr = pre_node_plan_tw->early_dest + cost_time;
   long plan_late_arr = pre_node_plan_tw->late_dest + cost_time;
@@ -43,9 +46,9 @@ TimeWindowPlan* TimeWindowInfer::forward_infer_s_s(const TimeWindowPlan* pre_nod
   return cur_tw;
 }
 
-void TimeWindowInfer::forward_infer_s_m(const TimeWindowPlan* pre_node_plan_tw, long cost_time,
-                                        long work_time, std::vector<TimeWindow*>& ori_tws,
-                                        std::vector<TimeWindowPlan*>& plan_node_tws) {
+void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const long cost_time,
+                                  const long work_time, std::vector<TimeWindow*>& ori_tws,
+                                  TimeWindowPlan::VecUPtr& plan_node_tws) {
   bool non_wait_over_flag = false;
   if (plan_node_tws.size() > 1 ||
       (plan_node_tws.size() > 0 && plan_node_tws[0]->is_zero_wait_over_time())) {
@@ -64,12 +67,9 @@ void TimeWindowInfer::forward_infer_s_m(const TimeWindowPlan* pre_node_plan_tw, 
       if (plan_node_tws.size() == 0 ||
           (plan_node_tws[0]->over_time > 0 ||
            (cur_ori_tw->early - plan_late_arr) < plan_node_tws[0]->wait_time)) {
-        for (auto& tw : plan_node_tws) {
-          delete tw;
-        }
         plan_node_tws.clear();
         plan_node_tws.push_back(
-            forward_infer_s_s(pre_node_plan_tw, cost_time, work_time, cur_ori_tw));
+            forward_s_s(pre_node_plan_tw, cost_time, work_time, cur_ori_tw));
       }
     } else if (plan_early_arr > cur_ori_tw->late) {
       // case: over time
@@ -79,33 +79,27 @@ void TimeWindowInfer::forward_infer_s_m(const TimeWindowPlan* pre_node_plan_tw, 
       if (plan_node_tws.size() == 0 ||
           (plan_node_tws[0]->wait_time == 0 &&
            (plan_early_arr - cur_ori_tw->late) < plan_node_tws[0]->over_time)) {
-        for (auto& tw : plan_node_tws) {
-          delete tw;
-        }
         plan_node_tws.clear();
         plan_node_tws.push_back(
-            forward_infer_s_s(pre_node_plan_tw, cost_time, work_time, cur_ori_tw));
+            forward_s_s(pre_node_plan_tw, cost_time, work_time, cur_ori_tw));
       }
     } else {
       if (!non_wait_over_flag) {
-        for (auto& tw : plan_node_tws) {
-          delete tw;
-        }
         plan_node_tws.clear();
         non_wait_over_flag = true;
       }
       plan_node_tws.push_back(
-          forward_infer_s_s(pre_node_plan_tw, cost_time, work_time, cur_ori_tw));
+          forward_s_s(pre_node_plan_tw, cost_time, work_time, cur_ori_tw));
     }
   }
 }
 
-std::vector<TimeWindowPlan*> TimeWindowInfer::forward_infer(
-    std::vector<TimeWindowPlan*>& pre_node_plan_tws, long cost_time, long work_time,
-    std::vector<TimeWindow*>& ori_tws) {
-  std::vector<TimeWindowPlan*> plan_node_tws;
+TimeWindowPlan::VecUPtr TimeWindowInfer::forward(TimeWindowPlan::VecUPtr& pre_node_plan_tws,
+                                                 const long cost_time, const long work_time,
+                                                 std::vector<TimeWindow*>& ori_tws) {
+  TimeWindowPlan::VecUPtr plan_node_tws;
   for (auto& pre_node_plan_tw : pre_node_plan_tws) {
-    forward_infer_s_m(pre_node_plan_tw, cost_time, work_time, ori_tws, plan_node_tws);
+    forward_s_m(pre_node_plan_tw, cost_time, work_time, ori_tws, plan_node_tws);
   }
   return plan_node_tws;
 }
@@ -129,7 +123,7 @@ std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
   // 每个向量当前的读取位置
   std::vector<std::size_t> idx(n, 0);
   // 时间窗交集结果
-  std::vector<TimeWindow*> result;
+  std::vector<TimeWindow*> res;
 
   while (true) {
     // 获取最大最小时间窗
@@ -146,7 +140,7 @@ std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
     }
     // 记录交集时间窗
     if (cur_min_late > cur_max_early) {
-      result.push_back(new TimeWindow(cur_max_early, cur_min_late));
+      res.push_back(new TimeWindow(cur_max_early, cur_min_late));
     }
     // 推进选中的向量
     if (++idx[cur_min_late_ind] >= tws_arr[cur_min_late_ind].size()) {
@@ -154,7 +148,7 @@ std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
     }
   }
 
-  return result;
+  return res;
 }
 
 std::vector<TimeWindow*> TimeWindowUntils::merge_time_windows(std::vector<TimeWindow*>& tws) {

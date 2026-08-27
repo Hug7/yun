@@ -5,7 +5,7 @@
 
 #include "pr_pattern.h"
 
-Load* SPMD::create_load(const Scenario* scenario) { return new LoadSPMD(scenario); }
+Load* SPMD::create_load(LoadContext* context) { return new LoadSPMD(context); }
 
 bool SPMD::add_order(Load* load, Order* order) {
   Node* first_pick_node = find_first_pick_node(load->first_node);

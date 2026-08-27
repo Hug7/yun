@@ -4,17 +4,30 @@
  */
 
 #include "dm_load.h"
+
 #include "bd_time_window_plan.h"
+#include "bd_time_window_utils.h"
+
+// ====== implement of LoadContext ======
+LoadContext::LoadContext(const Scenario* scenario, const PlanDatetimeRange* plan_datetime_range)
+    : scenario(scenario) {
+  this->node_time_window_cache = new NodeTimeWindowCache(plan_datetime_range);
+}
+
+LoadContext::~LoadContext() {
+  this->scenario = nullptr;
+  delete this->node_time_window_cache;
+}
 
 // ====== implement of Load ======
-Load::Load(const Scenario* scenario) : scenario(scenario) {
-  Location* default_loc = scenario->location_manager->get_default_location();
+Load::Load(LoadContext* context) : context(context) {
+  Location* default_loc = context->scenario->location_manager->get_default_location();
   this->first_node = std::make_unique<Node>(ActivityType::START, default_loc);
   auto end_node = std::make_unique<Node>(ActivityType::END, default_loc);
   end_node->prev = this->first_node.get();
   this->first_node->next = std::move(end_node);
   this->last_node = end_node.get();
-  this->route_profile = std::make_unique<LoadRouteProfile>(scenario);
+  this->route_profile = std::make_unique<LoadRouteProfile>(context->scenario);
   this->constr_profile = std::make_unique<LoadConstrProfile>();
 }
 
@@ -82,7 +95,7 @@ Bitset* Load::get_available_vehicle_bitset() {
     return this->route_profile->available_vehicle_bitset.get();
   }
   this->route_profile->available_vehicle_bitset =
-      this->scenario->carrier_manager->full_vehicle_bitset();
+      this->context->scenario->carrier_manager->full_vehicle_bitset();
   Node* tail_node = this->last_node->prev;
   while (tail_node->hase_prev()) {
     this->route_profile->available_vehicle_bitset->call_intersection(
@@ -129,13 +142,16 @@ void Load::update_end_node_dist_time() {
 }
 
 void Load::update_time_window() {
+  const auto tw_cache = this->context->node_time_window_cache;
+  // 第一个node(车场，可能为虚拟车场)
   Node* pre_node = this->first_node.get();
-  pre_node->ptws = TimeWindowPlanFactory::default_time_window_plans();
+  pre_node->ptws = TimeWindowPlanFactory::create_time_window_plans(tw_cache->get_other_time_windows(pre_node));
   Node* head_node = pre_node->next.get();
-  this->last_node->ptws = TimeWindowPlanFactory::default_time_window_plans();
   while (head_node != nullptr) {
-    head_node;
-    // pre_node->ptws
-    // head_node = head_node->next.get();
+    auto cur_tws = tw_cache->get_pick_drop_time_windows(head_node);
+    const long work_time = head_node->get_work_time();
+    tw_cache->get_pick_drop_time_windows(head_node);
+    head_node->ptws = TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);
+    head_node = head_node->next.get();
   }
 }

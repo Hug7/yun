@@ -398,12 +398,14 @@ class WorkEffectSchema {
 
   enum Col {
     LOCATION_CODE,
+    ACTIVITY_TYPE,
     DIMENSION_CODE,
     PER_HOUR_PROCESS_QUANTITY,
   };
 
   static constexpr std::array headers{
       "LocationCode",
+      "ActivityType",
       "DimensionCode",
       "PerHourProcessQuantity",
   };

@@ -6,8 +6,12 @@
 #include "s_solver.h"
 
 #include <memory>
+#include <vector>
+
+#include <spdlog/spdlog.h>
 
 #include "cc_dist.h"
+#include "dm_infeasible_order.h"
 #include "hc_label.h"
 #include "hc_location.h"
 #include "hc_vehicle.h"
@@ -69,6 +73,16 @@ void Solver::create_problem() {
 }
 
 void Solver::precheck() {
+  this->infeasible_cargo_orders = std::vector<InfeasibleCargoOrder::UPtr>();
   for (const auto& cargo_order : this->scenario->cargo_order_manager->cargo_orders) {
+    auto infeasible_cargo_order = this->problem->check_feasibility(cargo_order);
+    if (infeasible_cargo_order == nullptr) {
+      continue;
+    }
+    this->infeasible_cargo_orders.push_back(std::move(infeasible_cargo_order));
+  }
+
+  if (!this->infeasible_cargo_orders.empty()) {
+      spdlog::warn("number of cargo orders {} are infeasible!", this->infeasible_cargo_orders.size());
   }
 }

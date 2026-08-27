@@ -7,7 +7,7 @@
 
 // ====== implement of ProblemVRP ======
 Load* ProblemVRP::construct_load_by_order(std::vector<Order*>& orders) {
-  Load* load = this->pd_pattern->create_load(this->scenario);
+  Load* load = this->pd_pattern->create_load(this->load_context);
   for (auto order : orders) {
     this->pd_pattern->add_order(load, order);
   }
@@ -43,7 +43,7 @@ Load* ProblemVRP::construct_load_by_order(std::vector<Order*>& orders) {
 }
 
 Load* ProblemVRP::construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle) {
-  Load* load = this->pd_pattern->create_load(this->scenario);
+  Load* load = this->pd_pattern->create_load(this->load_context);
   for (auto order : orders) {
     this->pd_pattern->add_order(load, order);
   }

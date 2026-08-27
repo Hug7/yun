@@ -85,6 +85,8 @@ class Node {
   std::vector<TimeWindow*> intersection_time_windows() const;
 
   std::vector<const Order*> get_orders() const;
+
+  long get_work_time() const;
 };
 
 namespace NodeFactory {

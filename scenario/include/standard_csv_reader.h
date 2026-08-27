@@ -33,9 +33,10 @@ class StandardCsvReader {
   /**
    * @brief 读取站点
    * @param label_manager 标签管理器
+   * @param dim_manager 维度管理器
    * @return LocationManager* 站点管理器
    */
-  LocationManager* loading_location(LabelManager* label_manager);
+  LocationManager* loading_location(LabelManager* label_manager, DimensionManager* dim_manager);
   /**
    * @brief 读取距离矩阵
    * @param location_manager 站点管理器

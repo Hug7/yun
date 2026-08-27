@@ -3,9 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "bd_work_plan.h"
+#include <algorithm>
+#include <vector>
+#include <cmath>
 
+#include "bd_work_plan.h"
 #include "c_chrono_util.h"
+#include "c_constant.h"
 
 // ====== implement of Calendar ======
 Calendar::Calendar(CalendarTimeRangeType time_range_type) {
@@ -94,14 +98,44 @@ std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
   return res_time_windows;
 }
 
+// ====== implement of WorkEffect ======
+WorkEffect::WorkEffect(const DimensionManager* dim_manager) : dims_len(dim_manager->len) {
+  // this->effect_map
+  const int activity_type_count = static_cast<int>(ActivityType::NONE);
+
+  this->effect_map = std::vector<std::vector<double>>(
+      activity_type_count,
+      std::vector<double>(dim_manager->len, WorkPlanParameter::DEFAULT_WORK_EFFECT_QUANTITY));
+}
+
+void WorkEffect::add(const Dimension* dim, ActivityType activity_type, double quantity) {
+  if (quantity > 0) {
+    double factor = std::pow(10.0, WorkPlanParameter::WORK_EFFECT_QUANTITY_PRECISION);
+    double dim_precision = std::pow(10.0, dim->precision);
+    this->effect_map[static_cast<int>(activity_type)][dim->ind] = (std::round(quantity * factor) / factor) * dim_precision;
+  }
+}
+
+long WorkEffect::get_work_time(ActivityType activity_type, const std::vector<long>& dim_vals) const {
+  long work_time = 0;
+  auto& dim_effects = this->effect_map[static_cast<int>(activity_type)];
+  for (int u = 0; u < this->dims_len; u++) {
+    double unit_process_q = dim_effects[u];
+    if (unit_process_q > 0) {
+      work_time = std::max(work_time, static_cast<long>((dim_vals[u] * 3600) / unit_process_q));
+    }
+  }
+  return work_time;
+}
+
 // ====== implement of WorkPlan ======
-WorkPlan::WorkPlan() {
+WorkPlan::WorkPlan(const DimensionManager* dim_manager) {
   this->fixed_pick_time = 0;
   this->fixed_drop_time = 0;
   this->pick_calendar = nullptr;
   this->drop_calendar = nullptr;
   this->restrict_calendar = nullptr;
-  this->work_effect = nullptr;
+  this->work_effect = new WorkEffect(dim_manager);
 }
 
 WorkPlan::~WorkPlan() {
@@ -114,8 +148,6 @@ WorkPlan::~WorkPlan() {
 void WorkPlan::set_fixed_drop_time(int fixed_drop_time) { this->fixed_drop_time = fixed_drop_time; }
 
 void WorkPlan::set_fixed_pick_time(int fixed_pick_time) { this->fixed_pick_time = fixed_pick_time; }
-
-void WorkPlan::set_work_effect(WorkEffect* work_effect) { this->work_effect = work_effect; }
 
 void WorkPlan::set_calendar(Calendar* calendar, CalendarType calendar_type) {
   if (calendar_type == CalendarType::PICK) {

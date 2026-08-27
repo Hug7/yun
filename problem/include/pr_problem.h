@@ -26,6 +26,8 @@ class Problem {
 
   PickDropPattern* pd_pattern;
 
+  LoadContext* load_context;
+
   HardConstraintManager* hc_manager;
 
   SoftConstraintManager* sc_manager;

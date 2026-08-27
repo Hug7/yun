@@ -53,6 +53,8 @@ class TimeWindowPlan {
 
   TimeWindowPlan(const TimeWindow* time_window, int work_time);
 
+  TimeWindowPlan(const TimeWindow* time_window);
+
   TimeWindowPlan::UPtr deep_copy();
 
   bool is_zero_wait_over_time();
@@ -76,4 +78,9 @@ TimeWindowPlan::UPtr default_time_window_plan();
  * @return 时间窗计划列表
  */
 TimeWindowPlan::VecUPtr default_time_window_plans();
+
+/**
+ * @brief 根据时间窗构造时间窗计划列表
+ */
+TimeWindowPlan::VecUPtr create_time_window_plans(const std::vector<TimeWindow*> &time_windows);
 }  // namespace TimeWindowPlanFactory

@@ -1,2 +1,12 @@
+# Conan writes GTestConfig.cmake into CMAKE_BINARY_DIR; force this path so
+# stale caches with GTest_DIR-NOTFOUND are repaired.
+# set(GTest_DIR "${CMAKE_BINARY_DIR}" CACHE PATH "" FORCE)
+set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
+find_package(GTest CONFIG REQUIRED)
+
 add_executable(vrp_exec vrp_main.cpp)
 target_link_libraries(vrp_exec PRIVATE yun_solver)
+
+add_executable(bd_time_window_utils_test scenario/bd_time_window_utils_test.cpp)
+target_link_libraries(bd_time_window_utils_test PRIVATE yun_scenario GTest::gtest_main)
+add_test(NAME bd_time_window_utils_test COMMAND bd_time_window_utils_test)

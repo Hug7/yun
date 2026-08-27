@@ -9,7 +9,7 @@
 LoadRouteProfile::LoadRouteProfile(const Scenario* scenario) {
   this->dirty_marks =
       std::make_unique<Bitset>(static_cast<size_t>(LoadRouteProfileField::FIELDS_COUNT));
-  this->peak_load_dims = scenario->dimension_manager->empty_dim_values();
+  this->peak_load_dims = scenario->dim_manager->empty_dim_values();
   this->pick_loc_labelset_value_bitset =
       scenario->label_manager->location_labelset->empty_labelset_value_bitset();
   this->drop_loc_labelset_value_bitset =
