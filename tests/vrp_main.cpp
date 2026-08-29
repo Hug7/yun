@@ -9,12 +9,16 @@ int main()
     Solver* solver = new Solver(case_file_path);
     // loading scenario
     solver->load_scenario();
+    // loading parameters
+    solver->load_parameter();
+    // create problem
+    solver->create_problem();
     // base run
-    
+    solver->precheck();
 
 
     // cerate plan
     
-    
+    delete solver;
     return 0;
 }

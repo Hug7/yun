@@ -9,7 +9,7 @@
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
 #include "se_schema.h"
-#include "standard_csv_reader.h"
+#include "scr_standard_csv_reader.h"
 
 DistMatrixManager* StandardCsvReader::loading_dist_matrix(LocationManager* location_manager) {
   DistMatrixManager* dist_matrix_manager = new DistMatrixManager(location_manager->len);

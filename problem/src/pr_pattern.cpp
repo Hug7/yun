@@ -5,7 +5,7 @@
 
 #include "pr_pattern.h"
 
-Node* PickDropPattern::find_first_pick_node(std::unique_ptr<Node>& node) {
+Node* PickDropPattern::find_first_pick_node(std::unique_ptr<Node>& node) const {
   Node* head_node = node.get();
   while (head_node != nullptr) {
     if (head_node->activity_type == ActivityType::PICK) {
@@ -16,7 +16,7 @@ Node* PickDropPattern::find_first_pick_node(std::unique_ptr<Node>& node) {
   return nullptr;
 }
 
-Node* PickDropPattern::find_last_pick_node(std::unique_ptr<Node>& node) {
+Node* PickDropPattern::find_last_pick_node(std::unique_ptr<Node>& node) const {
   Node* head_node = node.get();
   Node* res_node = nullptr;
   while (head_node != nullptr) {
@@ -28,7 +28,7 @@ Node* PickDropPattern::find_last_pick_node(std::unique_ptr<Node>& node) {
   return res_node;
 }
 
-Node* PickDropPattern::find_first_drop_node(std::unique_ptr<Node>& node) {
+Node* PickDropPattern::find_first_drop_node(std::unique_ptr<Node>& node) const {
   Node* head_node = node.get();
   while (head_node != nullptr) {
     if (head_node->activity_type == ActivityType::DROP) {
@@ -39,7 +39,7 @@ Node* PickDropPattern::find_first_drop_node(std::unique_ptr<Node>& node) {
   return nullptr;
 }
 
-Node* PickDropPattern::find_last_drop_node(std::unique_ptr<Node>& node) {
+Node* PickDropPattern::find_last_drop_node(std::unique_ptr<Node>& node) const {
   Node* head_node = node.get();
   Node* res_node = nullptr;
   while (head_node != nullptr) {

@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include "dm_order.h"
+#include "pdm_order.h"
 
 // ====== implement of Problem ======
 Problem::Problem(const Scenario* scenario, Parameter* parameter)
@@ -124,4 +124,51 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_or
   }
 
   return infeasible_cargo_order;
+}
+
+Load* Problem::construct_load_by_order(std::vector<Order*>& orders) {
+  Load* load = this->pd_pattern->create_load(this->load_context);
+  for (auto order : orders) {
+    this->pd_pattern->add_order(load, order);
+  }
+  // try using different vehicle
+  const std::vector<Vehicle*>& vehicles = this->scenario->carrier_manager->vehicles;
+  LoadConstrProfile::UPtr best_profile = nullptr;
+  Vehicle* best_vehilce = nullptr;
+  for (auto vehicle : vehicles) {
+    // check vehicle resource
+    if (vehicle->unusable()) {
+      continue;
+    }
+    // change vehicle
+    load->change_vehicle(vehicle);
+    // temporary evaluate of load
+    auto cur_constr_profile = this->tmp_eval_load(load);
+    if (cur_constr_profile->is_infesible()) {
+      continue;
+    }
+    if (best_vehilce == nullptr) {
+      best_profile = std::move(cur_constr_profile);
+      best_vehilce = vehicle;
+    } else if (cur_constr_profile->dominate(best_profile)) {
+      best_profile = std::move(cur_constr_profile);
+      best_vehilce = vehicle;
+    }
+  }
+  // change vehicle
+  load->change_vehicle(best_vehilce);
+  this->eval_load(load);
+
+  return load;
+}
+
+Load* Problem::construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle) {
+  Load* load = this->pd_pattern->create_load(this->load_context);
+  for (auto order : orders) {
+    this->pd_pattern->add_order(load, order);
+  }
+  load->change_vehicle(vehicle);
+  this->eval_load(load);
+
+  return load;
 }

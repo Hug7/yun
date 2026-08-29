@@ -8,7 +8,7 @@
 #include <string>
 
 #include "se_scenario.h"
-#include "dm_parameter.h"
+#include "pdm_parameter.h"
 #include "pr_problem.h"
 
 class Solver {
@@ -33,7 +33,14 @@ class Solver {
 
   void create_problem();
 
-  void precheck();
+  /**
+   * @brief 预校验
+   * @details 校验是否存在不满足约束的订单，如果存在则提前退出
+   */
+  bool precheck();
 
+  /**
+   * @brief 求解
+   */
   void solve();
 };

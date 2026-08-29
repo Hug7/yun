@@ -7,12 +7,12 @@
 
 #include <vector>
 
-#include "bd_cargo_order.h"
+#include "bdm_cargo_order.h"
 #include "cc_manager.h"
-#include "dm_parameter.h"
-#include "dm_load.h"
-#include "dm_order.h"
-#include "dm_infeasible_order.h"
+#include "pdm_parameter.h"
+#include "pdm_load.h"
+#include "pdm_order.h"
+#include "pdm_infeasible_order.h"
 #include "hc_manager.h"
 #include "pr_pattern.h"
 #include "sc_manager.h"
@@ -51,9 +51,9 @@ class Problem {
   /**
    * @brief construct a new Load object for best vehicle
    */
-  virtual Load* construct_load_by_order(std::vector<Order*>& orders) = 0;
+  virtual Load* construct_load_by_order(std::vector<Order*>& orders);
   /**
    * @brief construct a new Load object for a vehicle
    */
-  virtual Load* construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle) = 0;
+  virtual Load* construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle);
 };

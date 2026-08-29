@@ -7,8 +7,8 @@
 
 #include <string>
 
-#include "dm_load.h"
-#include "dm_score.h"
+#include "pdm_load.h"
+#include "pdm_score.h"
 
 /**
  * @brief the attributes of hard constraint

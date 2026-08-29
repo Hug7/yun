@@ -9,7 +9,7 @@
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
 #include "se_schema.h"
-#include "standard_csv_reader.h"
+#include "scr_standard_csv_reader.h"
 
 LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager, DimensionManager* dim_manager) {
   LocationManager* location_manager = new LocationManager(label_manager->location_labelset, dim_manager);

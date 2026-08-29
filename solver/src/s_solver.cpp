@@ -11,14 +11,13 @@
 #include <spdlog/spdlog.h>
 
 #include "cc_dist.h"
-#include "dm_infeasible_order.h"
+#include "pdm_infeasible_order.h"
 #include "hc_label.h"
 #include "hc_location.h"
 #include "hc_vehicle.h"
 #include "pr_problem.h"
-#include "pr_vrp.h"
 #include "sc_dist.h"
-#include "standard_csv_reader.h"
+#include "scr_standard_csv_reader.h"
 
 // ====== implement of Load Solver ======
 Solver::~Solver() {
@@ -41,7 +40,7 @@ void Solver::load_parameter() {
 
 void Solver::create_problem() {
   // TODO 先默认创建 VRP
-  this->problem = new ProblemVRP(this->scenario, this->parameter);
+  this->problem = new Problem(this->scenario, this->parameter);
 
   // hard constraints: base
   this->problem->hc_manager->add_constr(new HcVehicleCapacity());
@@ -72,7 +71,7 @@ void Solver::create_problem() {
   }
 }
 
-void Solver::precheck() {
+bool Solver::precheck() {
   this->infeasible_cargo_orders = std::vector<InfeasibleCargoOrder::UPtr>();
   for (const auto& cargo_order : this->scenario->cargo_order_manager->cargo_orders) {
     auto infeasible_cargo_order = this->problem->check_feasibility(cargo_order);
@@ -85,4 +84,6 @@ void Solver::precheck() {
   if (!this->infeasible_cargo_orders.empty()) {
       spdlog::warn("number of cargo orders {} are infeasible!", this->infeasible_cargo_orders.size());
   }
+  
+  return this->infeasible_cargo_orders.empty();
 }

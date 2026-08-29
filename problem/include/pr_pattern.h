@@ -7,33 +7,28 @@
 
 #include <memory>
 
-#include "dm_load.h"
-#include "dm_node.h"
-#include "dm_order.h"
+#include "pdm_load.h"
+#include "pdm_node.h"
 
 class PickDropPattern {
  public:
 
-  virtual Node* find_first_pick_node(std::unique_ptr<Node>& node);
+  virtual Node* find_first_pick_node(std::unique_ptr<Node>& node) const;
 
-  virtual Node* find_last_pick_node(std::unique_ptr<Node>& node);
+  virtual Node* find_last_pick_node(std::unique_ptr<Node>& node) const;
 
-  virtual Node* find_first_drop_node(std::unique_ptr<Node>& node);
+  virtual Node* find_first_drop_node(std::unique_ptr<Node>& node) const;
 
-  virtual Node* find_last_drop_node(std::unique_ptr<Node>& node);
+  virtual Node* find_last_drop_node(std::unique_ptr<Node>& node) const;
 
-  virtual Load* create_load(LoadContext* context) = 0;
-
-  virtual bool add_order(Load* load, Order* order) = 0;
+  virtual Load* create_load(LoadContext* context) const = 0;
 
   PickDropPattern() {}
 };
 
-class SPMD : public PickDropPattern {
+class PatternSPMD : public PickDropPattern {
  public:
-  SPMD() : PickDropPattern() {}
+  PatternSPMD() : PickDropPattern() {}
 
-  Load* create_load(LoadContext* context) override;
-
-  bool add_order(Load* load, Order* order) override;
+  Load* create_load(LoadContext* context) const override;
 };

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "dm_resource.h"
+#include "pdm_resource.h"
 #include "pr_problem.h"
 #include "se_scenario.h"
 

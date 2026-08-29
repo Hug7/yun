@@ -12,7 +12,10 @@
 // ====== implement of Load Solver ======
 void Solver::solve() {
   // precheck
-  
+  bool continue_flage = this->precheck();
+  if (!continue_flage) {
+    return;
+  }
   // create a new plan
   Plan *plan = new Plan(this->scenario);
   // distrubute vehicle resources and order resources
