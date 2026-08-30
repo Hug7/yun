@@ -46,10 +46,6 @@ void Node::set_travel_dist(long travel_dist) { this->travel_dist = travel_dist; 
 
 void Node::set_travel_time(long travel_time) { this->travel_time = travel_time; }
 
-bool Node::hase_next() { return this->next != nullptr; }
-
-bool Node::hase_prev() { return this->prev != nullptr; }
-
 void Node::add_front_activity(Activity::UPtr activity) {
   if (this->first != nullptr) {
     this->first->prev = activity.get();

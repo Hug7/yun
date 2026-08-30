@@ -21,8 +21,18 @@ class PickDropPattern {
 
   virtual Node* find_last_drop_node(std::unique_ptr<Node>& node) const;
 
+  virtual Node* find_load_first_pick_node(Load* load) const;
+
+  virtual Node* find_load_last_pick_node(Load* load) const;
+
+  virtual Node* find_load_first_drop_node(Load* load) const;
+
+  virtual Node* find_load_last_drop_node(Load* load) const;
+
   virtual Load* create_load(LoadContext* context) const = 0;
 
+  virtual bool insert_last_drop(Load* load, const Order* order) const = 0;
+  
   PickDropPattern() {}
 };
 
@@ -30,5 +40,15 @@ class PatternSPMD : public PickDropPattern {
  public:
   PatternSPMD() : PickDropPattern() {}
 
+  Node* find_load_first_pick_node(Load* load) const override;
+
+  Node* find_load_last_pick_node(Load* load) const override;
+
+  Node* find_load_first_drop_node(Load* load) const override;
+
+  Node* find_load_last_drop_node(Load* load) const override;
+
   Load* create_load(LoadContext* context) const override;
+
+  bool insert_last_drop(Load* load, const Order* order) const override;
 };

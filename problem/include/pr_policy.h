@@ -5,36 +5,31 @@
 
 #pragma once
 
+#include "c_constant.h"
 #include "pdm_load.h"
 #include "pdm_order.h"
 #include "pr_pattern.h"
 
 class LoadUnloadPolicy {
  public:
-  const PickDropPattern* pattern;
-
-  LoadUnloadPolicy(const PickDropPattern* pattern) : pattern(pattern) {}
-
-  virtual bool add_order(Load* load, const Order* order) = 0;
+  LoadUnloadPolicy() {}
 };
 
 class PolicyFILO : public LoadUnloadPolicy {
  public:
-  PolicyFILO(const PickDropPattern* pattern) : LoadUnloadPolicy(pattern) {}
-
-  bool add_order(Load* load, const Order* order) override;
+  PolicyFILO() : LoadUnloadPolicy() {}
 };
 
 class PolicyFIFO : public LoadUnloadPolicy {
  public:
-  PolicyFIFO(const PickDropPattern* pattern) : LoadUnloadPolicy(pattern) {}
-
-  bool add_order(Load* load, const Order* order) override;
+  PolicyFIFO() : LoadUnloadPolicy() {}
 };
 
 class PolicyNone : public LoadUnloadPolicy {
  public:
-  PolicyNone(const PickDropPattern* pattern) : LoadUnloadPolicy(pattern) {}
-
-  bool add_order(Load* load, const Order* order) override;
+  PolicyNone() : LoadUnloadPolicy() {}
 };
+
+namespace LoadUnloadPolicyFactory {
+LoadUnloadPolicy* create_policy(LoadUnloadPolicyType policy_type);
+} // namespace LoadUnloadPolicyFactory

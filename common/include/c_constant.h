@@ -101,10 +101,15 @@ int const WORK_EFFECT_QUANTITY_PRECISION = 4;
 
 namespace TimeWindowParameter {
 /**
- * @brief default paln datetime range (start/end), unit: s
+ * @brief default paln datetime range (start), unit: s
  * @details representative 1970-01-01 00:00
  */
-long const DEFAULT_PLAN_DATETIME_RANGE = -28800;
+long const DEFAULT_PLAN_DATETIME_RANGE_START = -28800;
+/**
+ * @brief default paln datetime range (end), unit: s
+ * @details representative 2096-11-16 02:00
+ */
+long const DEFAULT_PLAN_DATETIME_RANGE_END = 4003840810;
 /**
  * @brief default early time, unit: s
  * @details representative 1970-01-01 00:00

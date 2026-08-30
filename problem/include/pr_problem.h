@@ -9,11 +9,12 @@
 
 #include "bdm_cargo_order.h"
 #include "cc_manager.h"
-#include "pdm_parameter.h"
+#include "hc_manager.h"
+#include "pdm_infeasible_order.h"
 #include "pdm_load.h"
 #include "pdm_order.h"
-#include "pdm_infeasible_order.h"
-#include "hc_manager.h"
+#include "pdm_parameter.h"
+#include "pr_policy.h"
 #include "pr_pattern.h"
 #include "sc_manager.h"
 #include "se_scenario.h"
@@ -23,6 +24,8 @@ class Problem {
   const Scenario* scenario;
 
   Parameter* parameter;
+
+  LoadUnloadPolicy* lu_policy;
 
   PickDropPattern* pd_pattern;
 

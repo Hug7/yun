@@ -25,8 +25,8 @@ Load::Load(LoadContext* context) : context(context) {
   this->first_node = std::make_unique<Node>(ActivityType::START, default_loc);
   auto end_node = std::make_unique<Node>(ActivityType::END, default_loc);
   end_node->prev = this->first_node.get();
-  this->first_node->next = std::move(end_node);
   this->last_node = end_node.get();
+  this->first_node->next = std::move(end_node);
   this->route_profile = std::make_unique<LoadRouteProfile>(context->scenario);
   this->constr_profile = std::make_unique<LoadConstrProfile>();
 }

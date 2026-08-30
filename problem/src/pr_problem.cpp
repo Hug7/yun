@@ -8,13 +8,15 @@
 #include <memory>
 
 #include "pdm_order.h"
+#include "pr_policy.h"
 
 // ====== implement of Problem ======
 Problem::Problem(const Scenario* scenario, Parameter* parameter)
     : scenario(scenario), parameter(parameter) {
+  this->lu_policy = LoadUnloadPolicyFactory::create_policy(parameter->load_unload_policy);
   switch (this->parameter->pick_drop_pattern) {
     case PickDropPatternType::SPMD:
-      this->pd_pattern = new SPMD();
+      this->pd_pattern = new PatternSPMD();
       break;
     case PickDropPatternType::MPMD:
       throw std::invalid_argument("unsupported pick drop pattern!");
@@ -129,7 +131,7 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_or
 Load* Problem::construct_load_by_order(std::vector<Order*>& orders) {
   Load* load = this->pd_pattern->create_load(this->load_context);
   for (auto order : orders) {
-    this->pd_pattern->add_order(load, order);
+    this->pd_pattern->insert_last_drop(load, order);
   }
   // try using different vehicle
   const std::vector<Vehicle*>& vehicles = this->scenario->carrier_manager->vehicles;
@@ -165,7 +167,7 @@ Load* Problem::construct_load_by_order(std::vector<Order*>& orders) {
 Load* Problem::construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle) {
   Load* load = this->pd_pattern->create_load(this->load_context);
   for (auto order : orders) {
-    this->pd_pattern->add_order(load, order);
+    this->pd_pattern->insert_last_drop(load, order);
   }
   load->change_vehicle(vehicle);
   this->eval_load(load);

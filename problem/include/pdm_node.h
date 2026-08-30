@@ -74,9 +74,13 @@ class Node {
 
   void set_travel_time(long travel_time);
 
-  bool hase_next();
+  bool hase_next() const { return this->next != nullptr; }
 
-  bool hase_prev();
+  bool hase_prev() const { return this->prev != nullptr; }
+
+  bool is_pick() const {return this->activity_type == ActivityType::PICK;}
+
+  bool is_drop() const {return this->activity_type == ActivityType::DROP;}
 
   void add_front_activity(Activity::UPtr activity);
 
