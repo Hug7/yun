@@ -6,7 +6,7 @@
 #pragma once
 
 #include "pdm_resource.h"
-#include "pr_problem.h"
+#include "prob_problem.h"
 #include "se_scenario.h"
 
 class Plan {

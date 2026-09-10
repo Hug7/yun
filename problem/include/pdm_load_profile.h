@@ -22,6 +22,7 @@ enum class LoadRouteProfileField {
   AVAILABLE_VEHICLE_BITSET,
   PICK_NODE_COUNT,
   DROP_NODE_COUNT,
+  NODE_DIST_TIME, // 站点间的距离和耗时
   TOTAL_DIST,
   TIME_WINDOW,
   FIELDS_COUNT  // sentinel does not participate in dirty mark
@@ -71,6 +72,10 @@ class LoadRouteProfile {
   bool get_dirty_mark(LoadRouteProfileField field);
 
   void set_dirty_mark(LoadRouteProfileField field);
+
+  void reset_dirty_marks();
+
+  void reset_dirty_mark(LoadRouteProfileField field);
 };
 
 /**

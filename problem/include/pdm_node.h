@@ -32,10 +32,6 @@ class Node {
    */
   const Location* loc;
   /**
-   * @brief time windows of the node
-   */
-  TimeWindow::VecUPtr time_windows;
-  /**
    * @brief plan time windows of the node
    */
   TimeWindowPlan::VecUPtr ptws;
@@ -66,9 +62,9 @@ class Node {
 
   Node();
 
-  Node(const ActivityType activity_type, const Location* loc);
+  Node(ActivityType activity_type, const Location* loc);
 
-  Node(const ActivityType activity_type, const Location* loc, Activity::UPtr activity);
+  Node(ActivityType activity_type, const Location* loc, Activity::UPtr activity);
 
   void set_travel_dist(long travel_dist);
 

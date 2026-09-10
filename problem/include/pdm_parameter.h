@@ -6,14 +6,16 @@
 #pragma once
 
 #include <string>
+#include <unordered_set>
 
-#include "c_constant.h"
+#include "bdm_label.h"
 #include "bdm_time_window.h"
+#include "c_constant.h"
 #include "se_scenario.h"
 
 /**
  * @brief 计划时间范围
- * @details 
+ * @details
  */
 class PlanDatetimeRange {
  public:
@@ -28,7 +30,7 @@ class PlanDatetimeRange {
    */
   long end_time{TimeWindowParameter::DEFAULT_PLAN_DATETIME_RANGE_END};
 
-  PlanDatetimeRange() {};
+  PlanDatetimeRange() = default;
 
   void set_start_datetime(const std::string& start_datetime);
 
@@ -38,7 +40,43 @@ class PlanDatetimeRange {
    * @brief 创建默认的时间窗口
    * @details 根据计划时间范围创建一个时间窗口
    */
-  TimeWindow* create_default_time_window();
+  [[nodiscard]] TimeWindow* create_default_time_window() const;
+};
+
+/**
+ * @brief cargo order分组规则
+ */
+class CargoOrderGroupRule {
+ public:
+  /**
+   * @brief 订单的labelset
+   */
+  const Labelset* order_labelset;
+  /**
+   * @brief group的参考label
+   */
+  Label* label;
+  /**
+   * @brief label在labelset的索引
+   */
+  int label_ind4labelset;
+  /**
+   * @brief 执行group动作的参考分组
+   * @details 为空时按照`label value`种类分组，不在分组内的`label value`的cargo order也按照`label
+   * value`种类分组
+   */
+  std::vector<std::unordered_set<int>> label_value_ind_groups;
+
+  explicit CargoOrderGroupRule(const Labelset* order_labelset)
+      : order_labelset{order_labelset}, label(nullptr), label_ind4labelset(-1), label_value_ind_groups() {};
+
+  /**
+   * @brief 设置分组规则
+   * @param label_code 标签编码
+   * @param label_value_code_groups
+   */
+  void set_rule(std::string label_code,
+                const std::vector<std::vector<std::string>>& label_value_code_groups);
 };
 
 /**
@@ -49,7 +87,7 @@ class Parameter {
   /**
    * @brief 计划时间范围
    */
-  PlanDatetimeRange *plan_datetime_range;
+  PlanDatetimeRange* plan_datetime_range;
   /**
    * @brief 提货和卸货站点的模式
    */
@@ -58,6 +96,12 @@ class Parameter {
    * @brief 装货和卸货顺序的规则
    */
   LoadUnloadPolicyType load_unload_policy{LoadUnloadPolicyType::FILO};
+
+  // order
+  /**
+   * @brief cargo order分组规则
+   */
+  CargoOrderGroupRule* cargo_order_group_rule;
 
   // constraints
   /**
@@ -81,14 +125,14 @@ class Parameter {
    */
   double cc_constr_dist_factor{CostConstraintParameter::CC_DIST_DEFAULT_DIST_FACTOR};
 
-  Parameter();
+  explicit Parameter(const Labelset* order_labelset);
 
   ~Parameter();
 
   /**
    * @brief 后处理
    * @details 根据场景数据更新参数
-   * @param 场景数据
+   * @param scenario 场景数据
    */
   void post_process(const Scenario* scenario);
 };

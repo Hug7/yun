@@ -10,7 +10,7 @@ void CargoSubOrder::update_dim_value(Dimension* dim, double dim_val) {
   this->dim_vals[dim->ind] = static_cast<long>(dim_val * PRECISION_POW[dim->precision]);
 }
 
-void CargoSubOrder::update_labelset_value(const int label_ind4labelset, LabelValue* label_value) {
+void CargoSubOrder::update_labelset_value(int label_ind4labelset, LabelValue* label_value) {
   this->labelset_value->add_label_value(label_ind4labelset, label_value);
   this->labelset_value_bitset->add_label_value(label_ind4labelset, label_value);
 }

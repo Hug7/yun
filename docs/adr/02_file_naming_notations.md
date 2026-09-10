@@ -6,19 +6,20 @@
 
 头文件`.h`要有前缀，前缀代表其属性便于调用和解释依赖关系，常用缩写表示，不同前缀的定义如下：
 
-| 前缀 | 前缀全称 | package | 说明 |
-|---|---|---|---|
-| c_ | common | common | 公共方法 |
-| hc_ | hard constraint | problem | 硬约束 |
-| sc_ | soft constraint | problem | 软约束 |
-| cc_ | cost constraint | problem | 成本约束 |
-| pdm_ | problem domain | problem | 问题层的领域对象 |
-| pr_ | problem | problem | 问题 |
-| bdm_ | base domain | scenario | 基本的领域对象 |
-| se_ | scenario | scenario | 场景 |
-| scr_ | standard csv reader | scenario | 标准的csv输入读取 |
-| scp_ | standard csv parser | scenario | 内存转为标准的csv输入 |
-| s_ | solver | solver | solver |
+| 前缀      | 前缀全称                | package | 说明               |
+|---------|---------------------|---|------------------|
+| c_      | common              | common | 公共方法             |
+| hc_     | hard constraint     | problem | 硬约束              |
+| sc_     | soft constraint     | problem | 软约束              |
+| cc_     | cost constraint     | problem | 成本约束             |
+| pdm_    | problem domain      | problem | 问题层的领域对象         |
+| pr_     | problem             | problem | 问题               |
+| visual_ | visual              | problem | 可视化(结果、过程等数据可视化) |
+| bdm_    | base domain         | scenario | 基本的领域对象          |
+| se_     | scenario            | scenario | 场景               |
+| scr_    | standard csv reader | scenario | 标准的csv输入读取       |
+| scp_    | standard csv parser | scenario | 内存转为标准的csv输入     |
+| s_      | solver              | solver | solver           |
 
 ## 2.2 头文件和源文件关系
 

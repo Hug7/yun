@@ -48,11 +48,11 @@ class Scenario {
    */
   CargoOrderManager* cargo_order_manager;
 
-  Scenario() {};
+  Scenario() = default;
 
   ~Scenario();
 
-  void set_dim_manager(DimensionManager* dimension_manager);
+  void set_dim_manager(DimensionManager* dim_manager);
 
   void set_label_manager(LabelManager* label_manager);
 

@@ -7,7 +7,7 @@
 
 // ====== implement of Label ======
 Label::~Label() {
-  for (auto value : this->values) {
+  for (const auto& value : this->values) {
     delete value;
   }
   this->values.clear();
@@ -15,10 +15,10 @@ Label::~Label() {
 }
 
 LabelValue* Label::add_label_value(const std::string& value) {
-  if (this->value_map.find(value) != this->value_map.end()) {
+  if (this->value_map.contains(value)) {
     return nullptr;
   } else {
-    int ind = this->generate_index->next();
+    const int ind = this->generate_index->next();
     LabelValue* label_value = new LabelValue(value, ind);
     this->values.push_back(label_value);
     this->value_map[value] = label_value;
@@ -27,8 +27,8 @@ LabelValue* Label::add_label_value(const std::string& value) {
   }
 }
 
-LabelValue* Label::get_label_value(const std::string& value) {
-  auto it = this->value_map.find(value);
+LabelValue* Label::get_label_value(const std::string& value) const {
+  const auto it = this->value_map.find(value);
   if (it != this->value_map.end()) {
     return it->second;
   }
@@ -49,9 +49,9 @@ void LabelsetValue::add_label_value(const int label_ind4labelset, LabelValue* la
 }
 
 void LabelsetValue::merge(LabelsetValue* labelset_value) {
-  const int len = this->label_values.size();
-  for (int u = 0; u < len; ++u) {
-    for (auto& label_value : labelset_value->label_values[u]) {
+  const size_t len = this->label_values.size();
+  for (size_t u = 0; u < len; ++u) {
+    for (const auto& label_value : labelset_value->label_values[u]) {
       this->label_values[u][label_value.first] = label_value.second;
     }
   }
@@ -63,14 +63,14 @@ void LabelsetValueBitset::add_label_value(int label_ind, LabelValue* label_value
 }
 
 void LabelsetValueBitset::merge(const LabelsetValueBitset::UPtr& labelset_value_bitset) {
-  const int len = this->bitsets.size();
-  for (int u = 0; u < len; ++u) {
+  const size_t len = this->bitsets.size();
+  for (size_t u = 0; u < len; ++u) {
     this->bitsets[u]->call_union(labelset_value_bitset->bitsets[u].get());
   }
 }
 
 void LabelsetValueBitset::clear_bitsets() {
-  for (auto &cur_bitset : this->bitsets) {
+  for (const auto &cur_bitset : this->bitsets) {
     cur_bitset->clear_all();
   }
 }
@@ -82,7 +82,7 @@ Labelset::~Labelset() {
 }
 
 void Labelset::add_label(Label* label) {
-  if (this->label_ind_map.count(label->code)) {
+  if (this->label_ind_map.contains(label->code)) {
     throw std::runtime_error("Label " + label->code + " already exists in Labelset");
   } else {
     this->labels.push_back(label);
@@ -91,13 +91,25 @@ void Labelset::add_label(Label* label) {
   }
 }
 
+bool Labelset::contains_label_code(const std::string& code) const {
+  return this->label_ind_map.contains(code);
+}
+
 int Labelset::get_label_ind(const std::string& code) const {
-  auto it = this->label_ind_map.find(code);
+  const auto it = this->label_ind_map.find(code);
   if (it == this->label_ind_map.end()) {
     return -1;
   } else {
     return it->second;
   }
+}
+
+Label* Labelset::get_label(const std::string& code) const {
+  const int ind = this->get_label_ind(code);
+  if (ind == -1) {
+    return nullptr;
+  }
+  return this->labels[ind];
 }
 
 LabelsetValue* Labelset::empty_labelset_value() const {
@@ -118,7 +130,7 @@ LabelsetValueBitset::UPtr Labelset::empty_labelset_value_bitset() const {
 
 // ====== implement of LabelManager ======
 LabelManager::~LabelManager() {
-  for (auto label : this->labels) {
+  for (const auto& label : this->labels) {
     delete label;
   }
   this->labels.clear();
@@ -129,10 +141,10 @@ LabelManager::~LabelManager() {
 }
 
 Label* LabelManager::create_label(const std::string& code, const std::string& name) {
-  if (this->label_map.find(code) != this->label_map.end()) {
+  if (this->label_map.contains(code)) {
     throw std::runtime_error("Label " + code + " already exists in LabelManager");
   } else {
-    int ind = this->generate_index->next();
+    const int ind = this->generate_index->next();
     Label* label = new Label(code, name, ind);
     this->labels.push_back(label);
     this->label_map[code] = label;
@@ -141,9 +153,9 @@ Label* LabelManager::create_label(const std::string& code, const std::string& na
 }
 
 Label* LabelManager::get_label(const std::string& code) {
-  auto iter = this->label_map.find(code);
-  if (iter != this->label_map.end()) {
-    return iter->second;
+  const auto it = this->label_map.find(code);
+  if (it != this->label_map.end()) {
+    return it->second;
   } else {
     return nullptr;
   }

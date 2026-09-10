@@ -8,12 +8,12 @@
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
 VehicleModelManager* StandardCsvReader::loading_vehicle_model(
     DimensionManager* dimension_manager, LabelManager* label_manager,
-    DistMatrixManager* dist_matrix_manager) {
+    DistMatrixManager* dist_matrix_manager) const {
   // === loading VehicleModel.csv ===
   spdlog::info("Loading {} ...", VehicleModelSchema::file_name);
   const std::string vehicle_model_file_path = this->root_dir + "/" + VehicleModelSchema::file_name;
@@ -25,8 +25,8 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
   VehicleModelManager* vehicle_model_manager =
       new VehicleModelManager(dimension_manager, label_manager->vehicle_model_labelset);
 
-  int vehicle_model_count = vehicle_model_doc.GetRowCount();
-  for (int u = 0; u < vehicle_model_count; u++) {
+  size_t vehicle_model_count = vehicle_model_doc.GetRowCount();
+  for (size_t u = 0; u < vehicle_model_count; u++) {
     const std::string vehicle_model_code = vehicle_model_doc.GetCell<std::string>(
         VehicleModelSchema::headers[VehicleModelSchema::CODE], u);
     const std::string vehicle_model_name = vehicle_model_doc.GetCell<std::string>(
@@ -55,9 +55,9 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
   CsvUtils::check_column_exist(vehicle_model_dim_val_doc, VehicleModelDimensionValueSchema::headers,
                                VehicleModelDimensionValueSchema::file_name);
 
-  int vehicle_model_dim_val_count = vehicle_model_dim_val_doc.GetRowCount();
+  size_t vehicle_model_dim_val_count = vehicle_model_dim_val_doc.GetRowCount();
 
-  for (int u = 0; u < vehicle_model_dim_val_count; u++) {
+  for (size_t u = 0; u < vehicle_model_dim_val_count; u++) {
     const std::string vehicle_model_code = vehicle_model_dim_val_doc.GetCell<std::string>(
         VehicleModelDimensionValueSchema::headers
             [VehicleModelDimensionValueSchema::VEHICLE_MODEL_CODE],
@@ -98,9 +98,9 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
   CsvUtils::check_column_exist(vehicle_model_label_value_doc, VehicleModelLabelValueSchema::headers,
                                VehicleModelLabelValueSchema::file_name);
 
-  int vehicle_model_label_value_count = vehicle_model_label_value_doc.GetRowCount();
+  size_t vehicle_model_label_value_count = vehicle_model_label_value_doc.GetRowCount();
 
-  for (int u = 0; u < vehicle_model_label_value_count; u++) {
+  for (size_t u = 0; u < vehicle_model_label_value_count; u++) {
     const std::string vehicle_model_code = vehicle_model_label_value_doc.GetCell<std::string>(
         VehicleModelLabelValueSchema::headers[VehicleModelLabelValueSchema::VEHICLE_MODEL_CODE], u);
     const std::string label_code = vehicle_model_label_value_doc.GetCell<std::string>(

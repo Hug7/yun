@@ -68,6 +68,8 @@ class Load {
 
   Load(LoadContext* context);
 
+  void reset_route_profile();
+
   void change_vehicle(Vehicle* vehicle);
 
   long get_total_dist();

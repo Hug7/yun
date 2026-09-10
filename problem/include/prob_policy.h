@@ -8,7 +8,7 @@
 #include "c_constant.h"
 #include "pdm_load.h"
 #include "pdm_order.h"
-#include "pr_pattern.h"
+#include "prob_pattern.h"
 
 class LoadUnloadPolicy {
  public:

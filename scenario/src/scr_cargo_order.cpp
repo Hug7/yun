@@ -10,12 +10,12 @@
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
 #include "c_time_utils.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
 CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* location_manager,
                                                           DimensionManager* dimension_manager,
-                                                          LabelManager* label_manager) {
+                                                          LabelManager* label_manager) const {
   CargoOrderManager* cargo_order_manager =
       new CargoOrderManager(label_manager->order_labelset, dimension_manager);
   // === loading CargoOrder.csv ===
@@ -26,8 +26,8 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
   CsvUtils::check_column_exist(cargo_order_doc, CargoOrderSchema::headers,
                                CargoOrderSchema::file_name);
 
-  int cargo_order_count = cargo_order_doc.GetRowCount();
-  for (int u = 0; u < cargo_order_count; u++) {
+  size_t cargo_order_count = cargo_order_doc.GetRowCount();
+  for (size_t u = 0; u < cargo_order_count; u++) {
     const std::string cargo_order_code =
         cargo_order_doc.GetCell<std::string>(CargoOrderSchema::headers[CargoOrderSchema::CODE], u);
     const std::string cargo_order_name =
@@ -103,8 +103,8 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
   CsvUtils::check_column_exist(cargo_sub_order_doc, CargoSubOrderSchema::headers,
                                CargoSubOrderSchema::file_name);
 
-  int cargo_sub_order_count = cargo_sub_order_doc.GetRowCount();
-  for (int u = 0; u < cargo_sub_order_count; u++) {
+  size_t cargo_sub_order_count = cargo_sub_order_doc.GetRowCount();
+  for (size_t u = 0; u < cargo_sub_order_count; u++) {
     const std::string cargo_order_code = cargo_sub_order_doc.GetCell<std::string>(
         CargoSubOrderSchema::headers[CargoSubOrderSchema::CARGO_ORDER_CODE], u);
     const std::string cargo_sub_order_code = cargo_sub_order_doc.GetCell<std::string>(
@@ -142,8 +142,8 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
                                CargoSubOrderDimensionValueSchema::headers,
                                CargoSubOrderDimensionValueSchema::file_name);
 
-  int cargo_sub_order_dimension_count = cargo_sub_order_dimension_doc.GetRowCount();
-  for (int u = 0; u < cargo_sub_order_dimension_count; u++) {
+  size_t cargo_sub_order_dimension_count = cargo_sub_order_dimension_doc.GetRowCount();
+  for (size_t u = 0; u < cargo_sub_order_dimension_count; u++) {
     const std::string cargo_order_code = cargo_sub_order_dimension_doc.GetCell<std::string>(
         CargoSubOrderDimensionValueSchema::headers
             [CargoSubOrderDimensionValueSchema::CARGO_ORDER_CODE],
@@ -192,8 +192,8 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
   CsvUtils::check_column_exist(cargo_sub_order_label_doc, CargoSubOrderLabelValueSchema::headers,
                                CargoSubOrderLabelValueSchema::file_name);
 
-  int cargo_sub_order_label_count = cargo_sub_order_label_doc.GetRowCount();
-  for (int u = 0; u < cargo_sub_order_label_count; u++) {
+  size_t cargo_sub_order_label_count = cargo_sub_order_label_doc.GetRowCount();
+  for (size_t u = 0; u < cargo_sub_order_label_count; u++) {
     const std::string cargo_order_code = cargo_sub_order_label_doc.GetCell<std::string>(
         CargoSubOrderLabelValueSchema::headers[CargoSubOrderLabelValueSchema::CARGO_ORDER_CODE], u);
     const std::string cargo_sub_order_code = cargo_sub_order_label_doc.GetCell<std::string>(

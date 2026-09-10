@@ -8,30 +8,33 @@
 #include <string>
 
 /**
- * @brief infeasible of reason
+ * @brief 不可解原因
  */
 class InfeasibleReason {
  public:
   /**
-   * @brief infeasible reason code
+   * @brief 不可解原因编码
    */
   const std::string code;
   /**
-   * @brief constraint code
+   * @brief 约束编码
    */
   const std::string constr_code;
   /**
-   * @brief infeasible reason message cn
+   * @brief 中文不可解原因
    */
   const std::string msg_cn;
   /**
-   * @brief infeasible reason message en
+   * @brief 英文不可解原因
    */
   const std::string msg_en;
 
-  InfeasibleReason(const std::string& code, const std::string& constr_code,
-                   const std::string& msg_cn, const std::string& msg_en)
-      : code(code), constr_code(constr_code), msg_cn(msg_cn), msg_en(msg_en) {}
+  InfeasibleReason(std::string code, std::string constr_code, std::string msg_cn,
+                   std::string msg_en)
+      : code(std::move(code)),
+        constr_code(std::move(constr_code)),
+        msg_cn(std::move(msg_cn)),
+        msg_en(std::move(msg_en)) {}
 
   bool operator==(const InfeasibleReason& other) const noexcept { return code == other.code; }
 
@@ -45,7 +48,7 @@ inline const InfeasibleReason FEASIBLE{"1000", "ALL", "有解", "the constraint 
 inline const InfeasibleReason UNDEFINED{"1001", "ALL", "未知无解原因",
                                         "undefined infeasible reason"};
 
-inline const InfeasibleReason VEHICLE_REOURCE{"1002", "ALL", "车辆资源不足",
+inline const InfeasibleReason VEHICLE_RESOURCE{"1002", "ALL", "车辆资源不足",
                                               "the vehicle resources are insufficient"};
 
 inline const InfeasibleReason MAX_PICK_NODE_COUNT{
@@ -72,8 +75,7 @@ inline const InfeasibleReason FIFO_LOAD_UNLOAD_POLICY{
     "1009", "HcLoadUnloadPolicyFIFO", "订单提卸货顺序不满足先入先出(FIFO)",
     "the order pickup/drop sequence violates the FIFO policy"};
 
-inline const InfeasibleReason TIME_WINDOW{
-    "1010", "HcTimeWindow", "不满足时间窗约束",
-    "not meet the time window constraint"};
+inline const InfeasibleReason TIME_WINDOW{"1010", "HcTimeWindow", "不满足时间窗约束",
+                                          "not meet the time window constraint"};
 
 }  // namespace InfeasibleReasonCollection

@@ -33,7 +33,7 @@ class PickDropPattern {
 
   virtual bool insert_last_drop(Load* load, const Order* order) const = 0;
   
-  PickDropPattern() {}
+  PickDropPattern() = default;
 };
 
 class PatternSPMD : public PickDropPattern {

@@ -38,6 +38,15 @@ void LoadRouteProfile::set_dirty_mark(LoadRouteProfileField field) {
   this->dirty_marks->set(field_ind);
 }
 
+void LoadRouteProfile::reset_dirty_marks() {
+  this->dirty_marks->clear_all();
+}
+
+void LoadRouteProfile::reset_dirty_mark(LoadRouteProfileField field) {
+  const int field_ind = static_cast<int>(field);
+  this->dirty_marks->clear(field_ind);
+}
+
 // ====== implement of LoadConstraintProfile ======
 void LoadConstrProfile::reset() {
   this->total_hard_penalty = 0;

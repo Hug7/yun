@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
-#include <vector>
-#include <cmath>
-
 #include "bdm_work_plan.h"
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
 #include "c_chrono_util.h"
 #include "c_constant.h"
 
@@ -25,14 +26,26 @@ Calendar::Calendar(CalendarTimeRangeType time_range_type) {
   }
 }
 
-void Calendar::set_ond_day_time_ranges(const int day_ind,
+void Calendar::set_one_day_time_ranges(const int day_ind,
                                        std::vector<std::pair<int, int>>& time_ranges) {
+  sort(
+      time_ranges.begin(), time_ranges.end(),
+      [](const std::pair<int, int>& a, const std::pair<int, int>& b) { return a.first < b.first; });
+
   if (!time_ranges.empty()) {
     this->day_time_ranges[day_ind] = time_ranges;
   } else {
     std::vector<std::pair<int, int>> default_time_ranges;
-    default_time_ranges.emplace_back(0, 86400);
+    default_time_ranges.emplace_back(WorkPlanParameter::DEFAULT_CALENDAR_TIME_RANGE);
     this->day_time_ranges[day_ind] = default_time_ranges;
+  }
+}
+
+void Calendar::post_process() {
+  for (auto& time_ranges : this->day_time_ranges) {
+    if (time_ranges.empty()) {
+      time_ranges.emplace_back(WorkPlanParameter::DEFAULT_CALENDAR_TIME_RANGE);
+    }
   }
 }
 
@@ -51,7 +64,7 @@ std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
         if (cur_early >= cur_late) {
           continue;
         }
-        if (res_time_windows.size() > 0) {
+        if (!res_time_windows.empty()) {
           auto last_tw = res_time_windows.back();
           if ((cur_early - last_tw->late) <=
               TimeWindowParameter::INTERVAL_SECS_CONTINUOUS_TIME_BUCKET) {
@@ -77,7 +90,7 @@ std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
         if (cur_early >= cur_late) {
           continue;
         }
-        if (res_time_windows.size() > 0) {
+        if (!res_time_windows.empty()) {
           auto last_tw = res_time_windows.back();
           if ((cur_early - last_tw->late) <=
               TimeWindowParameter::INTERVAL_SECS_CONTINUOUS_TIME_BUCKET) {
@@ -101,7 +114,7 @@ std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
 // ====== implement of WorkEffect ======
 WorkEffect::WorkEffect(const DimensionManager* dim_manager) : dims_len(dim_manager->len) {
   // this->effect_map
-  const int activity_type_count = static_cast<int>(ActivityType::NONE);
+   constexpr int activity_type_count = static_cast<int>(ActivityType::NONE);
 
   this->effect_map = std::vector<std::vector<double>>(
       activity_type_count,
@@ -112,17 +125,19 @@ void WorkEffect::add(const Dimension* dim, ActivityType activity_type, double qu
   if (quantity > 0) {
     double factor = std::pow(10.0, WorkPlanParameter::WORK_EFFECT_QUANTITY_PRECISION);
     double dim_precision = std::pow(10.0, dim->precision);
-    this->effect_map[static_cast<int>(activity_type)][dim->ind] = (std::round(quantity * factor) / factor) * dim_precision;
+    this->effect_map[static_cast<int>(activity_type)][dim->ind] =
+        (std::round(quantity * factor) / factor) * dim_precision;
   }
 }
 
-long WorkEffect::get_work_time(ActivityType activity_type, const std::vector<long>& dim_vals) const {
+long WorkEffect::get_work_time(ActivityType activity_type,
+                               const std::vector<long>& dim_vals) const {
   long work_time = 0;
   auto& dim_effects = this->effect_map[static_cast<int>(activity_type)];
   for (int u = 0; u < this->dims_len; u++) {
     double unit_process_q = dim_effects[u];
     if (unit_process_q > 0) {
-      work_time = std::max(work_time, static_cast<long>((dim_vals[u] * 3600) / unit_process_q));
+      work_time = std::max(work_time, static_cast<long>((dim_vals[u] * 3600.0) / unit_process_q));
     }
   }
   return work_time;

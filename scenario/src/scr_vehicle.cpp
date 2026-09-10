@@ -8,12 +8,12 @@
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
 void StandardCsvReader::loading_vehicle(CarrierManager* carrier_manager,
                                         VehicleModelManager* vehicle_model_manager,
-                                        LocationManager* location_manager) {
+                                        LocationManager* location_manager) const {
   // === loading Vehicle.csv ===
   spdlog::info("Loading {} ...", VehicleSchema::file_name);
   const std::string vehicle_file_path = this->root_dir + "/" + VehicleSchema::file_name;
@@ -21,8 +21,8 @@ void StandardCsvReader::loading_vehicle(CarrierManager* carrier_manager,
   rapidcsv::Document vehicle_doc(vehicle_file_path);
   CsvUtils::check_column_exist(vehicle_doc, VehicleSchema::headers, VehicleSchema::file_name);
 
-  int vehicle_count = vehicle_doc.GetRowCount();
-  for (int u = 0; u < vehicle_count; u++) {
+  size_t vehicle_count = vehicle_doc.GetRowCount();
+  for (size_t u = 0; u < vehicle_count; u++) {
     const std::string carrier_code =
         vehicle_doc.GetCell<std::string>(VehicleSchema::headers[VehicleSchema::CARRIER_CODE], u);
     const std::string vehicle_model_code = vehicle_doc.GetCell<std::string>(
@@ -46,7 +46,7 @@ void StandardCsvReader::loading_vehicle(CarrierManager* carrier_manager,
     }
 
     Location* orig_loc = location_manager->get_location(LocationParameter::DEFAULT_LOCATION_CODE);
-    if (origin_location_code != "") {
+    if (!origin_location_code.empty()) {
       orig_loc = location_manager->get_location(origin_location_code);
       if (orig_loc == nullptr) {
         throw std::invalid_argument("Location " + origin_location_code + " was not found in " +
@@ -55,7 +55,7 @@ void StandardCsvReader::loading_vehicle(CarrierManager* carrier_manager,
     }
 
     Location* dest_loc = location_manager->get_location(LocationParameter::DEFAULT_LOCATION_CODE);
-    if (destination_location_code != "") {
+    if (!destination_location_code.empty()) {
       dest_loc = location_manager->get_location(destination_location_code);
       if (dest_loc == nullptr) {
         throw std::invalid_argument("Location " + destination_location_code + " was not found in " +

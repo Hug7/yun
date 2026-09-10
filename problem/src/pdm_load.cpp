@@ -38,6 +38,10 @@ Load::~Load() {
   this->constr_profile.reset();
 }
 
+void Load::reset_route_profile() {
+  this->route_profile->reset_dirty_marks();
+}
+
 void Load::change_vehicle(Vehicle* vehicle) {
   // check if the routing network has changed
   // if change, update the distance and time between nodes
@@ -68,10 +72,14 @@ void Load::change_vehicle(Vehicle* vehicle) {
   }
 
   if (network_change_flag) {
-    this->update_node_dist_time();
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TIME_WINDOW);
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::NODE_DIST_TIME);
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TOTAL_DIST);
   } else if (change_start_node_flag) {
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TIME_WINDOW);
     this->update_start_node_dist_time();
   } else if (change_end_node_flag) {
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TIME_WINDOW);
     this->update_end_node_dist_time();
   }
 }
@@ -107,6 +115,10 @@ Bitset* Load::get_available_vehicle_bitset() {
 }
 
 void Load::update_node_dist_time() {
+  if (this->route_profile->get_dirty_mark(LoadRouteProfileField::NODE_DIST_TIME)) {
+    return;
+  }
+
   const DistMatrix* dist_matrix = this->vehicle->get_dist_matrix();
   Node* tail_node = this->last_node;
   while (tail_node->hase_prev()) {
@@ -117,8 +129,6 @@ void Load::update_node_dist_time() {
     tail_node->travel_time = dist_time.time;
     tail_node = prev_node;
   }
-
-  // todo updata time window
 }
 
 void Load::update_start_node_dist_time() {
@@ -150,7 +160,6 @@ void Load::update_time_window() {
   while (head_node != nullptr) {
     auto cur_tws = tw_cache->get_pick_drop_time_windows(head_node);
     const long work_time = head_node->get_work_time();
-    tw_cache->get_pick_drop_time_windows(head_node);
     head_node->ptws = TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);
     head_node = head_node->next.get();
   }

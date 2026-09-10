@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <ctime>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -60,7 +59,7 @@ class CargoSubOrder : public Item {
    * @param label_ind4labelset index of label in labelset
    * @param label_value label value
    */
-  void update_labelset_value(const int label_ind4labelset, LabelValue* label_value);
+  void update_labelset_value(int label_ind4labelset, LabelValue* label_value);
 };
 
 /**

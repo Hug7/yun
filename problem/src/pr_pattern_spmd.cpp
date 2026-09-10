@@ -5,7 +5,7 @@
 
 #include <utility>
 
-#include "pr_pattern.h"
+#include "prob_pattern.h"
 
 // ====== implement of PatternSPMD ======
 Node* PatternSPMD::find_load_first_pick_node(Load* load) const {
@@ -43,6 +43,9 @@ Node* PatternSPMD::find_load_last_drop_node(Load* load) const {
 Load* PatternSPMD::create_load(LoadContext* context) const { return new LoadSPMD(context); }
 
 bool PatternSPMD::insert_last_drop(Load* load, const Order* order) const {
+  // 重置route profile
+  load->reset_route_profile();
+  // 找到第一个pick node
   Node* first_pick_node = this->find_load_first_pick_node(load);
   if (first_pick_node == nullptr) {
     // case of empty load

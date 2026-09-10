@@ -8,11 +8,13 @@
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
-LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager, DimensionManager* dim_manager) {
-  LocationManager* location_manager = new LocationManager(label_manager->location_labelset, dim_manager);
+LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager,
+                                                     DimensionManager* dim_manager) const {
+  LocationManager* location_manager =
+      new LocationManager(label_manager->location_labelset, dim_manager);
   // === loading Location.csv ===
   spdlog::info("Loading {} ...", LocationSchema::file_name);
   const std::string location_file_name =
@@ -21,8 +23,8 @@ LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager
   rapidcsv::Document location_doc(location_file_name);
   CsvUtils::check_column_exist(location_doc, LocationSchema::headers, LocationSchema::file_name);
 
-  int location_count = location_doc.GetRowCount();
-  for (int u = 0; u < location_count; u++) {
+  size_t location_count = location_doc.GetRowCount();
+  for (size_t u = 0; u < location_count; u++) {
     const std::string location_code =
         location_doc.GetCell<std::string>(LocationSchema::headers[LocationSchema::CODE], u);
     const std::string location_name =
@@ -51,8 +53,8 @@ LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager
   CsvUtils::check_column_exist(location_label_value_doc, LocationLabelValueSchema::headers,
                                LocationLabelValueSchema::file_name);
 
-  int location_label_value_count = location_label_value_doc.GetRowCount();
-  for (int u = 0; u < location_label_value_count; u++) {
+  size_t location_label_value_count = location_label_value_doc.GetRowCount();
+  for (size_t u = 0; u < location_label_value_count; u++) {
     const std::string location_code = location_label_value_doc.GetCell<std::string>(
         LocationLabelValueSchema::headers[LocationLabelValueSchema::LOCATION_CODE], u);
     const std::string label_code = location_label_value_doc.GetCell<std::string>(

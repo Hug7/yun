@@ -8,10 +8,10 @@
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
-CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) {
+CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) const {
   CarrierManager* carrier_manager = new CarrierManager(label_manager->carrier_labelset);
 
   // === loading Carrier.csv ===
@@ -21,8 +21,8 @@ CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) 
   rapidcsv::Document carrier_doc(carrier_file_path);
   CsvUtils::check_column_exist(carrier_doc, CarrierSchema::headers, CarrierSchema::file_name);
 
-  int carrier_count = carrier_doc.GetRowCount();
-  for (int u = 0; u < carrier_count; u++) {
+  size_t carrier_count = carrier_doc.GetRowCount();
+  for (size_t u = 0; u < carrier_count; u++) {
     const std::string carrier_code =
         carrier_doc.GetCell<std::string>(CarrierSchema::headers[CarrierSchema::CODE], u);
     const std::string carrier_name =
@@ -43,8 +43,8 @@ CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) 
   CsvUtils::check_column_exist(carrier_label_value_doc, CarrierLabelValueSchema::headers,
                                CarrierLabelValueSchema::file_name);
 
-  int carrier_label_value_count = carrier_label_value_doc.GetRowCount();
-  for (int u = 0; u < carrier_label_value_count; u++) {
+  size_t carrier_label_value_count = carrier_label_value_doc.GetRowCount();
+  for (size_t u = 0; u < carrier_label_value_count; u++) {
     const std::string carrier_code = carrier_doc.GetCell<std::string>(
         CarrierLabelValueSchema::headers[CarrierLabelValueSchema::CARRIER_CODE], u);
     const std::string label_code = carrier_doc.GetCell<std::string>(

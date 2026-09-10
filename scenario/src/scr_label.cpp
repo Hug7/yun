@@ -3,15 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <spdlog/spdlog.h>
+
 #include <string>
 
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
-LabelManager* StandardCsvReader::loading_label() {
+LabelManager* StandardCsvReader::loading_label() const {
   LabelManager* label_manager = new LabelManager();
   // === loading Label.csv ===
   spdlog::info("Loading {} ...", LabelSchema::file_name);
@@ -21,8 +23,8 @@ LabelManager* StandardCsvReader::loading_label() {
   // 校验 label 文件列是否缺失
   CsvUtils::check_column_exist(label_doc, LabelSchema::headers, LabelSchema::file_name);
 
-  int label_count = label_doc.GetRowCount();
-  for (int u = 0; u < label_count; u++) {
+  size_t label_count = label_doc.GetRowCount();
+  for (size_t u = 0; u < label_count; u++) {
     const std::string dim_code =
         label_doc.GetCell<std::string>(LabelSchema::headers[LabelSchema::CODE], u);
     const std::string dim_name =
@@ -42,8 +44,8 @@ LabelManager* StandardCsvReader::loading_label() {
   CsvUtils::check_column_exist(label_value_doc, LabelValueSchema::headers,
                                LabelValueSchema::file_name);
 
-  int label_value_count = label_value_doc.GetRowCount();
-  for (int u = 0; u < label_value_count; u++) {
+  size_t label_value_count = label_value_doc.GetRowCount();
+  for (size_t u = 0; u < label_value_count; u++) {
     const std::string label_code = label_value_doc.GetCell<std::string>(
         LabelValueSchema::headers[LabelValueSchema::LABEL_CODE], u);
     const std::string label_value = label_value_doc.GetCell<std::string>(
@@ -72,8 +74,8 @@ LabelManager* StandardCsvReader::loading_label() {
   CsvUtils::check_column_exist(label_apply_doc, LabelApplySchema::headers,
                                LabelApplySchema::file_name);
 
-  int label_apply_row_count = label_apply_doc.GetRowCount();
-  for (int u = 0; u < label_apply_row_count; u++) {
+  size_t label_apply_row_count = label_apply_doc.GetRowCount();
+  for (size_t u = 0; u < label_apply_row_count; u++) {
     const std::string label_code = label_apply_doc.GetCell<std::string>(
         LabelApplySchema::headers[LabelApplySchema::LABEL_CODE], u);
     const std::string apply_item = label_apply_doc.GetCell<std::string>(

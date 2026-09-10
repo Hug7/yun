@@ -30,9 +30,9 @@ class NodeTimeWindowKey {
 
   int hash_code;
 
-  NodeTimeWindowKey(const ActivityType activity_type, const Location* location);
+  NodeTimeWindowKey(ActivityType activity_type, const Location* location);
 
-  NodeTimeWindowKey(const ActivityType activity_type, const Location* location,
+  NodeTimeWindowKey(ActivityType activity_type, const Location* location,
                     const std::vector<const Order*>& orders);
 
   bool operator==(const NodeTimeWindowKey& other) const {
@@ -53,7 +53,7 @@ class NodeTimeWindowKey {
         return false;
       }
     }
-    return this->hash_code == other.hash_code;
+    return true;
   }
 };
 
@@ -72,16 +72,16 @@ class NodeTimeWindowCache {
  public:
   const PlanDatetimeRange* plan_datetime_range;
 
-  std::unordered_map<NodeTimeWindowKey*, std::vector<TimeWindow*>> pick_drop_cache;
+  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> pick_drop_cache;
 
-  std::unordered_map<NodeTimeWindowKey*, std::vector<TimeWindow*>> other_cache;
+  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> other_cache;
 
   NodeTimeWindowCache(const PlanDatetimeRange* plan_datetime_range)
       : plan_datetime_range(plan_datetime_range), pick_drop_cache(), other_cache() {}
 
   ~NodeTimeWindowCache();
 
-  std::vector<TimeWindow*> get_pick_drop_time_windows(Node* node);
+  std::vector<TimeWindow*> get_pick_drop_time_windows(const Node* node);
 
-  std::vector<TimeWindow*> get_other_time_windows(Node* node);
+  std::vector<TimeWindow*> get_other_time_windows(const Node* node);
 };

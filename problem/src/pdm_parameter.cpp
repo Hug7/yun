@@ -5,6 +5,9 @@
 
 #include "pdm_parameter.h"
 
+#include <format>
+#include <unordered_set>
+
 #include "bdm_time_window.h"
 #include "c_time_utils.h"
 
@@ -17,12 +20,56 @@ void PlanDatetimeRange::set_end_datetime(const std::string& end_datetime) {
   this->end_time = TimeParse::parse_tm_to_sec(end_datetime, TimeParse::fmt_yyyymmddhhmm_1);
 }
 
-TimeWindow* PlanDatetimeRange::create_default_time_window() {
+TimeWindow* PlanDatetimeRange::create_default_time_window() const {
   return new TimeWindow(this->start_time, this->end_time);
 }
 
+// ====== implement of CargoOrderGroupRule ======
+void CargoOrderGroupRule::set_rule(
+    std::string label_code, const std::vector<std::vector<std::string>>& label_value_code_groups) {
+  this->label = this->order_labelset->get_label(label_code);
+  this->label_ind4labelset = this->order_labelset->get_label_ind(label_code);
+  // 校验 label code 是否存在
+  if (this->label == nullptr) {
+    throw std::runtime_error(
+        std::format("CargoOrderGroupRule: label code {} not exists in order labelset", label_code));
+  }
+  if (label_value_code_groups.empty()) {
+    return;
+  }
+  // 校验 label value 是否存在
+  std::unordered_set<std::string> label_value_set;  // 标签值的集合
+  for (const auto& label_value_codes : label_value_code_groups) {
+    std::unordered_set<int> label_value_indices;
+    for (const auto& label_value_code : label_value_codes) {
+      // 校验是否存在重复的标签值
+      if (label_value_set.contains(label_value_code)) {
+        throw std::runtime_error(std::format(
+            "CargoOrderGroupRule: label value code {} is repetitive", label_value_code));
+      }
+      label_value_set.insert(label_value_code);
+      LabelValue* label_value = this->label->get_label_value(label_value_code);
+      if (label_value == nullptr) {
+        throw std::runtime_error(
+            std::format("CargoOrderGroupRule: label code {} not contains label value code {}",
+                        label_code, label_value_code));
+      }
+      label_value_indices.insert(label_value->ind);
+    }
+    this->label_value_ind_groups.push_back(label_value_indices);
+  }
+}
+
 // ====== implement of Parameter ======
-Parameter::Parameter() { this->plan_datetime_range = new PlanDatetimeRange(); }
+Parameter::Parameter(const Labelset* order_labelset) {
+  this->plan_datetime_range = new PlanDatetimeRange();
+  this->cargo_order_group_rule = new CargoOrderGroupRule(order_labelset);
+}
+
+Parameter::~Parameter() {
+  delete this->plan_datetime_range;
+  delete this->cargo_order_group_rule;
+}
 
 void Parameter::post_process(const Scenario* scenario) {
   // 根据订单时间范围，更新计划时间范围
@@ -41,5 +88,3 @@ void Parameter::post_process(const Scenario* scenario) {
     this->plan_datetime_range->end_time = max_drop_time;
   }
 }
-
-Parameter::~Parameter() { delete this->plan_datetime_range; }

@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "bdm_common.h"
@@ -54,7 +55,7 @@ class LabelValue {
    */
   const int ind;
 
-  LabelValue(const std::string& value, const int ind) : value(value), ind(ind) {};
+  LabelValue(std::string value, const int ind) : value(std::move(value)), ind(ind) {};
 };
 
 /**
@@ -65,7 +66,7 @@ class LabelValueBitset : public Bitset {
   using UPtr = std::unique_ptr<LabelValueBitset>;
   using VecUPtr = std::vector<UPtr>;
 
-  LabelValueBitset(size_t n) : Bitset(n) {};
+  LabelValueBitset(const size_t n) : Bitset(n) {};
 };
 
 /**
@@ -111,7 +112,7 @@ class Label : public Item {
    * @param value 标签属性值
    * @return 标签属性值，若不存在则返回nullptr
    */
-  LabelValue* get_label_value(const std::string& value);
+  LabelValue* get_label_value(const std::string& value) const;
 };
 
 /**
@@ -120,11 +121,12 @@ class Label : public Item {
 class LabelsetValue {
  public:
   /**
-   * @brief 标签集合值位图
+   * @brief 标签集合值
    */
   std::vector<std::unordered_map<int, LabelValue*>> label_values;
 
-  LabelsetValue(size_t n) : label_values(std::vector<std::unordered_map<int, LabelValue*>>(n)) {};
+  explicit LabelsetValue(const size_t n)
+      : label_values(std::vector<std::unordered_map<int, LabelValue*>>(n)) {};
 
   ~LabelsetValue();
 
@@ -133,7 +135,7 @@ class LabelsetValue {
    * @param label_ind4labelset 标签在labeset中的索引
    * @param label_value 标签属性值对象指针
    */
-  void add_label_value(const int label_ind4labelset, LabelValue* label_value);
+  void add_label_value(int label_ind4labelset, LabelValue* label_value);
 
   /**
    * @brief 合并标签集合值
@@ -153,7 +155,7 @@ class LabelsetValueBitset {
    */
   LabelValueBitset::VecUPtr bitsets;
 
-  LabelsetValueBitset(size_t n) : bitsets(LabelValueBitset::VecUPtr(n)) {};
+  explicit LabelsetValueBitset(size_t n) : bitsets(LabelValueBitset::VecUPtr(n)) {};
 
   /**
    * @brief 添加标签属性值到标签集合值位图
@@ -193,7 +195,7 @@ class Labelset {
    */
   int len;
 
-  Labelset() : labels(), label_ind_map(), len(0) {};
+  explicit Labelset() : labels(), label_ind_map(), len(0) {};
 
   ~Labelset();
 
@@ -204,11 +206,25 @@ class Labelset {
   void add_label(Label* label);
 
   /**
+   * @brief 判断labelset是否包含`标签编码`
+   * @param code 标签编码
+   * @return 是否存在
+   */
+  bool contains_label_code(const std::string& code) const;
+
+  /**
    * @brief 获取标签在labelset中的索引
    * @param code 标签编码
    * @return 标签索引
    */
   int get_label_ind(const std::string& code) const;
+
+  /**
+   * @brief 根据标签编码获取label
+   * @param code 标签编码
+   * @return 标签
+   */
+  Label* get_label(const std::string& code) const;
 
   /**
    * @brief 生成标签集合值类对象指针

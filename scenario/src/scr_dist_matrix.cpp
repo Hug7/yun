@@ -8,10 +8,10 @@
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
-DistMatrixManager* StandardCsvReader::loading_dist_matrix(LocationManager* location_manager) {
+DistMatrixManager* StandardCsvReader::loading_dist_matrix(LocationManager* location_manager) const {
   DistMatrixManager* dist_matrix_manager = new DistMatrixManager(location_manager->len);
   // === loading DistMatrix.csv ===
   spdlog::info("Loading {} ...", DistMatrixCodeSchema::file_name);
@@ -22,8 +22,8 @@ DistMatrixManager* StandardCsvReader::loading_dist_matrix(LocationManager* locat
   CsvUtils::check_column_exist(dist_matrix_code_doc, DistMatrixCodeSchema::headers,
                                DistMatrixCodeSchema::file_name);
 
-  int dist_matrix_code_count = dist_matrix_code_doc.GetRowCount();
-  for (int u = 0; u < dist_matrix_code_count; u++) {
+  size_t dist_matrix_code_count = dist_matrix_code_doc.GetRowCount();
+  for (size_t u = 0; u < dist_matrix_code_count; u++) {
     const std::string code = dist_matrix_code_doc.GetCell<std::string>(
         DistMatrixCodeSchema::headers[DistMatrixCodeSchema::CODE], u);
     const std::string name = dist_matrix_code_doc.GetCell<std::string>(
@@ -43,8 +43,8 @@ DistMatrixManager* StandardCsvReader::loading_dist_matrix(LocationManager* locat
   CsvUtils::check_column_exist(dist_matrix_doc, DistMatrixSchema::headers,
                                DistMatrixSchema::file_name);
 
-  int dist_matrix_count = dist_matrix_doc.GetRowCount();
-  for (int u = 0; u < dist_matrix_count; u++) {
+  size_t dist_matrix_count = dist_matrix_doc.GetRowCount();
+  for (size_t u = 0; u < dist_matrix_count; u++) {
     const std::string from_location_code = dist_matrix_doc.GetCell<std::string>(
         DistMatrixSchema::headers[DistMatrixSchema::FROM_LOCATION_CODE], u);
     const std::string to_location_code = dist_matrix_doc.GetCell<std::string>(

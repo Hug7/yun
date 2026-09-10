@@ -14,8 +14,8 @@
 #include "pdm_load.h"
 #include "pdm_order.h"
 #include "pdm_parameter.h"
-#include "pr_policy.h"
-#include "pr_pattern.h"
+#include "prob_pattern.h"
+#include "prob_policy.h"
 #include "sc_manager.h"
 #include "se_scenario.h"
 
@@ -39,7 +39,7 @@ class Problem {
 
   Problem(const Scenario* scenario, Parameter* parameter);
 
-  ~Problem();
+  virtual ~Problem();
 
   /**
    * @brief evaluate all constraints
@@ -50,7 +50,7 @@ class Problem {
   /**
    * @brief check cargo order feasibility
    */
-  virtual InfeasibleCargoOrder::UPtr check_feasibility(const CargoOrder* cargo_order);
+  virtual InfeasibleCargoOrder::UPtr check_feasibility(CargoOrder* cargo_order);
   /**
    * @brief construct a new Load object for best vehicle
    */

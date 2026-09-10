@@ -13,7 +13,11 @@
 #include "bdm_location.h"
 #include "bdm_time_window.h"
 #include "pdm_parameter.h"
+#include "se_scenario.h"
 
+/**
+ * @brief 订单-problem层
+ */
 class Order {
  public:
   /**
@@ -23,7 +27,7 @@ class Order {
   /**
    * @brief cargo orders
    */
-  std::vector<const CargoOrder*> cargo_orders;
+  std::vector<CargoOrder*> cargo_orders;
   /**
    * @brief pick location
    */
@@ -73,51 +77,36 @@ class Order {
    */
   Bitset::UPtr available_vehicle_bitset;
 
-  Order(PlanDatetimeRange* plan_datetime_range, const int ind,
-        std::vector<const CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
+  Order(const PlanDatetimeRange* plan_datetime_range, int ind,
+        std::vector<CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
         LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
         Bitset::UPtr available_vehicle_bitset);
 
-  Order(PlanDatetimeRange* plan_datetime_range, std::vector<const CargoOrder*>& cargo_orders,
-        std::vector<long>& dim_vals, LabelsetValue* labelset_value,
-        LabelsetValueBitset::UPtr labelset_value_bitset, Bitset::UPtr available_vehicle_bitset)
-      : Order(plan_datetime_range, -1, cargo_orders, dim_vals, labelset_value,
-              std::move(labelset_value_bitset), std::move(available_vehicle_bitset)) {};
-
   ~Order();
 
-  std::vector<TimeWindow*> copy_pick_time_windows() const;
+  [[nodiscard]] std::vector<TimeWindow*> copy_pick_time_windows() const;
 
-  std::vector<TimeWindow*> copy_drop_time_windows() const;
+  [[nodiscard]] std::vector<TimeWindow*> copy_drop_time_windows() const;
 };
 
-class OrderManager {
- public:
-  /**
-   * @brief order list
-   */
-  std::vector<Order*> orders;
-  /**
-   * @brief generate index util
-   */
-  std::unique_ptr<GenerateIndex> generate_index;
-  /**
-   * @brief number of orders
-   */
-  int len;
-  /**
-   * @brief order labelset
-   */
-  const Labelset* labelset;
-  /**
-   * @brief dimension manager
-   */
-  const DimensionManager* dimension_manager;
-
-  OrderManager(const Labelset* labelset, const DimensionManager* dimension_manager)
-      : orders(),
-        generate_index(std::make_unique<GenerateIndex>()),
-        len(0),
-        labelset(labelset),
-        dimension_manager(dimension_manager) {};
-};
+namespace OrderFactory {
+/**
+ * @brief 创建order
+ * @param cargo_orders cargo order列表
+ * @param ind order的索引
+ * @param plan_datetime_range 规划时间范围
+ * @param scenario 场景
+ * @return order对象指针
+ */
+Order* creat_order(std::vector<CargoOrder*>& cargo_orders, int ind,
+                   const PlanDatetimeRange* plan_datetime_range, const Scenario* scenario);
+/**
+ * @brief 创建临时order
+ * @param cargo_orders cargo order列表
+ * @param plan_datetime_range 规划时间范围
+ * @param scenario 场景
+ * @return 临时order对象指针
+ */
+Order* creat_tmp_order(std::vector<CargoOrder*>& cargo_orders,
+                       const PlanDatetimeRange* plan_datetime_range, const Scenario* scenario);
+}  // namespace OrderFactory

@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "pr_problem.h"
+#include "prob_problem.h"
 
 #include <memory>
 
 #include "pdm_order.h"
-#include "pr_policy.h"
+#include "prob_policy.h"
 
 // ====== implement of Problem ======
 Problem::Problem(const Scenario* scenario, Parameter* parameter)
@@ -33,7 +33,7 @@ Problem::Problem(const Scenario* scenario, Parameter* parameter)
   this->cc_manager = new CostConstraintManager();
 }
 
-Problem::~Problem() { delete this->parameter; }
+Problem::~Problem() {}
 
 void Problem::eval_load(Load* load) {
   // todo 是否需要重置待讨论
@@ -69,20 +69,11 @@ LoadConstrProfile::UPtr Problem::tmp_eval_load(Load* load) {
   return constr_profile;
 }
 
-InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_order) {
+InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) {
   // construct order
-  auto dim_vals = scenario->dim_manager->empty_dim_values();
-  auto labelset_value = scenario->label_manager->order_labelset->empty_labelset_value();
-  auto labelset_value_bitset =
-      scenario->label_manager->order_labelset->empty_labelset_value_bitset();
-  auto cargo_orders = std::vector<const CargoOrder*>({
-      cargo_order,
-  });
-  auto available_vehicle_bitset = scenario->carrier_manager->full_vehicle_bitset();
-
+  auto cargo_orders = std::vector<CargoOrder*>({cargo_order});
   Order* order =
-      new Order(this->parameter->plan_datetime_range, cargo_orders, dim_vals, labelset_value,
-                std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
+      OrderFactory::creat_tmp_order(cargo_orders, parameter->plan_datetime_range, scenario);
   auto orders = std::vector<Order*>({order});
 
   auto infeasible_cargo_order = std::make_unique<InfeasibleCargoOrder>(cargo_orders);
@@ -94,7 +85,7 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(const CargoOrder* cargo_or
     // check vehicle resource
     if (vehicle->unusable()) {
       infeasible_cargo_order->record_vehicle_infeasible_reasons(
-          InfeasibleReasonCollection::VEHICLE_REOURCE, vehicle);
+          InfeasibleReasonCollection::VEHICLE_RESOURCE, vehicle);
       continue;
     }
     auto cur_load = this->construct_load_by_order(orders, vehicle);

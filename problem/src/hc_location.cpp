@@ -42,6 +42,8 @@ HardConstrScore::UPtr HcAvailableVehicle::eval(Load* load) {
 
 // ====== implement of HcTimeWindow ======
 HardConstrScore::UPtr HcTimeWindow::eval(Load* load) {
+  // 更新站点间距离和时间
+  load->update_node_dist_time();
   // 更新并时间窗
   load->update_time_window();
 

@@ -12,8 +12,9 @@
 #include "bdm_time_window_utils.h"
 #include "c_constant.h"
 
-Order::Order(PlanDatetimeRange* plan_datetime_range, const int ind,
-             std::vector<const CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
+// ====== implement of Order ======
+Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
+             std::vector<CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
              LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
              Bitset::UPtr available_vehicle_bitset)
     : ind(ind) {
@@ -25,7 +26,7 @@ Order::Order(PlanDatetimeRange* plan_datetime_range, const int ind,
   this->drop_time_windows.push_back(plan_datetime_range->create_default_time_window());
 
   for (const auto cargo_order : cargo_orders) {
-    // process pick time window
+    // process order pick time window
     std::vector<TimeWindow*> tmp_pick_time_windows;
     TimeWindow* cur_pick_tw = cargo_order->pick_time_window;
     for (auto& ptw : this->pick_time_windows) {
@@ -38,7 +39,7 @@ Order::Order(PlanDatetimeRange* plan_datetime_range, const int ind,
       delete tw;
     }
     this->pick_time_windows = tmp_pick_time_windows;
-    // process drop time window
+    // process order drop time window
     std::vector<TimeWindow*> tmp_drop_time_windows;
     TimeWindow* cur_drop_tw = cargo_order->drop_time_window;
     for (auto& dtw : this->drop_time_windows) {
@@ -52,26 +53,33 @@ Order::Order(PlanDatetimeRange* plan_datetime_range, const int ind,
     }
     this->drop_time_windows = tmp_drop_time_windows;
   }
+  this->pick_time_windows_len = this->pick_time_windows.size();
+  this->drop_time_windows_len = this->drop_time_windows.size();
   // intersection pick and drop time windows for location calendar
   Calendar* pick_calendar = this->pick_loc->work_plan->pick_calendar;
+  if (pick_calendar != nullptr) {
+    std::vector<TimeWindow*> res_pick_time_windows;
+    for (auto& tw : this->pick_time_windows) {
+      std::vector<TimeWindow*> extend_tws = pick_calendar->intersection(tw);
+      res_pick_time_windows.insert(res_pick_time_windows.end(), extend_tws.begin(),
+                                   extend_tws.end());
+      delete tw;
+    }
+    this->pick_time_windows = TimeWindowUntils::merge_time_windows(res_pick_time_windows);
+    this->pick_time_windows_len = this->pick_time_windows.size();
+  }
   Calendar* drop_calendar = this->drop_loc->work_plan->drop_calendar;
-  std::vector<TimeWindow*> res_pick_time_windows;
-  for (auto& tw : this->pick_time_windows) {
-    std::vector<TimeWindow*> extend_tws = pick_calendar->intersection(tw);
-    res_pick_time_windows.insert(res_pick_time_windows.end(), extend_tws.begin(), extend_tws.end());
-    delete tw;
+  if (drop_calendar != nullptr) {
+    std::vector<TimeWindow*> res_drop_time_windows;
+    for (auto& tw : this->drop_time_windows) {
+      std::vector<TimeWindow*> extend_tws = drop_calendar->intersection(tw);
+      res_drop_time_windows.insert(res_drop_time_windows.end(), extend_tws.begin(),
+                                   extend_tws.end());
+      delete tw;
+    }
+    this->drop_time_windows = TimeWindowUntils::merge_time_windows(res_drop_time_windows);
+    this->drop_time_windows_len = this->drop_time_windows.size();
   }
-  this->pick_time_windows = TimeWindowUntils::merge_time_windows(res_pick_time_windows);
-  this->pick_time_windows_len = this->pick_time_windows.size();
-
-  std::vector<TimeWindow*> res_drop_time_windows;
-  for (auto& tw : this->drop_time_windows) {
-    std::vector<TimeWindow*> extend_tws = drop_calendar->intersection(tw);
-    res_drop_time_windows.insert(res_drop_time_windows.end(), extend_tws.begin(), extend_tws.end());
-    delete tw;
-  }
-  this->drop_time_windows = TimeWindowUntils::merge_time_windows(res_drop_time_windows);
-  this->drop_time_windows_len = this->drop_time_windows.size();
 
   // accumulate sub cargo order
   // 1. accumulate the dim values
@@ -81,11 +89,11 @@ Order::Order(PlanDatetimeRange* plan_datetime_range, const int ind,
   this->labelset_value = labelset_value;
   this->labelset_value_bitset = std::move(labelset_value_bitset);
   this->available_vehicle_bitset = std::move(available_vehicle_bitset);
-  const int dim_vals_len = this->dim_vals.size();
+  const size_t dim_vals_len = this->dim_vals.size();
   for (const auto& cargo_order : cargo_orders) {
     for (const auto& sub_order : cargo_order->sub_orders) {
       // accumulate the dim values
-      for (int u = 0; u < dim_vals_len; u++) {
+      for (size_t u = 0; u < dim_vals_len; u++) {
         this->dim_vals[u] += sub_order->dim_vals[u];
       }
       // accumulate labelset value
@@ -136,4 +144,22 @@ std::vector<TimeWindow*> Order::copy_drop_time_windows() const {
     copy_tws[u] = new TimeWindow(this->drop_time_windows[u]);
   }
   return copy_tws;
+}
+
+// ====== implement of OrderFactory ======
+Order* OrderFactory::creat_order(std::vector<CargoOrder*>& cargo_orders, int ind,
+                                 const PlanDatetimeRange* plan_datetime_range,
+                                 const Scenario* scenario) {
+  auto dim_vals = scenario->dim_manager->empty_dim_values();
+  auto labelset_value = scenario->label_manager->order_labelset->empty_labelset_value();
+  auto labelset_value_bitset = scenario->label_manager->order_labelset->empty_labelset_value_bitset();
+  auto available_vehicle_bitset = scenario->carrier_manager->full_vehicle_bitset();
+
+  return new Order(plan_datetime_range, ind, cargo_orders, dim_vals, labelset_value, std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
+}
+
+Order* OrderFactory::creat_tmp_order(std::vector<CargoOrder*>& cargo_orders,
+                                     const PlanDatetimeRange* plan_datetime_range,
+                                     const Scenario* scenario) {
+  return creat_order(cargo_orders, -1, plan_datetime_range, scenario);
 }

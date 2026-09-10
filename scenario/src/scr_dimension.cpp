@@ -3,15 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <spdlog/spdlog.h>
+
 #include <string>
 
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
-DimensionManager* StandardCsvReader::loading_dimension() {
+DimensionManager* StandardCsvReader::loading_dimension() const {
   spdlog::info("Loading {} ...", DimensionSchema::file_name);
   const std::string dimension_file_path = this->root_dir + "/" + DimensionSchema::file_name;
   FileUtils::file_exists(dimension_file_path, DimensionSchema::file_name);
@@ -19,8 +21,8 @@ DimensionManager* StandardCsvReader::loading_dimension() {
   CsvUtils::check_column_exist(dim_doc, DimensionSchema::headers, DimensionSchema::file_name);
 
   DimensionManager* dimension_manager = new DimensionManager();
-  int row_count = dim_doc.GetRowCount();
-  for (int u = 0; u < row_count; u++) {
+  size_t row_count = dim_doc.GetRowCount();
+  for (size_t u = 0; u < row_count; u++) {
     const std::string dimension_code =
         dim_doc.GetCell<std::string>(DimensionSchema::headers[DimensionSchema::CODE], u);
     const std::string dimension_name =

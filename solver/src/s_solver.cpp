@@ -5,85 +5,35 @@
 
 #include "s_solver.h"
 
-#include <memory>
-#include <vector>
-
 #include <spdlog/spdlog.h>
 
-#include "cc_dist.h"
-#include "pdm_infeasible_order.h"
-#include "hc_label.h"
-#include "hc_location.h"
-#include "hc_vehicle.h"
-#include "pr_problem.h"
-#include "sc_dist.h"
-#include "scr_standard_csv_reader.h"
+#include "s_precheck.h"
+#include "pdm_order_pool.h"
 
 // ====== implement of Load Solver ======
+Solver::Solver(std::string root_dir) {
+  this->solver_context = new SolverContext(std::move(root_dir));
+}
+
 Solver::~Solver() {
-  // release scenario
-  delete this->scenario;
+  // release context
+  delete this->solver_context;
 }
 
-void Solver::load_scenario() {
-  auto reader = std::make_unique<StandardCsvReader>(this->roo_dir);
-  this->scenario = reader->loading_scenario();
-}
-
-void Solver::load_parameter() {
-  this->parameter = new Parameter();
-  // TODO 实现读取参数
-
-  // 参数后处理
-  this->parameter->post_process(this->scenario);
-}
-
-void Solver::create_problem() {
-  // TODO 先默认创建 VRP
-  this->problem = new Problem(this->scenario, this->parameter);
-
-  // hard constraints: base
-  this->problem->hc_manager->add_constr(new HcVehicleCapacity());
-  this->problem->hc_manager->add_constr(new HcAvailableVehicle());
-
-  // add hard constraints by scenario
-  auto parameter = this->problem->parameter;
-  // -- hard constraints: max pick node count
-  if (parameter->time_window_constr_enabled) {
-    this->problem->hc_manager->add_constr(new HcTimeWindow());
+void Solver::solve() const {
+  // precheck, 发现不可解的订单则
+  const auto solver_precheck = new SolverPrecheck(this->solver_context);
+  const bool can_continue_flag = solver_precheck->call();
+  delete solver_precheck;
+  if (!can_continue_flag) {
+    return;
   }
-  // -- hard constraints: max drop node count
-  if (parameter->max_pick_node_count > HardConstraintParameter::DEFAULT_MAX_PICK_NODE_COUNT) {
-    this->problem->hc_manager->add_constr(new HcMaxPickNodeCount(parameter->max_pick_node_count));
-  }
-  // -- hard constraints: max pick node count
-  if (parameter->max_drop_node_count > HardConstraintParameter::DEFAULT_MAX_DROP_NODE_COUNT) {
-    this->problem->hc_manager->add_constr(new HcMaxDropNodeCount(parameter->max_drop_node_count));
-  }
-  // soft constraints
-  if (parameter->sc_constr_dist_factor > SoftConstraintParameter::SC_DIST_DEFAULT_DIST_FACTOR) {
-    this->problem->sc_manager->add_constr(new ScDist(parameter->sc_constr_dist_factor));
-  }
-  // cost constraints
-  // -- cost constraints: dist
-  if (parameter->cc_constr_dist_factor > CostConstraintParameter::CC_DIST_DEFAULT_DIST_FACTOR) {
-    this->problem->cc_manager->add_constr(new CcDist(parameter->cc_constr_dist_factor));
-  }
-}
+  // 构造订单池
+  OrderPool* order_pool = new OrderPool(this->solver_context);
+  // 求解
 
-bool Solver::precheck() {
-  this->infeasible_cargo_orders = std::vector<InfeasibleCargoOrder::UPtr>();
-  for (const auto& cargo_order : this->scenario->cargo_order_manager->cargo_orders) {
-    auto infeasible_cargo_order = this->problem->check_feasibility(cargo_order);
-    if (infeasible_cargo_order == nullptr) {
-      continue;
-    }
-    this->infeasible_cargo_orders.push_back(std::move(infeasible_cargo_order));
-  }
+  // 结果转换并导出
 
-  if (!this->infeasible_cargo_orders.empty()) {
-      spdlog::warn("number of cargo orders {} are infeasible!", this->infeasible_cargo_orders.size());
-  }
-  
-  return this->infeasible_cargo_orders.empty();
+  // create a new plan
+  // Plan* plan = new Plan(this->scenario);
 }

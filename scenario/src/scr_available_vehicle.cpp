@@ -10,11 +10,11 @@
 #include "c_csv_utils.h"
 #include "c_file_utils.h"
 #include "c_rapidcsv.h"
-#include "se_schema.h"
 #include "scr_standard_csv_reader.h"
+#include "se_schema.h"
 
 void StandardCsvReader::loading_available_vehicle(CarrierManager* carrier_manager,
-                                                  LocationManager* location_manager) {
+                                                  LocationManager* location_manager) const {
   // === loading LocationAvailableVehicle.csv ===
   spdlog::info("Loading {} ...", LocationAvailableVehicleSchema::file_name);
   const std::string location_available_vehicle_file_path =
@@ -29,8 +29,8 @@ void StandardCsvReader::loading_available_vehicle(CarrierManager* carrier_manage
   // 站点可用车型的集合
   std::unordered_map<std::string, AvailableVehicle*> loc_available_vehicle_map;
 
-  int location_available_vehicle_count = location_available_vehicle_doc.GetRowCount();
-  for (int u = 0; u < location_available_vehicle_count; u++) {
+  size_t location_available_vehicle_count = location_available_vehicle_doc.GetRowCount();
+  for (size_t u = 0; u < location_available_vehicle_count; u++) {
     const std::string location_code = location_available_vehicle_doc.GetCell<std::string>(
         LocationAvailableVehicleSchema::headers[LocationAvailableVehicleSchema::LOCATION_CODE], u);
     const std::string carrier_code = location_available_vehicle_doc.GetCell<std::string>(
