@@ -16,7 +16,7 @@ LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager
   LocationManager* location_manager =
       new LocationManager(label_manager->location_labelset, dim_manager);
   // === loading Location.csv ===
-  spdlog::info("Loading {} ...", LocationSchema::file_name);
+  this->logger->info("Loading {} ...", LocationSchema::file_name);
   const std::string location_file_name =
       this->root_dir + "/" + std::string(LocationSchema::file_name);
   FileUtils::file_exists(location_file_name, LocationSchema::file_name);
@@ -41,11 +41,11 @@ LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager
     location_manager->create_location(location_code, location_name, lat, lng);
   }
   location_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                LocationSchema::file_name, location_count);
 
   // === loading LocationLabelValue.csv ===
-  spdlog::info("Loading {} ...", LocationLabelValueSchema::file_name);
+  this->logger->info("Loading {} ...", LocationLabelValueSchema::file_name);
   const std::string location_label_value_file_name =
       this->root_dir + "/" + std::string(LocationLabelValueSchema::file_name);
   FileUtils::file_exists(location_label_value_file_name, LocationLabelValueSchema::file_name);
@@ -87,7 +87,7 @@ LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager
     location->add_label_value(label_ind4labelset, label_value_ptr);
   }
   location_label_value_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                LocationLabelValueSchema::file_name, location_label_value_count);
 
   return location_manager;

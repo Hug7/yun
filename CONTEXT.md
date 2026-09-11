@@ -60,3 +60,9 @@ Load 的 Node 链的起点或终点。由 Vehicle 的 origin_loc / dest_loc 决�
 
 **Constraint Score**（约束评分）:
 三重约束体系——硬约束（HardConstrScore：不可违反，违规则不可行）、软约束（SoftConstrScore：可违反但有惩罚）、成本约束（CostConstrScore：计入目标函数）。每个 Score 携带编码（code）、权重（weight）和值（value），聚合在 Load 的 LoadAttrConstraint 中。
+
+### 求解上下文
+
+**Request**（请求）:
+一次求解的运行实例，由 `request_id`（`%Y%m%d%H%M%S_{进程标识}_{序号}`）标识。本次请求产生的全部产物（可视化文件、日志）都落在以它命名的输出目录里。
+_Avoid_: 运行、会话、任务

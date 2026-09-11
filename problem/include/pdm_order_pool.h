@@ -5,12 +5,10 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 
-#include "bdm_common.h"
-#include "pdm_order.h"
 #include "pdm_context.h"
+#include "pdm_order.h"
 
 /**
  * @brief 订单池-problem层
@@ -23,13 +21,11 @@ class OrderPool {
    */
   std::vector<Order*> orders;
   /**
-   * @brief 订单索引生成器
-   */
-  std::unique_ptr<GenerateIndex> generate_index;
-  /**
    * @brief 订单数量
    */
   int len;
 
   explicit OrderPool(const SolverContext* context);
+
+  ~OrderPool();
 };

@@ -49,7 +49,7 @@ void parse_time_range_and_update_calendar(const std::string& str_time, Calendar*
 void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
                                           DimensionManager* dimension_manager) const {
   // === loading WorkFixed.csv ===
-  spdlog::info("Loading {} ...", WorkFixedSchema::file_name);
+  this->logger->info("Loading {} ...", WorkFixedSchema::file_name);
   const std::string work_fixed_file_path = this->root_dir + "/" + WorkFixedSchema::file_name;
   FileUtils::file_exists(work_fixed_file_path, WorkFixedSchema::file_name);
   rapidcsv::Document work_fixed_doc(work_fixed_file_path);
@@ -73,11 +73,11 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
     location->work_plan->set_fixed_drop_time(fixed_drop_time);
   }
   work_fixed_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                WorkFixedSchema::file_name, work_plan_count);
 
   // === loading WorkEffectSchema.csv ===
-  spdlog::info("Loading {} ...", WorkEffectSchema::file_name);
+  this->logger->info("Loading {} ...", WorkEffectSchema::file_name);
   const std::string work_effect_file_path = this->root_dir + "/" + WorkEffectSchema::file_name;
   FileUtils::file_exists(work_effect_file_path, WorkEffectSchema::file_name);
   rapidcsv::Document work_effect_doc(work_effect_file_path);
@@ -113,11 +113,11 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
     location->work_plan->work_effect->add(dim, activity_type.value(), per_hour_process_quantity);
   }
   work_effect_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                WorkEffectSchema::file_name, work_effect_count);
 
   // === WorkCalendarDay.csv ===
-  spdlog::info("Loading {} ...", WorkCalendarDailySchema::file_name);
+  this->logger->info("Loading {} ...", WorkCalendarDailySchema::file_name);
   const std::string work_calendar_daily_file_path =
       this->root_dir + "/" + WorkCalendarDailySchema::file_name;
   FileUtils::file_exists(work_calendar_daily_file_path, WorkCalendarDailySchema::file_name);
@@ -154,7 +154,7 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
     location->work_plan->set_calendar(calendar, calendar_type_enum);
   }
   work_calendar_daily_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                WorkCalendarDailySchema::file_name, work_calendar_daily_count);
 
   // === WorkCalendarWeek.csv ===
@@ -211,6 +211,6 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
     location->work_plan->set_calendar(calendar, calendar_type_enum);
   }
   work_calendar_weekly_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                WorkCalendarWeeklySchema::file_name, work_calendar_week_count);
 }

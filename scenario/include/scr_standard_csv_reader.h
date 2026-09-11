@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <spdlog/spdlog.h>
+
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -19,6 +22,10 @@ class StandardCsvReader {
    * @brief 根目录
    */
   const std::string root_dir;
+  /**
+   * @brief 日志器，由 SolverContext 传入，本次请求专属
+   */
+  const std::shared_ptr<spdlog::logger> logger;
   /**
    * @brief 读取维度
    * @return DimensionManager* 维度管理器
@@ -92,7 +99,8 @@ class StandardCsvReader {
                          DimensionManager* dimension_manager) const;
 
  public:
-  explicit StandardCsvReader(std::string root_dir) : root_dir(std::move(root_dir)) {}
+  explicit StandardCsvReader(std::string root_dir, std::shared_ptr<spdlog::logger> logger)
+      : root_dir(std::move(root_dir)), logger(std::move(logger)) {}
 
   /**
    * @brief 加载场景

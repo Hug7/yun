@@ -88,3 +88,7 @@ void Parameter::post_process(const Scenario* scenario) {
     this->plan_datetime_range->end_time = max_drop_time;
   }
 }
+
+void Parameter::set_strategy_file_name(const std::string& file_name) {
+  this->strategy_file_name = file_name;
+};

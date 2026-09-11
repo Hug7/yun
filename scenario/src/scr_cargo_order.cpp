@@ -19,7 +19,7 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
   CargoOrderManager* cargo_order_manager =
       new CargoOrderManager(label_manager->order_labelset, dimension_manager);
   // === loading CargoOrder.csv ===
-  spdlog::info("Loading {} ...", CargoOrderSchema::file_name);
+  this->logger->info("Loading {} ...", CargoOrderSchema::file_name);
   const std::string cargo_order_file_path = this->root_dir + "/" + CargoOrderSchema::file_name;
   FileUtils::file_exists(cargo_order_file_path, CargoOrderSchema::file_name);
   rapidcsv::Document cargo_order_doc(cargo_order_file_path);
@@ -92,7 +92,7 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
     cargo_order->set_drop_time_window(new TimeWindow(earliest_drop_time_sec, latest_drop_time_sec));
   }
   cargo_order_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                CargoOrderSchema::file_name, cargo_order_count);
 
   // === loading CargoSubOrder.csv ===
@@ -129,7 +129,7 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
                                                 cargo_sub_order_name, quantity);
   }
   cargo_sub_order_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                CargoSubOrderSchema::file_name, cargo_sub_order_count);
 
   // === loading CargoSubOrderDimensionValue.csv ===
@@ -179,11 +179,11 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
     cargo_sub_order->update_dim_value(dimension, dimension_value);
   }
   cargo_sub_order_dimension_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                CargoSubOrderDimensionValueSchema::file_name, cargo_sub_order_dimension_count);
 
   // === loading CargoSubOrderLabelValue.csv ===
-  spdlog::info("Loading {} ...", CargoSubOrderLabelValueSchema::file_name);
+  this->logger->info("Loading {} ...", CargoSubOrderLabelValueSchema::file_name);
   const std::string cargo_sub_order_label_value_file_path =
       this->root_dir + "/" + CargoSubOrderLabelValueSchema::file_name;
   FileUtils::file_exists(cargo_sub_order_label_value_file_path,
@@ -231,7 +231,7 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
     cargo_sub_order->update_labelset_value(label_ind4labelset, label_value);
   }
   cargo_sub_order_label_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                CargoSubOrderLabelValueSchema::file_name, cargo_sub_order_label_count);
 
   return cargo_order_manager;

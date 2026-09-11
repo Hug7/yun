@@ -14,9 +14,15 @@ class Solver {
   /**
    * @brief solver上下文
    */
-  SolverContext* solver_context;
+  SolverContext* context;
 
-  explicit Solver(std::string root_dir);
+  /**
+   * @brief 构造solver
+   * @param root_dir 文件根目录
+   * @param log_dir 全局日志目录
+   * @param log_level 日志等级
+   */
+  explicit Solver(std::string root_dir, const std::string& log_dir, const std::string& log_level);
 
   ~Solver();
 

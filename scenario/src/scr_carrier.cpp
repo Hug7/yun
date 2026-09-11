@@ -15,7 +15,7 @@ CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) 
   CarrierManager* carrier_manager = new CarrierManager(label_manager->carrier_labelset);
 
   // === loading Carrier.csv ===
-  spdlog::info("Loading {} ...", CarrierSchema::file_name);
+  this->logger->info("Loading {} ...", CarrierSchema::file_name);
   const std::string carrier_file_path = this->root_dir + "/" + CarrierSchema::file_name;
   FileUtils::file_exists(carrier_file_path, CarrierSchema::file_name);
   rapidcsv::Document carrier_doc(carrier_file_path);
@@ -31,11 +31,11 @@ CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) 
     carrier_manager->create_carrier(carrier_code, carrier_name);
   }
   carrier_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                CarrierSchema::file_name, carrier_count);
 
   // === loading CarrierLabelValue.csv ===
-  spdlog::info("Loading {} ...", CarrierLabelValueSchema::file_name);
+  this->logger->info("Loading {} ...", CarrierLabelValueSchema::file_name);
   const std::string carrier_label_value_file_path =
       this->root_dir + "/" + CarrierLabelValueSchema::file_name;
   FileUtils::file_exists(carrier_label_value_file_path, CarrierLabelValueSchema::file_name);
@@ -79,7 +79,7 @@ CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) 
     carrier->update_labelset_value(label_ind4labelset, label_value_ptr);
   }
   carrier_label_value_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                CarrierLabelValueSchema::file_name, carrier_label_value_count);
 
   return carrier_manager;

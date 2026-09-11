@@ -14,7 +14,7 @@
 #include "se_schema.h"
 
 DimensionManager* StandardCsvReader::loading_dimension() const {
-  spdlog::info("Loading {} ...", DimensionSchema::file_name);
+  this->logger->info("Loading {} ...", DimensionSchema::file_name);
   const std::string dimension_file_path = this->root_dir + "/" + DimensionSchema::file_name;
   FileUtils::file_exists(dimension_file_path, DimensionSchema::file_name);
   rapidcsv::Document dim_doc(dimension_file_path);
@@ -33,7 +33,7 @@ DimensionManager* StandardCsvReader::loading_dimension() const {
     dimension_manager->create_dimension(dimension_code, dimension_name, percision);
   }
   dim_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                DimensionSchema::file_name, row_count);
 
   return dimension_manager;

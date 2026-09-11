@@ -15,7 +15,7 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
     DimensionManager* dimension_manager, LabelManager* label_manager,
     DistMatrixManager* dist_matrix_manager) const {
   // === loading VehicleModel.csv ===
-  spdlog::info("Loading {} ...", VehicleModelSchema::file_name);
+  this->logger->info("Loading {} ...", VehicleModelSchema::file_name);
   const std::string vehicle_model_file_path = this->root_dir + "/" + VehicleModelSchema::file_name;
   FileUtils::file_exists(vehicle_model_file_path, VehicleModelSchema::file_name);
   rapidcsv::Document vehicle_model_doc(vehicle_model_file_path);
@@ -42,11 +42,11 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
                                                 dist_matrix_code, dist_matrix);
   }
   vehicle_model_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                VehicleModelSchema::file_name, vehicle_model_count);
 
   // === loading VehicleModelDimensionValue.csv ===
-  spdlog::info("Loading {} ...", VehicleModelDimensionValueSchema::file_name);
+  this->logger->info("Loading {} ...", VehicleModelDimensionValueSchema::file_name);
   const std::string vehicle_model_dim_val_file_path =
       this->root_dir + "/" + VehicleModelDimensionValueSchema::file_name;
   FileUtils::file_exists(vehicle_model_dim_val_file_path,
@@ -85,11 +85,11 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
     vehicle_model->update_dim_value(dimension, dimension_value);
   }
   vehicle_model_dim_val_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                VehicleModelDimensionValueSchema::file_name, vehicle_model_dim_val_count);
 
   // === loading VehicleModelDimensionValue.csv ===
-  spdlog::info("Loading {} ...", VehicleModelLabelValueSchema::file_name);
+  this->logger->info("Loading {} ...", VehicleModelLabelValueSchema::file_name);
   const std::string vehicle_model_label_value_file_path =
       root_dir + "/" + VehicleModelLabelValueSchema::file_name;
   FileUtils::file_exists(vehicle_model_label_value_file_path,
@@ -135,7 +135,7 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
     vehicle_model->update_labelset_value(label_ind4labelset, label_value);
   }
   vehicle_model_label_value_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                VehicleModelLabelValueSchema::file_name, vehicle_model_label_value_count);
 
   return vehicle_model_manager;

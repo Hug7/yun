@@ -6,6 +6,7 @@
 #include "pdm_order_pool.h"
 
 #include <algorithm>
+#include <memory>
 #include <ranges>
 #include <unordered_map>
 #include <unordered_set>
@@ -117,8 +118,8 @@ std::vector<std::vector<CargoOrder*>> cargo_orders_group_by_label(
  * @return 合并后的order
  */
 std::vector<Order*> merge_cargo_orders_to_orders(
-    std::vector<CargoOrder*>& cargo_orders, std::unique_ptr<GenerateIndex>& order_generate_index,
-    const SolverContext* context) {
+    std::vector<CargoOrder*>& cargo_orders,
+    const std::unique_ptr<GenerateIndex>& order_generate_index, const SolverContext* context) {
   const int ind = order_generate_index->next();
   Order* order = OrderFactory::creat_order(
       cargo_orders, ind, context->parameter->plan_datetime_range, context->scenario);
@@ -127,8 +128,7 @@ std::vector<Order*> merge_cargo_orders_to_orders(
 }
 
 // ====== implement of OrderPool ======
-OrderPool::OrderPool(const SolverContext* context)
-    : orders(), generate_index(std::make_unique<GenerateIndex>()), len(0) {
+OrderPool::OrderPool(const SolverContext* context) : orders(), len(0) {
   /**
    * 合并cargo order规则
    * 1. cargo order的提货站点和卸货站点必须相同；
@@ -137,6 +137,7 @@ OrderPool::OrderPool(const SolverContext* context)
    * 2.2 指定label value组合合并, e.g. [A, B], [C, D]；
    * 3. 最重要的合并后要有可行解，要能被最小可用车型配送，也就是说合并变成最小化分组数量的多背包问题
    */
+
   // step 1: 按照提货和卸货站点对cargo order集合分组
   auto cargo_order_groups = cargo_orders_group_by_loc(
       context->scenario->cargo_order_manager->cargo_orders, context->scenario->location_manager);
@@ -144,10 +145,17 @@ OrderPool::OrderPool(const SolverContext* context)
   cargo_order_groups = cargo_orders_group_by_label(std::move(cargo_order_groups),
                                                    context->parameter->cargo_order_group_rule);
   // step 3: 合并cargo order
+  auto order_generate_index = std::make_unique<GenerateIndex>();  // 订单索引生成器
   for (auto& cargo_orders : cargo_order_groups) {
     auto tmp_cargo_orders =
-        merge_cargo_orders_to_orders(cargo_orders, this->generate_index, context);
+        merge_cargo_orders_to_orders(cargo_orders, order_generate_index, context);
     this->orders.insert(this->orders.end(), tmp_cargo_orders.begin(), tmp_cargo_orders.end());
   }
   this->len = static_cast<int>(this->orders.size());
+}
+
+OrderPool::~OrderPool() {
+  for (const auto& order : this->orders) {
+    delete order;
+  }
 }

@@ -26,6 +26,10 @@ target_include_directories(yun_solver
 # 4. linked dependencies
 target_link_libraries(yun_solver PUBLIC yun_common yun_scenario yun_problem)
 
+find_package(lua CONFIG REQUIRED)
+find_package(sol2 CONFIG REQUIRED)
+target_link_libraries(yun_solver PRIVATE sol2::sol2 lua::lua)
+
 # 5. install
 install(TARGETS yun_solver
     EXPORT yunConfig

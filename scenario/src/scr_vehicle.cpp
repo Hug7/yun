@@ -15,7 +15,7 @@ void StandardCsvReader::loading_vehicle(CarrierManager* carrier_manager,
                                         VehicleModelManager* vehicle_model_manager,
                                         LocationManager* location_manager) const {
   // === loading Vehicle.csv ===
-  spdlog::info("Loading {} ...", VehicleSchema::file_name);
+  this->logger->info("Loading {} ...", VehicleSchema::file_name);
   const std::string vehicle_file_path = this->root_dir + "/" + VehicleSchema::file_name;
   FileUtils::file_exists(vehicle_file_path, VehicleSchema::file_name);
   rapidcsv::Document vehicle_doc(vehicle_file_path);
@@ -66,6 +66,6 @@ void StandardCsvReader::loading_vehicle(CarrierManager* carrier_manager,
     carrier_manager->create_vehicle(carrier_code, vehicle_model, count, orig_loc, dest_loc);
   }
   vehicle_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                VehicleSchema::file_name, vehicle_count);
 }

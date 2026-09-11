@@ -473,14 +473,19 @@ function(conan_install)
     set(conan_output_folder ${CMAKE_BINARY_DIR}/conan)
     # Invoke "conan install" with the provided arguments
     set(conan_args -of=${conan_output_folder})
-    message(STATUS "CMake-Conan: conan install ${CMAKE_SOURCE_DIR} ${conan_args} ${ARGN}")
+    list(JOIN ARGN " " argn_str)
+    message(STATUS "CMake-Conan: conan install ${CMAKE_SOURCE_DIR} ${conan_args} ${argn_str}")
 
 
     # In case there was not a valid cmake executable in the PATH, we inject the
     # same we used to invoke the provider to the PATH
     if(DEFINED PATH_TO_CMAKE_BIN)
         set(old_path $ENV{PATH})
-        set(ENV{PATH} "$ENV{PATH}:${PATH_TO_CMAKE_BIN}")
+        if(CMAKE_HOST_WIN32)
+            set(ENV{PATH} "$ENV{PATH};${PATH_TO_CMAKE_BIN}")
+        else()
+            set(ENV{PATH} "$ENV{PATH}:${PATH_TO_CMAKE_BIN}")
+        endif()
     endif()
 
     execute_process(COMMAND ${CONAN_COMMAND} install ${CMAKE_SOURCE_DIR} ${conan_args} ${ARGN} --format=json
@@ -575,7 +580,7 @@ macro(conan_provide_dependency method package_name)
     get_property(_conan_install_success GLOBAL PROPERTY CONAN_INSTALL_SUCCESS)
     if(NOT _conan_install_success)
         find_program(CONAN_COMMAND "conan" REQUIRED)
-        conan_get_version(${CONAN_COMMAND} CONAN_CURRENT_VERSION)
+        conan_get_version("${CONAN_COMMAND}" CONAN_CURRENT_VERSION)
         conan_version_check(MINIMUM ${CONAN_MINIMUM_VERSION} CURRENT ${CONAN_CURRENT_VERSION})
         message(STATUS "CMake-Conan: first find_package() found. Installing dependencies with Conan")
         if("default" IN_LIST CONAN_HOST_PROFILE OR "default" IN_LIST CONAN_BUILD_PROFILE)

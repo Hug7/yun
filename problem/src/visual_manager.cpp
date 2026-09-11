@@ -17,14 +17,15 @@
 #include "visual_schema.h"
 
 // ====== implement of Load VisualManager ======
-VisualManager::VisualManager(const std::string& root_dir, const std::string& request_id)
-    : file_path(root_dir + "/" + request_id) {
-  if (!std::filesystem::exists(this->file_path)) {
+VisualManager::VisualManager(const std::string& output_dir,
+                             const std::shared_ptr<spdlog::logger>& logger)
+    : output_dir(output_dir), logger(logger) {
+  if (!std::filesystem::exists(this->output_dir)) {
     try {
-      std::filesystem::create_directories(this->file_path);
+      std::filesystem::create_directories(this->output_dir);
     } catch (const std::exception& e) {
-      spdlog::error(std::format("创建文件夹 {} 失败!", this->file_path));
-      spdlog::error(e.what());
+      this->logger->error(std::format("创建文件夹 {} 失败!", this->output_dir));
+      this->logger->error(e.what());
     }
   }
 }
@@ -108,5 +109,5 @@ void VisualManager::infeasible_cargo_order_to_csv(
   }  // end for infeasible_cargo_orders
 
   // 保存文件
-  doc.Save(this->file_path + "/" + PrecheckInfeasibleCargoOrderSchema::file_name);
+  doc.Save(this->output_dir + "/" + PrecheckInfeasibleCargoOrderSchema::file_name);
 }

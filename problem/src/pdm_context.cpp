@@ -5,10 +5,12 @@
 
 #include "pdm_context.h"
 
+#include <atomic>
 #include <format>
 #include <random>
 
 #include "c_chrono_util.h"
+#include "c_log.h"
 #include "cc_dist.h"
 #include "hc_label.h"
 #include "hc_location.h"
@@ -37,20 +39,39 @@ std::string generate_uuid() {
 }  // namespace
 
 /**
- * @brief 生成唯一的请求ID，格式 %Y%m%d%H%M%S_{uuid}
+ * @brief 进程标识，取 uuid 的前 4 位，避免多个进程在同一秒内撞车
+ */
+const std::string& process_nonce() {
+  static const std::string nonce = generate_uuid().substr(0, 4);
+  return nonce;
+}
+
+/**
+ * @brief 进程内的请求序号，避免同一进程并发求解时撞车
+ */
+uint64_t next_request_seq() {
+  static std::atomic<uint64_t> seq{0};
+  return seq.fetch_add(1) + 1;
+}
+
+/**
+ * @brief 生成唯一的请求ID，格式 %Y%m%d%H%M%S_{进程标识}_{序号}
+ * @details 时间戳保证可读可排序；进程标识与序号保证并发求解不会共用同一个输出目录和日志文件
  */
 std::string generate_request_id() {
-  // return chrono_util::format(chrono_util::now(), "%Y%m%d%H%M%S") + "_" + generate_uuid();
-  return chrono_util::format(chrono_util::now(), "%Y%m%d%H%M%S");
+  return std::format("{}_{}_{}", chrono_util::format(chrono_util::now(), "%Y%m%d%H%M%S"),
+                     process_nonce(), next_request_seq());
 }
 
 /**
  * 读取场景
  * @param root_dir 根目录
+ * @param logger 日志器
  * @return 场景
  */
-Scenario* load_scenario(const std::string& root_dir) {
-  const auto reader = std::make_unique<StandardCsvReader>(root_dir);
+Scenario* load_scenario(const std::string& root_dir,
+                        const std::shared_ptr<spdlog::logger>& logger) {
+  const auto reader = std::make_unique<StandardCsvReader>(root_dir, logger);
   Scenario* scenario = reader->loading_scenario();
   return scenario;
 }
@@ -107,19 +128,35 @@ Problem* create_problem(const Scenario* scenario, Parameter* parameter) {
 }
 
 // ====== implement of Load CcDist ======
-SolverContext::SolverContext(std::string root_dir)
+SolverContext::SolverContext(std::string root_dir, const std::string& log_dir,
+                             const std::string& log_level)
     : root_dir(std::move(root_dir)), request_id(generate_request_id()) {
+  // 拼装输出目录
+  this->output_dir = this->root_dir + "/output/" + this->request_id;
+  // 创建本次请求专属的 logger：控制台 + log_dir + output_dir 三处输出
+  // 必须先于场景读取，加载过程的日志才能落盘
+  this->logger = LogManager::create(this->request_id, log_dir, this->output_dir, log_level);
   // 读取场景
-  this->scenario = load_scenario(this->root_dir);
+  try {
+    this->scenario = load_scenario(this->root_dir, this->logger);
+  } catch (const std::exception& e) {
+    // common 层的工具函数拿不到 logger，失败原因在这里补记，保证三个输出里都有
+    this->logger->error("读取场景失败: {}", e.what());
+    throw;
+  }
   // 读取参数
   this->parameter = load_parameter(this->scenario);
   // 可视化管理器
-  this->visual_manager = new VisualManager(this->root_dir, this->request_id);
+  this->visual_manager = new VisualManager(this->output_dir, this->logger);
   // 创建问题
   this->problem = create_problem(this->scenario, this->parameter);
 }
 
 SolverContext::~SolverContext() {
+  // 日志刷盘，info/debug 不会留在缓冲区
+  if (this->logger != nullptr) {
+    this->logger->flush();
+  }
   delete this->scenario;
   delete this->parameter;
   delete this->visual_manager;

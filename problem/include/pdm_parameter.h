@@ -89,6 +89,10 @@ class Parameter {
    */
   PlanDatetimeRange* plan_datetime_range;
   /**
+   * @brief 策略文件名
+   */
+  std::string strategy_file_name{"strategy.lua"};
+  /**
    * @brief 提货和卸货站点的模式
    */
   PickDropPatternType pick_drop_pattern{PickDropPatternType::SPMD};
@@ -135,4 +139,10 @@ class Parameter {
    * @param scenario 场景数据
    */
   void post_process(const Scenario* scenario);
+
+  /**
+   * @brief 设置策略文件名
+   * @param file_name 策略文件名
+   */
+  void set_strategy_file_name(const std::string& file_name);
 };

@@ -16,14 +16,14 @@ class SolverPrecheck {
   /**
    * @brief solver的上下文
    */
-  SolverContext* solver_context;
+  SolverContext* context;
   /**
    * @brief 不可解订单集合
    */
   InfeasibleCargoOrder::VecUPtr infeasible_cargo_orders;
 
  public:
-  explicit SolverPrecheck(SolverContext* solver_context) : solver_context(solver_context) {}
+  explicit SolverPrecheck(SolverContext* context) : context(context) {}
 
   /**
    * @brief 预校验

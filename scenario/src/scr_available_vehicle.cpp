@@ -16,7 +16,7 @@
 void StandardCsvReader::loading_available_vehicle(CarrierManager* carrier_manager,
                                                   LocationManager* location_manager) const {
   // === loading LocationAvailableVehicle.csv ===
-  spdlog::info("Loading {} ...", LocationAvailableVehicleSchema::file_name);
+  this->logger->info("Loading {} ...", LocationAvailableVehicleSchema::file_name);
   const std::string location_available_vehicle_file_path =
       this->root_dir + "/" + LocationAvailableVehicleSchema::file_name;
   FileUtils::file_exists(location_available_vehicle_file_path,
@@ -60,7 +60,7 @@ void StandardCsvReader::loading_available_vehicle(CarrierManager* carrier_manage
     loc_available_vehicle_map[location_code]->add_vehicle(vehicle);
   }
   location_available_vehicle_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                LocationAvailableVehicleSchema::file_name, location_available_vehicle_count);
 
   // 更新所有站点的可用车辆

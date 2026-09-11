@@ -10,3 +10,19 @@ target_link_libraries(vrp_exec PRIVATE yun_solver)
 add_executable(bd_time_window_utils_test scenario/bd_time_window_utils_test.cpp)
 target_link_libraries(bd_time_window_utils_test PRIVATE yun_scenario GTest::gtest_main)
 add_test(NAME bd_time_window_utils_test COMMAND bd_time_window_utils_test)
+
+add_executable(c_log_test common/c_log_test.cpp)
+target_link_libraries(c_log_test PRIVATE yun_common GTest::gtest_main)
+add_test(NAME c_log_test COMMAND c_log_test)
+
+add_executable(csv_write_demo csv_write_demo.cpp)
+target_link_libraries(csv_write_demo PRIVATE yun_common)
+
+# DSL demo: lua 虚拟机 + sol2 绑定层
+find_package(lua CONFIG REQUIRED)
+find_package(sol2 CONFIG REQUIRED)
+
+add_executable(lua_dsl_demo lua_dsl_demo.cpp)
+target_link_libraries(lua_dsl_demo PRIVATE sol2::sol2 lua::lua)
+# 脚本目录通过编译宏注入，避免依赖运行时的工作目录
+target_compile_definitions(lua_dsl_demo PRIVATE YUN_LUA_DEMO_DIR="${CMAKE_CURRENT_SOURCE_DIR}")

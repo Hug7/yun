@@ -10,9 +10,9 @@
 #include "scr_standard_csv_reader.h"
 
 Scenario* StandardCsvReader::loading_scenario() {
-  spdlog::info("Loading scenario from files path: {}", this->root_dir);
+  this->logger->info("Loading scenario from files path: {}", this->root_dir);
   if (!FileUtils::file_exists(this->root_dir)) {
-    spdlog::error("The files path {} is not exists!", this->root_dir);
+    this->logger->error("The files path {} is not exists!", this->root_dir);
     throw std::filesystem::filesystem_error(
         this->root_dir, std::error_code(static_cast<int>(std::errc::no_such_file_or_directory),
                                         std::generic_category()));
@@ -40,7 +40,7 @@ Scenario* StandardCsvReader::loading_scenario() {
   CargoOrderManager* cargo_order_manager =
       this->loading_cargo_order(location_manager, dim_manager, label_manager);
 
-  spdlog::info("Loading scenario finished!");
+  this->logger->info("Loading scenario finished!");
 
   // 构造模型
   Scenario* scenario = new Scenario();

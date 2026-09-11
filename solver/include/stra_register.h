@@ -4,5 +4,3 @@
  */
 
 #pragma once
-
-// todo 注册所有策略到lua虚拟机

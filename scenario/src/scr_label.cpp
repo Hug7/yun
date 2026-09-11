@@ -16,7 +16,7 @@
 LabelManager* StandardCsvReader::loading_label() const {
   LabelManager* label_manager = new LabelManager();
   // === loading Label.csv ===
-  spdlog::info("Loading {} ...", LabelSchema::file_name);
+  this->logger->info("Loading {} ...", LabelSchema::file_name);
   const std::string label_file_path = this->root_dir + "/" + LabelSchema::file_name;
   FileUtils::file_exists(label_file_path, LabelSchema::file_name);
   rapidcsv::Document label_doc(label_file_path);
@@ -32,11 +32,11 @@ LabelManager* StandardCsvReader::loading_label() const {
     label_manager->create_label(dim_code, dim_name);
   }
   label_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                LabelSchema::file_name, label_count);
 
   // === loading LabelValue.csv ===
-  spdlog::info("Loading {} ...", LabelValueSchema::file_name);
+  this->logger->info("Loading {} ...", LabelValueSchema::file_name);
   const std::string label_value_file_path = this->root_dir + "/" + LabelValueSchema::file_name;
   FileUtils::file_exists(label_value_file_path, LabelValueSchema::file_name);
   rapidcsv::Document label_value_doc(label_value_file_path);
@@ -62,11 +62,11 @@ LabelManager* StandardCsvReader::loading_label() const {
     }
   }
   label_value_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                LabelValueSchema::file_name, label_value_count);
 
   // === loading LabelApply.csv ===
-  spdlog::info("Loading {} ...", LabelApplySchema::file_name);
+  this->logger->info("Loading {} ...", LabelApplySchema::file_name);
   const std::string label_apply_file_path = this->root_dir + "/" + LabelApplySchema::file_name;
   FileUtils::file_exists(label_apply_file_path, LabelApplySchema::file_name);
   rapidcsv::Document label_apply_doc(label_apply_file_path);
@@ -93,7 +93,7 @@ LabelManager* StandardCsvReader::loading_label() const {
     label_manager->labelset_add_label(label_code, apply_item);
   }
   label_apply_doc.Clear();
-  spdlog::info("Loading {} is complete. A total of {} pieces of data have been obtained.",
+  this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
                LabelApplySchema::file_name, label_apply_row_count);
 
   return label_manager;
