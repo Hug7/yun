@@ -7,7 +7,7 @@
 
 // ====== implement of Load HardConstraintManager ======
 HardConstraintManager::~HardConstraintManager() {
-  for (auto& constraint : this->constrs) {
+  for (const auto& constraint : this->constrs) {
     delete constraint;
   }
 }
@@ -22,10 +22,11 @@ void HardConstraintManager::add_constr(HardConstraint* constr) {
       [](const HardConstraint* a, const HardConstraint* b) { return a->priority > b->priority; });
 }
 
-void HardConstraintManager::eval_constrs(Load* load, LoadConstrProfile::UPtr& constr_profile) {
-  for (auto& constr : this->constrs) {
+void HardConstraintManager::eval_constrs(Load* load,
+                                         const LoadConstrProfile::UPtr& constr_profile) const {
+  for (const auto& constr : this->constrs) {
     auto hard_score = constr->eval(load);
-    constr_profile->infesible |= hard_score->is_infeasible();
+    constr_profile->infeasible |= hard_score->is_infeasible();
     constr_profile->total_hard_penalty += hard_score->get_score();
     constr_profile->hard_constr_scores.push_back(std::move(hard_score));
   }

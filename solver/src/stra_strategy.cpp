@@ -9,16 +9,42 @@
 
 #include <filesystem>
 
+#include "stra_construct.h"
+
 // ====== implement of StrategyManager::Private ======
-void StrategyManager::register_clazz(const SolverContext* context) {
-  // this->lua_vm.new_usertype
+void StrategyManager::register_common_func(Workspace* workspace) {
+  const SolverContext* context = workspace->context;
+  // 注册-日志
+  this->lua_vm.set_function("log_info", [logger = context->logger](const std::string& msg) {
+    logger->info("[lua] {}", msg);
+  });
+  this->lua_vm.set_function("log_debug", [logger = context->logger](const std::string& msg) {
+    logger->debug("[lua] {}", msg);
+  });
+  this->lua_vm.set_function("log_warn", [logger = context->logger](const std::string& msg) {
+    logger->warn("[lua] {}", msg);
+  });
+  this->lua_vm.set_function("log_error", [logger = context->logger](const std::string& msg) {
+    logger->error("[lua] {}", msg);
+  });
 }
 
-void StrategyManager::register_func(const SolverContext* context) {
-  // this->lua_vm.set_function
-  // 脚本日志走本次请求的 logger，才能同时进控制台和两个日志文件
-  this->lua_vm.set_function(
-      "log", [logger = context->logger](const std::string& msg) { logger->info("[lua] {}", msg); });
+void StrategyManager::register_construct_heuristic_func(Workspace* workspace) {
+  // 注册-knn
+  // --knn参数
+  constexpr auto constructors = sol::constructors<KnnParameter(), KnnParameter(int)>();
+  this->lua_vm.new_usertype<KnnParameter>("KnnParameter", constructors, sol::call_constructor,
+                                          constructors, "neighbor_count",
+                                          &KnnParameter::neighbor_count);
+  // --knn方法
+  this->lua_vm.set_function("construct_knn", [workspace](const sol::object& knn_parameter) {
+    if (!knn_parameter.valid()) {
+      // 入参为KnnParameter，不传参或传nil时用结构体里的默认值
+      ConstructHeuristic::k_nearest_neighbor(workspace, KnnParameter());
+    } else {
+      ConstructHeuristic::k_nearest_neighbor(workspace, knn_parameter.as<KnnParameter>());
+    }
+  });
 }
 
 void StrategyManager::load_script() {
@@ -33,7 +59,8 @@ void StrategyManager::load_script() {
 }
 
 // ====== implement of StrategyManager::Public ======
-StrategyManager::StrategyManager(const SolverContext* context) {
+StrategyManager::StrategyManager(Workspace* workspace) {
+  const SolverContext* context = workspace->context;
   // 日志器随请求走，脚本相关的错误也要落进本次请求的日志文件
   this->logger = context->logger;
   // 拼装策略文件路径
@@ -46,10 +73,10 @@ StrategyManager::StrategyManager(const SolverContext* context) {
   }
   // 为lua虚拟机提供基本库
   this->lua_vm.open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math);
-  // 注册-类
-  this->register_clazz(context);
-  // 注册-方法
-  this->register_func(context);
+  // 注册-公共方法
+  this->register_common_func(workspace);
+  // 注册-构造启发式方法
+  this->register_construct_heuristic_func(workspace);
   // 加载脚本
   this->load_script();
 }

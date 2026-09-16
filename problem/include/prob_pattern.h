@@ -12,6 +12,7 @@
 
 class PickDropPattern {
  public:
+  virtual ~PickDropPattern() = default;
 
   virtual Node* find_first_pick_node(std::unique_ptr<Node>& node) const;
 
@@ -31,6 +32,8 @@ class PickDropPattern {
 
   virtual Load* create_load(LoadContext* context) const = 0;
 
+  virtual Load* deep_copy_load(const Load* other) const = 0;
+
   virtual bool insert_last_drop(Load* load, const Order* order) const = 0;
   
   PickDropPattern() = default;
@@ -48,7 +51,9 @@ class PatternSPMD : public PickDropPattern {
 
   Node* find_load_last_drop_node(Load* load) const override;
 
-  Load* create_load(LoadContext* context) const override;
+  LoadSPMD* create_load(LoadContext* context) const override;
+
+  LoadSPMD* deep_copy_load(const Load* other) const override;
 
   bool insert_last_drop(Load* load, const Order* order) const override;
 };

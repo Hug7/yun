@@ -40,7 +40,11 @@ Node* PatternSPMD::find_load_last_drop_node(Load* load) const {
   return nullptr;
 }
 
-Load* PatternSPMD::create_load(LoadContext* context) const { return new LoadSPMD(context); }
+LoadSPMD* PatternSPMD::create_load(LoadContext* context) const { return new LoadSPMD(context); }
+
+LoadSPMD* PatternSPMD::deep_copy_load(const Load* other) const {
+  return new LoadSPMD(other);
+}
 
 bool PatternSPMD::insert_last_drop(Load* load, const Order* order) const {
   // 重置route profile

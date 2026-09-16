@@ -17,6 +17,24 @@ LoadRouteProfile::LoadRouteProfile(const Scenario* scenario) {
   this->order_labelset_value_bitset =
       scenario->label_manager->order_labelset->empty_labelset_value_bitset();
   this->available_vehicle_bitset = scenario->carrier_manager->empty_vehicle_bitset();
+  this->pick_node_count = 0;
+  this->drop_node_count = 0;
+  this->total_dist = 0;
+}
+
+LoadRouteProfile::LoadRouteProfile(const LoadRouteProfile::UPtr& other) {
+  this->dirty_marks = std::make_unique<Bitset>(other->dirty_marks);
+  this->peak_load_dims = other->peak_load_dims;
+  this->pick_loc_labelset_value_bitset =
+      std::make_unique<LabelsetValueBitset>(other->pick_loc_labelset_value_bitset);
+  this->drop_loc_labelset_value_bitset =
+      std::make_unique<LabelsetValueBitset>(other->drop_loc_labelset_value_bitset);
+  this->order_labelset_value_bitset =
+      std::make_unique<LabelsetValueBitset>(other->order_labelset_value_bitset);
+  this->available_vehicle_bitset = std::make_unique<Bitset>(other->available_vehicle_bitset);
+  this->pick_node_count = other->pick_node_count;
+  this->drop_node_count = other->drop_node_count;
+  this->total_dist = other->total_dist;
 }
 
 bool LoadRouteProfile::get_set_dirty_mark(LoadRouteProfileField field) {
@@ -38,9 +56,7 @@ void LoadRouteProfile::set_dirty_mark(LoadRouteProfileField field) {
   this->dirty_marks->set(field_ind);
 }
 
-void LoadRouteProfile::reset_dirty_marks() {
-  this->dirty_marks->clear_all();
-}
+void LoadRouteProfile::reset_dirty_marks() { this->dirty_marks->clear_all(); }
 
 void LoadRouteProfile::reset_dirty_mark(LoadRouteProfileField field) {
   const int field_ind = static_cast<int>(field);
@@ -48,11 +64,31 @@ void LoadRouteProfile::reset_dirty_mark(LoadRouteProfileField field) {
 }
 
 // ====== implement of LoadConstraintProfile ======
+LoadConstrProfile::LoadConstrProfile(const UPtr& other) {
+  this->total_hard_penalty = other->total_hard_penalty;
+  this->total_soft_penalty = other->total_soft_penalty;
+  this->total_cost = other->total_cost;
+  this->obj_val = other->obj_val;
+  this->infeasible = other->infeasible;
+  // copy hard constraint scores
+  for (const auto & score : other->hard_constr_scores) {
+    this->hard_constr_scores.push_back(std::make_unique<HardConstrScore>(score));
+  }
+  // copy soft constraint scores
+  for (const auto & score : other->soft_constr_scores) {
+    this->soft_constr_scores.push_back(std::make_unique<SoftConstrScore>(score));
+  }
+  // copy cost constraint scores
+  for (const auto & score : other->cost_constr_scores) {
+   this->cost_constr_scores.push_back(std::make_unique<CostConstrScore>(score));
+  }
+}
+
 void LoadConstrProfile::reset() {
   this->total_hard_penalty = 0;
   this->total_soft_penalty = 0;
   this->total_cost = 0;
-  this->infesible = false;
+  this->infeasible = false;
   this->hard_constr_scores.clear();
   this->soft_constr_scores.clear();
   this->cost_constr_scores.clear();
@@ -63,8 +99,8 @@ void LoadConstrProfile::update_obj_val() {
 }
 
 bool LoadConstrProfile::dominate(LoadConstrProfile::UPtr& other) {
-  if (this->infesible ^ other->infesible) {
-    return other->infesible;
+  if (this->infeasible ^ other->infeasible) {
+    return other->infeasible;
   } else {
     return this->obj_val < other->obj_val;
   }

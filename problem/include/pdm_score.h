@@ -5,7 +5,9 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "pdm_infeasible.h"
@@ -48,19 +50,19 @@ class HardConstrScore {
    */
   const InfeasibleReason reason;
 
-  HardConstrScore(const std::string& code, const bool feasible, const double weight,
-                  const double value, const bool seq_type, const bool vehicle_type,
-                  const InfeasibleReason reason)
-      : code(code),
+  explicit HardConstrScore(std::string code, const bool feasible, const double weight,
+                           const double value, const bool seq_type, const bool vehicle_type,
+                           InfeasibleReason reason)
+      : code(std::move(code)),
         feasible(feasible),
         weight(weight),
         value(value),
         seq_type(seq_type),
         vehicle_type(vehicle_type),
-        reason(reason) {}
+        reason(std::move(reason)) {}
 
-  HardConstrScore(const std::string& code)
-      : code(code),
+  explicit HardConstrScore(std::string code)
+      : code(std::move(code)),
         feasible(true),
         weight(1),
         value(0),
@@ -68,15 +70,24 @@ class HardConstrScore {
         vehicle_type(false),
         reason(InfeasibleReasonCollection::FEASIBLE) {}
 
-  double get_score() const { return this->weight * this->value; }
+  explicit HardConstrScore(const UPtr& score)
+      : code(score->code),
+        feasible(score->feasible),
+        weight(score->weight),
+        value(score->value),
+        seq_type(score->seq_type),
+        vehicle_type(score->vehicle_type),
+        reason(score->reason) {};
 
-  bool is_feasible() const { return this->feasible; }
+  [[nodiscard]] double get_score() const { return this->weight * this->value; }
 
-  bool is_infeasible() const { return !this->feasible; }
+  [[nodiscard]] bool is_feasible() const { return this->feasible; }
 
-  bool is_seq() const { return this->seq_type; }
+  [[nodiscard]] bool is_infeasible() const { return !this->feasible; }
 
-  bool is_vehicle() const { return this->vehicle_type; }
+  [[nodiscard]] bool is_seq() const { return this->seq_type; }
+
+  [[nodiscard]] bool is_vehicle() const { return this->vehicle_type; }
 };
 
 /**
@@ -101,10 +112,13 @@ class SoftConstrScore {
    */
   const double value;
 
-  SoftConstrScore(const std::string& code, const double weight, const double value)
-      : code(code), weight(weight), value(value) {}
+  explicit SoftConstrScore(std::string code, const double weight, const double value)
+      : code(std::move(code)), weight(weight), value(value) {}
 
-  double get_score() const { return this->weight * this->value; }
+  explicit SoftConstrScore(const UPtr& score)
+      : code(score->code), weight(score->weight), value(score->value) {}
+
+  [[nodiscard]] double get_score() const { return this->weight * this->value; }
 };
 
 /**
@@ -145,20 +159,19 @@ class CostConstrScore {
    */
   const InfeasibleReason reason;
 
-  CostConstrScore(const std::string& code, const bool feasible, const double weight,
-                  const double value, const bool seq_type, const bool vehicle_type,
-                  const InfeasibleReason reason)
-      : code(code),
+  CostConstrScore(std::string code, const bool feasible, const double weight, const double value,
+                  const bool seq_type, const bool vehicle_type, InfeasibleReason reason)
+      : code(std::move(code)),
         feasible(feasible),
         weight(weight),
         value(value),
         seq_type(seq_type),
         vehicle_type(vehicle_type),
-        reason(reason) {}
+        reason(std::move(reason)) {}
 
-  CostConstrScore(const std::string& code, const double weight, const double value,
-                  const bool seq_type, const bool vehicle_type)
-      : code(code),
+  CostConstrScore(std::string code, const double weight, const double value, const bool seq_type,
+                  const bool vehicle_type)
+      : code(std::move(code)),
         feasible(true),
         weight(weight),
         value(value),
@@ -166,13 +179,22 @@ class CostConstrScore {
         vehicle_type(vehicle_type),
         reason(InfeasibleReasonCollection::FEASIBLE) {}
 
-  double get_score() const { return this->weight * this->value; }
+  explicit CostConstrScore(const UPtr& score)
+      : code(score->code),
+        feasible(score->feasible),
+        weight(score->weight),
+        value(score->value),
+        seq_type(score->seq_type),
+        vehicle_type(score->vehicle_type),
+        reason(score->reason) {}
 
-  bool is_feasible() const { return this->feasible; }
+  [[nodiscard]] double get_score() const { return this->weight * this->value; }
 
-  bool is_infeasible() const { return !this->feasible; }
+  [[nodiscard]] bool is_feasible() const { return this->feasible; }
 
-  bool is_seq() const { return this->seq_type; }
+  [[nodiscard]] bool is_infeasible() const { return !this->feasible; }
 
-  bool is_vehicle() const { return this->vehicle_type; }
+  [[nodiscard]] bool is_seq() const { return this->seq_type; }
+
+  [[nodiscard]] bool is_vehicle() const { return this->vehicle_type; }
 };

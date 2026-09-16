@@ -44,19 +44,19 @@ class Problem {
   /**
    * @brief evaluate all constraints
    */
-  virtual void eval_load(Load* load);
+  virtual void eval_load(Load* load) const;
 
-  virtual LoadConstrProfile::UPtr tmp_eval_load(Load* load);
+  virtual LoadConstrProfile::UPtr tmp_eval_load(Load* load) const;
   /**
    * @brief check cargo order feasibility
    */
-  virtual InfeasibleCargoOrder::UPtr check_feasibility(CargoOrder* cargo_order);
+  virtual InfeasibleCargoOrder::UPtr check_feasibility(CargoOrder* cargo_order) const;
   /**
    * @brief construct a new Load object for best vehicle
    */
-  virtual Load* construct_load_by_order(std::vector<Order*>& orders);
+  virtual Load* construct_load_by_order(std::vector<const Order*>& orders) const;
   /**
    * @brief construct a new Load object for a vehicle
    */
-  virtual Load* construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle);
+  virtual Load* construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle) const;
 };

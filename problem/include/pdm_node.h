@@ -60,8 +60,6 @@ class Node {
    */
   long travel_time;
 
-  Node();
-
   Node(ActivityType activity_type, const Location* loc);
 
   Node(ActivityType activity_type, const Location* loc, Activity::UPtr activity);
@@ -70,23 +68,23 @@ class Node {
 
   void set_travel_time(long travel_time);
 
-  bool hase_next() const { return this->next != nullptr; }
+  [[nodiscard]] bool hase_next() const { return this->next != nullptr; }
 
-  bool hase_prev() const { return this->prev != nullptr; }
+  [[nodiscard]] bool hase_prev() const { return this->prev != nullptr; }
 
-  bool is_pick() const {return this->activity_type == ActivityType::PICK;}
+  [[nodiscard]] bool is_pick() const {return this->activity_type == ActivityType::PICK;}
 
-  bool is_drop() const {return this->activity_type == ActivityType::DROP;}
+  [[nodiscard]] bool is_drop() const {return this->activity_type == ActivityType::DROP;}
 
   void add_front_activity(Activity::UPtr activity);
 
   void add_back_activity(Activity::UPtr activity);
 
-  std::vector<TimeWindow*> intersection_time_windows() const;
+  [[nodiscard]] std::vector<TimeWindow*> intersection_time_windows() const;
 
-  std::vector<const Order*> get_orders() const;
+  [[nodiscard]] std::vector<const Order*> get_orders() const;
 
-  long get_work_time() const;
+  [[nodiscard]] long get_work_time() const;
 };
 
 namespace NodeFactory {
@@ -98,7 +96,7 @@ std::pair<Node::UPtr, Node::UPtr> create_pair_node(const Order* order);
 }  // namespace NodeFactory
 
 struct NodeOps {
-  static Node* tail(Node::UPtr& head);
+  static Node* tail(const Node::UPtr& head);
 
   // 从链表中摘除子链 [from_ptr 指向的节点 ... to]
   // from_ptr: 即 Load::first_node 或 前驱节点->next
@@ -112,4 +110,9 @@ struct NodeOps {
 
   // 翻转独立链。返回新头 (原尾)。修正内部所有 prev
   static Node::UPtr reverse_chain(Node::UPtr chain);
+
+  // 深度克隆整条链 [head ... 尾节点]
+  // 克隆 node 标量属性、ptws、activity 子链, 修正 prev 与 related/related_node 指向
+  // 返回: 新链的头节点 (prev 为 nullptr)
+  static Node::UPtr deep_copy_chain(const Node* head);
 };

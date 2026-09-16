@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 class Item {
@@ -24,8 +25,8 @@ class Item {
    */
   const int ind;
 
-  Item(const std::string& code, const std::string& name, const int ind)
-      : code(code), name(name), ind(ind) {}
+  Item(std::string code, std::string name, const int ind)
+      : code(std::move(code)), name(std::move(name)), ind(ind) {}
 
   ~Item() = default;
 };
@@ -43,7 +44,7 @@ class GenerateIndex {
  public:
   GenerateIndex() : ind(-1) {};
 
-  GenerateIndex(int start) : ind(start) {};
+  explicit GenerateIndex(int start) : ind(start) {};
 
   ~GenerateIndex() = default;
 
@@ -76,9 +77,16 @@ class Bitset {
    * @brief 构造函数
    * @param n 位图的大小
    */
-  Bitset(size_t n) : w((n + 63) / 64, 0), n(n) {}
+  explicit Bitset(const size_t n) : w((n + 63) / 64, 0), n(n) {}
+
+  explicit Bitset(const UPtr& other);
 
   ~Bitset() = default;
+
+  /**
+   * @brief 位图长度
+   */
+  [[nodiscard]] size_t len() const { return n; };
 
   /**
    * @brief 设置位图中第u位为1
@@ -102,7 +110,7 @@ class Bitset {
    * @param u 位图中第u位
    * @return 如果第u位为1则返回true，否则返回false
    */
-  bool test(size_t u) const;
+  [[nodiscard]] bool test(size_t u) const;
 
   /**
    * @brief 将所有位设置为1
@@ -113,28 +121,28 @@ class Bitset {
    * @brief 取并集
    * @param o 另一个位图
    */
-  void call_union(Bitset* o);
+  void call_union(const Bitset* o);
 
   /**
    * @brief 取交集
    * @param o 另一个位图
    */
-  void call_intersection(Bitset* o);
+  void call_intersection(const Bitset* o);
 
   /**
    * @brief 取并集
    * @param o 另一个位图
    */
-  void call_union(Bitset::UPtr& o);
+  void call_union(const Bitset::UPtr& o);
 
   /**
    * @brief 取交集
    * @param o 另一个位图
    */
-  void call_intersection(Bitset::UPtr& o);
+  void call_intersection(const Bitset::UPtr& o);
 
   /**
    * @brief 计算位图中1的个数
    */
-  int popcount() const;
+  [[nodiscard]] int sum() const;
 };

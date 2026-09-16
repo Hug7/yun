@@ -20,15 +20,32 @@ LoadContext::~LoadContext() {
 }
 
 // ====== implement of Load ======
-Load::Load(LoadContext* context) : context(context) {
+Load::Load(LoadContext* context)
+    : context(context), prev_dist_matrix_code(nullptr), vehicle(nullptr) {
   Location* default_loc = context->scenario->location_manager->get_default_location();
   this->first_node = std::make_unique<Node>(ActivityType::START, default_loc);
   auto end_node = std::make_unique<Node>(ActivityType::END, default_loc);
   end_node->prev = this->first_node.get();
-  this->last_node = end_node.get();
   this->first_node->next = std::move(end_node);
+  this->last_node = this->first_node->next.get();
   this->route_profile = std::make_unique<LoadRouteProfile>(context->scenario);
   this->constr_profile = std::make_unique<LoadConstrProfile>();
+}
+
+Load::Load(const Load* other) {
+  // copy-context
+  this->context = other->context;
+  // copy-距离矩阵编码
+  this->prev_dist_matrix_code = other->prev_dist_matrix_code;
+  // copy-车辆
+  this->vehicle = other->vehicle;
+  // copy-route属性
+  this->route_profile = std::make_unique<LoadRouteProfile>(other->route_profile);
+  // copy-约束+成本属性
+  this->constr_profile = std::make_unique<LoadConstrProfile>(other->constr_profile);
+  // copy-node链(含首尾depot哨兵), 并修正尾节点指针
+  this->first_node = NodeOps::deep_copy_chain(other->first_node.get());
+  this->last_node = NodeOps::tail(other->first_node);
 }
 
 Load::~Load() {
@@ -38,7 +55,7 @@ Load::~Load() {
   this->constr_profile.reset();
 }
 
-void Load::reset_route_profile() {
+void Load::reset_route_profile() const {
   this->route_profile->reset_dirty_marks();
 }
 
@@ -48,10 +65,10 @@ void Load::change_vehicle(Vehicle* vehicle) {
   bool network_change_flag = false;
   if (this->vehicle != nullptr &&
       this->prev_dist_matrix_code != this->vehicle->get_dist_matrix_code()) {
-    this->prev_dist_matrix_code = this->vehicle->get_dist_matrix_code();
     network_change_flag = true;
   }
   this->vehicle = vehicle;
+  this->prev_dist_matrix_code = this->vehicle->get_dist_matrix_code();
 
   // change start node
   const bool change_start_node_flag = this->first_node->loc != vehicle->orig_loc;
@@ -84,7 +101,7 @@ void Load::change_vehicle(Vehicle* vehicle) {
   }
 }
 
-long Load::get_total_dist() {
+long Load::get_total_dist() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::TOTAL_DIST)) {
     return this->route_profile->total_dist;
   }
@@ -112,6 +129,10 @@ Bitset* Load::get_available_vehicle_bitset() {
   }
 
   return this->route_profile->available_vehicle_bitset.get();
+}
+
+bool Load::is_infeasible() const {
+  return this->constr_profile->is_infeasible();
 }
 
 void Load::update_node_dist_time() {

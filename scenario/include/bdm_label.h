@@ -67,6 +67,8 @@ class LabelValueBitset : public Bitset {
   using VecUPtr = std::vector<UPtr>;
 
   LabelValueBitset(const size_t n) : Bitset(n) {};
+
+  explicit LabelValueBitset(const LabelValueBitset::UPtr& other) : Bitset(*other) {}
 };
 
 /**
@@ -155,7 +157,9 @@ class LabelsetValueBitset {
    */
   LabelValueBitset::VecUPtr bitsets;
 
-  explicit LabelsetValueBitset(size_t n) : bitsets(LabelValueBitset::VecUPtr(n)) {};
+  explicit LabelsetValueBitset(const size_t n) : bitsets(LabelValueBitset::VecUPtr(n)) {};
+
+  explicit LabelsetValueBitset(const LabelsetValueBitset::UPtr& other);
 
   /**
    * @brief 添加标签属性值到标签集合值位图

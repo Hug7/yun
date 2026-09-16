@@ -6,18 +6,18 @@
 #include "pdm_load.h"
 
 // ====== implement of Load ======
-const std::vector<long>& Load::get_peak_load_dims_sp() {
+const std::vector<long>& Load::get_peak_load_dims_sp() const {
   std::vector<long>& peak_load_dims = this->route_profile->peak_load_dims;
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PEAK_LOAD_DIMS)) {
     return peak_load_dims;
   }
-  const int dim_size = peak_load_dims.size();
+  const size_t dim_size = peak_load_dims.size();
   const Node* head_node = this->first_node->next.get();
   if (head_node->activity_type == ActivityType::PICK) {
     auto tail_activity = head_node->last;
     while (tail_activity != nullptr) {
       auto& cur_load_dims = tail_activity->order->dim_vals;
-      for (int u = 0; u < dim_size; u++) {
+      for (size_t u = 0; u < dim_size; u++) {
         peak_load_dims[u] += cur_load_dims[u];
       }
       tail_activity = tail_activity->prev;
@@ -27,18 +27,18 @@ const std::vector<long>& Load::get_peak_load_dims_sp() {
   return peak_load_dims;
 }
 
-const std::vector<long>& Load::get_peak_load_dims_sd() {
+const std::vector<long>& Load::get_peak_load_dims_sd() const {
   std::vector<long>& peak_load_dims = this->route_profile->peak_load_dims;
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PEAK_LOAD_DIMS)) {
     return peak_load_dims;
   }
-  const int dim_size = peak_load_dims.size();
+  const size_t dim_size = peak_load_dims.size();
   const Node* tail_node = this->last_node->prev;
   if (tail_node->activity_type == ActivityType::DROP) {
     auto tail_activity = tail_node->last;
     while (tail_activity != nullptr) {
       auto& cur_load_dims = tail_activity->order->dim_vals;
-      for (int u = 0; u < dim_size; u++) {
+      for (size_t u = 0; u < dim_size; u++) {
         peak_load_dims[u] += cur_load_dims[u];
       }
       tail_activity = tail_activity->prev;
@@ -48,18 +48,18 @@ const std::vector<long>& Load::get_peak_load_dims_sd() {
   return peak_load_dims;
 }
 
-const std::vector<long>& Load::get_peak_load_dims_mp() {
+const std::vector<long>& Load::get_peak_load_dims_mp() const {
   std::vector<long>& peak_load_dims = this->route_profile->peak_load_dims;
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PEAK_LOAD_DIMS)) {
     return peak_load_dims;
   }
-  const int dim_size = peak_load_dims.size();
+  const size_t dim_size = peak_load_dims.size();
   auto head_node = this->first_node->next.get();
   while (head_node->activity_type == ActivityType::PICK) {
     auto tail_activity = head_node->last;
     while (tail_activity != nullptr) {
       auto& cur_load_dims = tail_activity->order->dim_vals;
-      for (int u = 0; u < dim_size; u++) {
+      for (size_t u = 0; u < dim_size; u++) {
         peak_load_dims[u] += cur_load_dims[u];
       }
       tail_activity = tail_activity->prev;
@@ -70,7 +70,7 @@ const std::vector<long>& Load::get_peak_load_dims_mp() {
   return peak_load_dims;
 }
 
-int Load::get_pick_node_count_sp() {
+int Load::get_pick_node_count_sp() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PICK_NODE_COUNT)) {
     return this->route_profile->pick_node_count;
   }
@@ -82,7 +82,7 @@ int Load::get_pick_node_count_sp() {
   return 0;
 }
 
-int Load::get_pick_node_count_mp() {
+int Load::get_pick_node_count_mp() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PICK_NODE_COUNT)) {
     return this->route_profile->pick_node_count;
   }
@@ -96,7 +96,7 @@ int Load::get_pick_node_count_mp() {
   return tmp_pick_node_count;
 }
 
-int Load::get_drop_node_count_sd() {
+int Load::get_drop_node_count_sd() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::DROP_NODE_COUNT)) {
     return this->route_profile->drop_node_count;
   }
@@ -108,7 +108,7 @@ int Load::get_drop_node_count_sd() {
   return 0;
 }
 
-int Load::get_drop_node_count_md() {
+int Load::get_drop_node_count_md() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::DROP_NODE_COUNT)) {
     return this->route_profile->drop_node_count;
   }
@@ -122,7 +122,7 @@ int Load::get_drop_node_count_md() {
   return tmp_drop_node_count;
 }
 
-LabelsetValueBitset* Load::get_pick_loc_labelset_value_bitset_sp() {
+LabelsetValueBitset* Load::get_pick_loc_labelset_value_bitset_sp() const {
   if (this->route_profile->get_set_dirty_mark(
           LoadRouteProfileField::PICK_LOC_LABELSET_VALUE_BITSET)) {
     return this->route_profile->pick_loc_labelset_value_bitset.get();
@@ -136,7 +136,7 @@ LabelsetValueBitset* Load::get_pick_loc_labelset_value_bitset_sp() {
   return this->route_profile->pick_loc_labelset_value_bitset.get();
 }
 
-LabelsetValueBitset* Load::get_pick_loc_labelset_value_bitset_mp() {
+LabelsetValueBitset* Load::get_pick_loc_labelset_value_bitset_mp() const {
   if (this->route_profile->get_set_dirty_mark(
           LoadRouteProfileField::PICK_LOC_LABELSET_VALUE_BITSET)) {
     return this->route_profile->pick_loc_labelset_value_bitset.get();
@@ -151,7 +151,7 @@ LabelsetValueBitset* Load::get_pick_loc_labelset_value_bitset_mp() {
   return this->route_profile->pick_loc_labelset_value_bitset.get();
 }
 
-LabelsetValueBitset* Load::get_drop_loc_labelset_value_bitset_sd() {
+LabelsetValueBitset* Load::get_drop_loc_labelset_value_bitset_sd() const {
   if (this->route_profile->get_set_dirty_mark(
           LoadRouteProfileField::DROP_LOC_LABELSET_VALUE_BITSET)) {
     return this->route_profile->drop_loc_labelset_value_bitset.get();
@@ -165,7 +165,7 @@ LabelsetValueBitset* Load::get_drop_loc_labelset_value_bitset_sd() {
   return this->route_profile->drop_loc_labelset_value_bitset.get();
 }
 
-LabelsetValueBitset* Load::get_drop_loc_labelset_value_bitset_md() {
+LabelsetValueBitset* Load::get_drop_loc_labelset_value_bitset_md() const {
   if (this->route_profile->get_set_dirty_mark(
           LoadRouteProfileField::DROP_LOC_LABELSET_VALUE_BITSET)) {
     return this->route_profile->drop_loc_labelset_value_bitset.get();
@@ -180,7 +180,7 @@ LabelsetValueBitset* Load::get_drop_loc_labelset_value_bitset_md() {
   return this->route_profile->drop_loc_labelset_value_bitset.get();
 }
 
-LabelsetValueBitset* Load::get_order_labelset_value_bitset_sp() {
+LabelsetValueBitset* Load::get_order_labelset_value_bitset_sp() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::ORDER_LABELSET_VALUE_BITSET)) {
     return this->route_profile->order_labelset_value_bitset.get();
   }
@@ -197,7 +197,7 @@ LabelsetValueBitset* Load::get_order_labelset_value_bitset_sp() {
   return this->route_profile->order_labelset_value_bitset.get();
 }
 
-LabelsetValueBitset* Load::get_order_labelset_value_bitset_sd() {
+LabelsetValueBitset* Load::get_order_labelset_value_bitset_sd() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::ORDER_LABELSET_VALUE_BITSET)) {
     return this->route_profile->order_labelset_value_bitset.get();
   }
@@ -215,7 +215,7 @@ LabelsetValueBitset* Load::get_order_labelset_value_bitset_sd() {
   return this->route_profile->order_labelset_value_bitset.get();
 }
 
-LabelsetValueBitset* Load::get_order_labelset_value_bitset_mp() {
+LabelsetValueBitset* Load::get_order_labelset_value_bitset_mp() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::ORDER_LABELSET_VALUE_BITSET)) {
     return this->route_profile->order_labelset_value_bitset.get();
   }

@@ -66,3 +66,17 @@ Load 的 Node 链的起点或终点。由 Vehicle 的 origin_loc / dest_loc 决�
 **Request**（请求）:
 一次求解的运行实例，由 `request_id`（`%Y%m%d%H%M%S_{进程标识}_{序号}`）标识。本次请求产生的全部产物（可视化文件、日志）都落在以它命名的输出目录里。
 _Avoid_: 运行、会话、任务
+
+### 求解过程
+
+**Workspace**（工作空间）:
+一次求解过程中可变的工作状态：当前的 Load 集合与尚未指派的 Order 集合，可压栈暂存以支持回退。求解期间被反复改写，本身不是产物。
+_Avoid_: 上下文、缓存
+
+**Initial Solution**（初始解）:
+用构造启发式（如 K 近邻）将未分配的订单插入到提供的 Load 或者构造新的 Load。
+_Avoid_: 构造方案、初始方案、构造解
+
+**Solution**（方案）:
+一次求解的最终产物：Load 集合、车辆资源占用、未指派的 Order，以及由三重 Constraint Score 汇总出的总成本。
+_Avoid_: 结果、答案

@@ -58,6 +58,14 @@ void LabelsetValue::merge(LabelsetValue* labelset_value) {
 }
 
 // ====== implement of LabelsetValueBitset ======
+LabelsetValueBitset::LabelsetValueBitset(const LabelsetValueBitset::UPtr& other) {
+  const size_t bitsets_len = other->bitsets.size();
+  this->bitsets = LabelValueBitset::VecUPtr(bitsets_len);
+  for (size_t u = 0; u < bitsets_len; ++u) {
+    this->bitsets[u] = std::make_unique<LabelValueBitset>(other->bitsets[u]);
+  }
+}
+
 void LabelsetValueBitset::add_label_value(int label_ind, LabelValue* label_value) {
   this->bitsets[label_ind]->set(label_value->ind);
 }

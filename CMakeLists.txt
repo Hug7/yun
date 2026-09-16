@@ -64,7 +64,6 @@ endif()
 # add subdirectories
 enable_testing()
 add_subdirectory(common)
-# add_subdirectory(domain)
 add_subdirectory(scenario)
 add_subdirectory(problem)
 add_subdirectory(algorithm)

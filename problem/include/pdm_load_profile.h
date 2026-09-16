@@ -65,7 +65,9 @@ class LoadRouteProfile {
 
   long total_dist;
 
-  LoadRouteProfile(const Scenario* scenario);
+  explicit LoadRouteProfile(const Scenario* scenario);
+
+  explicit LoadRouteProfile(const UPtr& other);
 
   bool get_set_dirty_mark(LoadRouteProfileField field);
 
@@ -103,7 +105,7 @@ class LoadConstrProfile {
    */
   double obj_val{LoadParameter::INIT_LOAD_OBJ_VAL};
 
-  bool infesible{false};
+  bool infeasible{false};
 
   HardConstrScore::VecUPtr hard_constr_scores;
 
@@ -111,13 +113,15 @@ class LoadConstrProfile {
 
   CostConstrScore::VecUPtr cost_constr_scores;
 
-  LoadConstrProfile() {}
+  LoadConstrProfile() = default;
 
-  bool is_infesible() const { return this->infesible; }
+  explicit LoadConstrProfile(const UPtr& other);
 
-  bool is_fesible() const { return !this->infesible; }
+  [[nodiscard]] bool is_infeasible() const { return this->infeasible; }
 
-  void set_infesible() noexcept { this->infesible = true; };
+  [[nodiscard]] bool is_feasible() const { return !this->infeasible; }
+
+  void set_infeasible() noexcept { this->infeasible = true; };
 
   void reset();
 

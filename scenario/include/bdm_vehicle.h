@@ -59,13 +59,13 @@ class Vehicle {
 
   bool operator==(const Vehicle& other) const { return this->ind == other.ind; }
 
-  const DistMatrixCode* get_dist_matrix_code() const {
+  [[nodiscard]] const DistMatrixCode* get_dist_matrix_code() const {
     return this->vehicle_model->dist_matrix_code;
   };
 
-  const DistMatrix* get_dist_matrix() const { return this->vehicle_model->dist_matrix; }
+  [[nodiscard]] const DistMatrix* get_dist_matrix() const { return this->vehicle_model->dist_matrix; }
 
-  bool unusable() const { return this->count == 0; }
+  [[nodiscard]] bool unusable() const { return this->count == 0; }
 };
 
 namespace std {

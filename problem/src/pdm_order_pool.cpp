@@ -145,7 +145,7 @@ OrderPool::OrderPool(const SolverContext* context) : orders(), len(0) {
   cargo_order_groups = cargo_orders_group_by_label(std::move(cargo_order_groups),
                                                    context->parameter->cargo_order_group_rule);
   // step 3: 合并cargo order
-  auto order_generate_index = std::make_unique<GenerateIndex>();  // 订单索引生成器
+  const auto order_generate_index = std::make_unique<GenerateIndex>();  // 订单索引生成器
   for (auto& cargo_orders : cargo_order_groups) {
     auto tmp_cargo_orders =
         merge_cargo_orders_to_orders(cargo_orders, order_generate_index, context);

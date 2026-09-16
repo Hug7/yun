@@ -8,6 +8,7 @@
 #include <string>
 
 #include "pdm_context.h"
+#include "pdm_workspace.h"
 
 class Solver {
  public:
@@ -15,6 +16,14 @@ class Solver {
    * @brief solver上下文
    */
   SolverContext* context;
+  /**
+   * @brief 订单池
+   */
+  OrderPool* order_pool;
+  /**
+   * @brief 工作空间
+   */
+  Workspace* workspace;
 
   /**
    * @brief 构造solver
@@ -29,5 +38,5 @@ class Solver {
   /**
    * @brief 求解
    */
-  void solve() const;
+  void solve();
 };

@@ -5,19 +5,12 @@
 
 #include "pdm_node.h"
 
+#include <unordered_map>
+
 #include "bdm_time_window.h"
 #include "bdm_time_window_utils.h"
 
 // ====== implement of Node ======
-Node::Node() : activity_type(ActivityType::NONE), loc(nullptr) {
-  this->ptws = std::vector<std::unique_ptr<TimeWindowPlan>>();
-  this->first = nullptr;
-  this->last = nullptr;
-  this->next = nullptr;
-  this->prev = nullptr;
-  this->travel_dist = 0;
-  this->travel_time = 0;
-}
 
 Node::Node(const ActivityType activity_type, const Location* loc)
     : activity_type(activity_type), loc(loc) {
@@ -52,20 +45,19 @@ void Node::add_front_activity(Activity::UPtr activity) {
     activity->next = std::move(this->first);
     this->first = std::move(activity);
   } else {
-    this->last = activity.get();
     this->first = std::move(activity);
+    this->last = this->first.get();
   }
 }
 
 void Node::add_back_activity(Activity::UPtr activity) {
   if (this->last != nullptr) {
     activity->prev = this->last;
-    Activity* activity_ptr = activity.get();
     this->last->next = std::move(activity);
-    this->last = activity_ptr;
+    this->last = this->last->next.get();
   } else {
-    this->last = activity.get();
     this->first = std::move(activity);
+    this->last = this->first.get();
   }
 }
 
@@ -140,7 +132,7 @@ std::pair<Node::UPtr, Node::UPtr> NodeFactory::create_pair_node(const Order* ord
 }
 
 // ====== implement of NodeFactory ======
-Node* NodeOps::tail(Node::UPtr& head) {
+Node* NodeOps::tail(const Node::UPtr& head) {
   if (!head) {
     return nullptr;
   }
@@ -203,4 +195,59 @@ Node::UPtr NodeOps::reverse_chain(Node::UPtr chain) {
     prev_p->prev = nullptr;
   }
   return prev_p;
+}
+
+Node::UPtr NodeOps::deep_copy_chain(const Node* head) {
+  if (head == nullptr) {
+    return nullptr;
+  }
+  std::unordered_map<const Node*, Node*> node_map;
+  std::unordered_map<const Activity*, Activity*> activity_map;
+
+  // 第一遍: 逐个克隆 node 及其 activity 子链, 并记录新旧指针的映射
+  Node::UPtr copy_head;
+  Node* copy_tail = nullptr;
+  for (const Node* src_node = head; src_node != nullptr; src_node = src_node->next.get()) {
+    auto copy_node = std::make_unique<Node>(src_node->activity_type, src_node->loc);
+    for (const auto& src_ptw : src_node->ptws) {
+      copy_node->ptws.push_back(src_ptw->deep_copy());
+    }
+    for (const Activity* src_activity = src_node->first.get(); src_activity != nullptr;
+         src_activity = src_activity->next.get()) {
+      auto copy_activity =
+          std::make_unique<Activity>(src_activity->activity_type, src_activity->order);
+      activity_map[src_activity] = copy_activity.get();
+      copy_node->add_back_activity(std::move(copy_activity));
+    }
+    copy_node->travel_dist = src_node->travel_dist;
+    copy_node->travel_time = src_node->travel_time;
+    copy_node->prev = copy_tail;
+
+    Node* copy_node_ptr = copy_node.get();
+    if (copy_tail == nullptr) {
+      copy_head = std::move(copy_node);
+    } else {
+      copy_tail->next = std::move(copy_node);
+    }
+    copy_tail = copy_node_ptr;
+    node_map[src_node] = copy_tail;
+  }
+
+  // 第二遍: 修正跨 node 的关联指针(取货 activity <-> 送货 activity)
+  for (const Node* src_node = head; src_node != nullptr; src_node = src_node->next.get()) {
+    for (const Activity* src_activity = src_node->first.get(); src_activity != nullptr;
+         src_activity = src_activity->next.get()) {
+      Activity* copy_activity = activity_map.at(src_activity);
+      if (src_activity->related != nullptr) {
+        const auto related_it = activity_map.find(src_activity->related);
+        copy_activity->related = related_it == activity_map.end() ? nullptr : related_it->second;
+      }
+      if (src_activity->related_node != nullptr) {
+        const auto node_it = node_map.find(src_activity->related_node);
+        copy_activity->related_node = node_it == node_map.end() ? nullptr : node_it->second;
+      }
+    }
+  }
+
+  return copy_head;
 }

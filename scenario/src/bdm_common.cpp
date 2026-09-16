@@ -12,6 +12,11 @@ int GenerateIndex::next() {
 }
 
 // ====== implement of Bitset ======
+Bitset::Bitset(const UPtr& other) {
+  this->w = other->w;
+  this->n = other->n;
+}
+
 void Bitset::set(size_t u) { w[u >> 6] |= (1ULL << (u & 63)); }
 
 void Bitset::clear(size_t u) { w[u >> 6] &= ~(1ULL << (u & 63)); }
@@ -29,38 +34,37 @@ void Bitset::set_all() {
   size_t remaining = n % 64;
   if (remaining != 0) {
     // 清零多余的位
-    size_t last_index = w.size() - 1;
-    w[last_index] &= (1ULL << remaining) - 1;
+    w[w.size() - 1] &= (1ULL << remaining) - 1;
     // 或者直接：w[last_index] = (1ULL << remaining) - 1;
   }
 }
 
-void Bitset::call_union(Bitset* o) {
+void Bitset::call_union(const Bitset* o) {
   for (size_t u = 0; u < w.size(); ++u) {
     w[u] |= o->w[u];
   }
 }
 
-void Bitset::call_intersection(Bitset* o) {
+void Bitset::call_intersection(const Bitset* o) {
   for (size_t u = 0; u < w.size(); ++u) {
     w[u] &= o->w[u];
   }
 }
 
-void Bitset::call_union(Bitset::UPtr &o) {
+void Bitset::call_union(const Bitset::UPtr& o) {
   for (size_t u = 0; u < w.size(); ++u) {
     w[u] |= o->w[u];
   }
 }
 
-void Bitset::call_intersection(Bitset::UPtr &o) {
+void Bitset::call_intersection(const Bitset::UPtr& o) {
   for (size_t u = 0; u < w.size(); ++u) {
     w[u] &= o->w[u];
   }
 }
 
-int Bitset::popcount() const {
+int Bitset::sum() const {
   int c = 0;
-  for (auto x : w) c += __builtin_popcountll(x);
+  for (const auto x : w) c += __builtin_popcountll(x);
   return c;
 }

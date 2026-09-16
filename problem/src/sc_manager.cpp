@@ -17,13 +17,12 @@ void SoftConstraintManager::add_constr(SoftConstraint* constr) {
   ++this->len;
 
   // sort the constraints in the order of their priority
-  std::sort(
-      this->constrs.begin(), this->constrs.end(),
+  std::ranges::sort(this->constrs,
       [](const SoftConstraint* a, const SoftConstraint* b) { return a->priority > b->priority; });
 }
 
 void SoftConstraintManager::eval_constrs(Load* load, LoadConstrProfile::UPtr& constr_profile) {
-  for (auto& constr : this->constrs) {
+  for (const auto& constr : this->constrs) {
     auto soft_score = constr->eval(load);
     if (soft_score->value > 0) {
       constr_profile->total_soft_penalty += soft_score->get_score();

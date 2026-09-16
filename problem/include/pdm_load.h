@@ -42,7 +42,7 @@ class Load {
    */
   LoadContext* context;
   /**
-   * @brief pervious dist matrix code
+   * @brief previous dist matrix code
    */
   const DistMatrixCode* prev_dist_matrix_code;
   /**
@@ -50,7 +50,7 @@ class Load {
    */
   Vehicle* vehicle;
   /**
-   * @brief fisrt node of the load
+   * @brief first node of the load
    */
   Node::UPtr first_node;
   /**
@@ -66,15 +66,21 @@ class Load {
    */
   LoadConstrProfile::UPtr constr_profile;
 
-  Load(LoadContext* context);
+  explicit Load(LoadContext* context);
 
-  void reset_route_profile();
+  explicit Load(const Load* other);
+
+  virtual ~Load();
+
+  void reset_route_profile() const;
 
   void change_vehicle(Vehicle* vehicle);
 
-  long get_total_dist();
+  [[nodiscard]] long get_total_dist() const;
 
-  Bitset* get_available_vehicle_bitset();
+  [[nodiscard]] Bitset* get_available_vehicle_bitset();
+
+  [[nodiscard]] bool is_infeasible() const;
 
   void update_node_dist_time();
 
@@ -83,8 +89,6 @@ class Load {
   void update_end_node_dist_time();
 
   void update_time_window();
-
-  virtual ~Load();
 
   virtual const std::vector<long>& get_peak_load_dims() = 0;
 
@@ -98,34 +102,36 @@ class Load {
 
   virtual LabelsetValueBitset* get_order_labelset_value_bitset() = 0;
 
+  virtual std::vector<const Order*> get_all_orders() = 0;
+
  protected:
-  const std::vector<long>& get_peak_load_dims_sp();
+  [[nodiscard]] const std::vector<long>& get_peak_load_dims_sp() const;
 
-  const std::vector<long>& get_peak_load_dims_sd();
+  [[nodiscard]] const std::vector<long>& get_peak_load_dims_sd() const;
 
-  const std::vector<long>& get_peak_load_dims_mp();
+  [[nodiscard]] const std::vector<long>& get_peak_load_dims_mp() const;
 
-  int get_pick_node_count_sp();
+  [[nodiscard]] int get_pick_node_count_sp() const;
 
-  int get_pick_node_count_mp();
+  [[nodiscard]] int get_pick_node_count_mp() const;
 
-  int get_drop_node_count_sd();
+  [[nodiscard]] int get_drop_node_count_sd() const;
 
-  int get_drop_node_count_md();
+  [[nodiscard]] int get_drop_node_count_md() const;
 
-  LabelsetValueBitset* get_pick_loc_labelset_value_bitset_sp();
+  [[nodiscard]] LabelsetValueBitset* get_pick_loc_labelset_value_bitset_sp() const;
 
-  LabelsetValueBitset* get_pick_loc_labelset_value_bitset_mp();
+  [[nodiscard]] LabelsetValueBitset* get_pick_loc_labelset_value_bitset_mp() const;
 
-  LabelsetValueBitset* get_drop_loc_labelset_value_bitset_sd();
+  [[nodiscard]] LabelsetValueBitset* get_drop_loc_labelset_value_bitset_sd() const;
 
-  LabelsetValueBitset* get_drop_loc_labelset_value_bitset_md();
+  [[nodiscard]] LabelsetValueBitset* get_drop_loc_labelset_value_bitset_md() const;
 
-  LabelsetValueBitset* get_order_labelset_value_bitset_sp();
+  [[nodiscard]] LabelsetValueBitset* get_order_labelset_value_bitset_sp() const;
 
-  LabelsetValueBitset* get_order_labelset_value_bitset_sd();
+  [[nodiscard]] LabelsetValueBitset* get_order_labelset_value_bitset_sd() const;
 
-  LabelsetValueBitset* get_order_labelset_value_bitset_mp();
+  [[nodiscard]] LabelsetValueBitset* get_order_labelset_value_bitset_mp() const;
 };
 
 /**
@@ -133,7 +139,9 @@ class Load {
  */
 class LoadSPMD : public Load {
  public:
-  LoadSPMD(LoadContext* context) : Load(context) {};
+  explicit LoadSPMD(LoadContext* context) : Load(context) {};
+
+  explicit LoadSPMD(const Load* other) : Load(other) {};
 
   ~LoadSPMD() override;
 
@@ -148,4 +156,6 @@ class LoadSPMD : public Load {
   LabelsetValueBitset* get_drop_loc_labelset_value_bitset() override;
 
   LabelsetValueBitset* get_order_labelset_value_bitset() override;
+
+  std::vector<const Order*> get_all_orders() override;
 };

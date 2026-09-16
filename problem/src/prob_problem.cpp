@@ -35,7 +35,7 @@ Problem::Problem(const Scenario* scenario, Parameter* parameter)
 
 Problem::~Problem() {}
 
-void Problem::eval_load(Load* load) {
+void Problem::eval_load(Load* load) const {
   // todo 是否需要重置待讨论
   LoadConstrProfile::UPtr& constr_profile = load->constr_profile;
   constr_profile->reset();
@@ -49,15 +49,15 @@ void Problem::eval_load(Load* load) {
   constr_profile->update_obj_val();
 }
 
-LoadConstrProfile::UPtr Problem::tmp_eval_load(Load* load) {
+LoadConstrProfile::UPtr Problem::tmp_eval_load(Load* load) const {
   LoadConstrProfile::UPtr constr_profile = std::make_unique<LoadConstrProfile>();
   this->hc_manager->eval_constrs(load, constr_profile);
-  if (constr_profile->infesible) {
+  if (constr_profile->infeasible) {
     return constr_profile;
   }
 
   this->cc_manager->eval_constrs(load, constr_profile);
-  if (constr_profile->infesible) {
+  if (constr_profile->infeasible) {
     return constr_profile;
   }
 
@@ -69,12 +69,12 @@ LoadConstrProfile::UPtr Problem::tmp_eval_load(Load* load) {
   return constr_profile;
 }
 
-InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) {
+InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) const {
   // construct order
   auto cargo_orders = std::vector<CargoOrder*>({cargo_order});
-  Order* order =
+  const Order* order =
       OrderFactory::creat_tmp_order(cargo_orders, parameter->plan_datetime_range, scenario);
-  auto orders = std::vector<Order*>({order});
+  auto orders = std::vector<const Order*>({order});
 
   auto infeasible_cargo_order = std::make_unique<InfeasibleCargoOrder>(cargo_orders);
 
@@ -90,7 +90,7 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) {
     }
     auto cur_load = this->construct_load_by_order(orders, vehicle);
     // check feasibility
-    if (cur_load->constr_profile->is_infesible()) {
+    if (cur_load->constr_profile->is_infeasible()) {
       auto& cur_constr_profile = cur_load->constr_profile;
       // record hard constr scores
       for (auto& hard_score : cur_constr_profile->hard_constr_scores) {
@@ -119,16 +119,16 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) {
   return infeasible_cargo_order;
 }
 
-Load* Problem::construct_load_by_order(std::vector<Order*>& orders) {
+Load* Problem::construct_load_by_order(std::vector<const Order*>& orders) const {
   Load* load = this->pd_pattern->create_load(this->load_context);
-  for (auto order : orders) {
+  for (const auto order : orders) {
     this->pd_pattern->insert_last_drop(load, order);
   }
   // try using different vehicle
   const std::vector<Vehicle*>& vehicles = this->scenario->carrier_manager->vehicles;
   LoadConstrProfile::UPtr best_profile = nullptr;
-  Vehicle* best_vehilce = nullptr;
-  for (auto vehicle : vehicles) {
+  Vehicle* best_vehicle = nullptr;
+  for (const auto vehicle : vehicles) {
     // check vehicle resource
     if (vehicle->unusable()) {
       continue;
@@ -137,27 +137,32 @@ Load* Problem::construct_load_by_order(std::vector<Order*>& orders) {
     load->change_vehicle(vehicle);
     // temporary evaluate of load
     auto cur_constr_profile = this->tmp_eval_load(load);
-    if (cur_constr_profile->is_infesible()) {
+    if (cur_constr_profile->is_infeasible()) {
       continue;
     }
-    if (best_vehilce == nullptr) {
+    if (best_vehicle == nullptr) {
       best_profile = std::move(cur_constr_profile);
-      best_vehilce = vehicle;
+      best_vehicle = vehicle;
     } else if (cur_constr_profile->dominate(best_profile)) {
       best_profile = std::move(cur_constr_profile);
-      best_vehilce = vehicle;
+      best_vehicle = vehicle;
     }
   }
+  // 没有任何可行车辆时不能切换车辆，直接标记不可行交由调用方处理
+  if (best_vehicle == nullptr) {
+    load->constr_profile->set_infeasible();
+    return load;
+  }
   // change vehicle
-  load->change_vehicle(best_vehilce);
+  load->change_vehicle(best_vehicle);
   this->eval_load(load);
 
   return load;
 }
 
-Load* Problem::construct_load_by_order(std::vector<Order*>& orders, Vehicle* vehicle) {
+Load* Problem::construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle) const {
   Load* load = this->pd_pattern->create_load(this->load_context);
-  for (auto order : orders) {
+  for (const auto order : orders) {
     this->pd_pattern->insert_last_drop(load, order);
   }
   load->change_vehicle(vehicle);

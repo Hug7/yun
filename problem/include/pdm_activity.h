@@ -45,7 +45,7 @@ class Activity {
 
   Activity();
 
-  Activity(const ActivityType activity_type, const Order* order);
+  Activity(ActivityType activity_type, const Order* order);
 
   void set_prev(Activity* prev);
 

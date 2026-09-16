@@ -7,7 +7,7 @@
 
 #include <sol/sol.hpp>
 
-#include "pdm_context.h"
+#include "pdm_workspace.h"
 
 /**
  * @brief 策略管理器
@@ -28,22 +28,22 @@ class StrategyManager {
   std::shared_ptr<spdlog::logger> logger;
 
   /**
-   * @brief 注册usertype：把类的方法暴露给脚本
-   * @param context solver上下文
+   * @brief 注册-公共方法
+   * @param workspace 工作空间
    */
-  void register_clazz(const SolverContext* context);
+  void register_common_func(Workspace* workspace);
   /**
-   * @brief 注册方法
-   * @param context solver上下文
+   * @brief 注册-构造启发式方法
+   * @param workspace 工作空间
    */
-  void register_func(const SolverContext* context);
+  void register_construct_heuristic_func(Workspace* workspace);
   /**
    * @brief 加载脚本
    */
   void load_script();
 
  public:
-  explicit StrategyManager(const SolverContext* context);
+  explicit StrategyManager(Workspace* workspace);
 
   /**
    * @brief 执行脚本
