@@ -45,7 +45,7 @@ Load::Load(const Load* other) {
   this->constr_profile = std::make_unique<LoadConstrProfile>(other->constr_profile);
   // copy-node链(含首尾depot哨兵), 并修正尾节点指针
   this->first_node = NodeOps::deep_copy_chain(other->first_node.get());
-  this->last_node = NodeOps::tail(other->first_node);
+  this->last_node = NodeOps::tail(this->first_node);
 }
 
 Load::~Load() {

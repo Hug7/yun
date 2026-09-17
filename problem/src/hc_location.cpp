@@ -29,7 +29,7 @@ HardConstrScore::UPtr HcMaxDropNodeCount::eval(Load* load) {
 
 // ====== implement of HcAvailableVehicle ======
 HardConstrScore::UPtr HcAvailableVehicle::eval(Load* load) {
-  auto available_vehicle_bitset = load->get_available_vehicle_bitset();
+  const auto available_vehicle_bitset = load->get_available_vehicle_bitset();
 
   if (!available_vehicle_bitset->test(load->vehicle->ind)) {
     return std::make_unique<HardConstrScore>(this->code, false, 1, 1, this->seq_type,

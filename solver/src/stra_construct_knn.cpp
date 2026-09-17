@@ -271,6 +271,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
             const auto tmp_load = problem->pd_pattern->deep_copy_load(cur_load);
             // 插入到最后-并且快速判断能否插入
             if (problem->pd_pattern->insert_last_delivery(tmp_load, cur_order)) {
+              problem->eval_load(tmp_load);
               // 找到合适的车
               problem->tmp_select_best_vehicle(tmp_load, sol->vehicle_resource);
               if (tmp_load->is_feasible()) {
@@ -307,6 +308,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
       // 选择最优车辆
       auto cur_load = candidate_loads[best_rank_for_load_ind];
       problem->pd_pattern->insert_last_delivery(cur_load, cur_order);
+      problem->eval_load(cur_load);
       problem->select_best_vehicle(cur_load, sol->vehicle_resource);
       // 将所有unassigned orders不能插入的candidate load归档
       int archived_load_len = static_cast<int>(archived_load_indices.size());

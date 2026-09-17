@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 
 #include "pdm_load.h"
 #include "pdm_score.h"
@@ -33,9 +34,9 @@ class HardConstraint {
    */
   const bool vehicle_type;
 
-  HardConstraint(const std::string& code, const int priority, const bool seq_type,
+  HardConstraint(std::string  code, const int priority, const bool seq_type,
                  const bool vehicle_type)
-      : code(code), priority(priority), seq_type(seq_type), vehicle_type(vehicle_type) {};
+      : code(std::move(code)), priority(priority), seq_type(seq_type), vehicle_type(vehicle_type) {};
 
   virtual ~HardConstraint() = default;
 

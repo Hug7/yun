@@ -16,7 +16,7 @@ class HcMaxPickNodeCount : public HardConstraint {
  public:
   const int max_pick_node_count;
 
-  HcMaxPickNodeCount(const int max_pick_node_count)
+  explicit HcMaxPickNodeCount(const int max_pick_node_count)
       : HardConstraint("MaxPickNodeCount", 0, false, false),
         max_pick_node_count(max_pick_node_count) {};
 
@@ -33,7 +33,7 @@ class HcMaxDropNodeCount : public HardConstraint {
  public:
   const int max_drop_node_count;
 
-  HcMaxDropNodeCount(const int max_drop_node_count)
+  explicit HcMaxDropNodeCount(const int max_drop_node_count)
       : HardConstraint("MaxDropNodeCount", 0, false, false),
         max_drop_node_count(max_drop_node_count) {};
 
@@ -48,9 +48,7 @@ class HcMaxDropNodeCount : public HardConstraint {
  */
 class HcAvailableVehicle : public HardConstraint {
  public:
-
-  HcAvailableVehicle()
-      : HardConstraint("HcAvailableVehicle", 0, false, true) {};
+  HcAvailableVehicle() : HardConstraint("HcAvailableVehicle", 0, false, true) {};
 
   /**
    * @brief calculate the score of the hard constraint
@@ -63,13 +61,10 @@ class HcAvailableVehicle : public HardConstraint {
  */
 class HcTimeWindow : public HardConstraint {
  public:
-
-  HcTimeWindow()
-      : HardConstraint("HcTimeWindow", 0, true, true) {};
+  HcTimeWindow() : HardConstraint("HcTimeWindow", 0, true, true) {};
 
   /**
    * @brief calculate the score of the hard constraint
    */
   HardConstrScore::UPtr eval(Load* load) override;
 };
-
