@@ -34,7 +34,7 @@ class PickDropPattern {
 
   virtual Load* deep_copy_load(const Load* other) const = 0;
 
-  virtual bool insert_last_drop(Load* load, const Order* order) const = 0;
+  virtual bool insert_last_delivery(Load* load, const Order* order) const = 0;
   
   PickDropPattern() = default;
 };
@@ -55,5 +55,5 @@ class PatternSPMD : public PickDropPattern {
 
   LoadSPMD* deep_copy_load(const Load* other) const override;
 
-  bool insert_last_drop(Load* load, const Order* order) const override;
+  bool insert_last_delivery(Load* load, const Order* order) const override;
 };

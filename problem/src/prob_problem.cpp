@@ -69,6 +69,58 @@ LoadConstrProfile::UPtr Problem::tmp_eval_load(Load* load) const {
   return constr_profile;
 }
 
+void Problem::select_best_vehicle(Load* load, VehicleResource::UPtr& vehicle_resource) const {
+  const Vehicle* best_vehicle = load->vehicle;
+  // 先释放车辆资源
+  vehicle_resource->release(best_vehicle);
+  double best_obj_val = std::numeric_limits<double>::max();
+  if (load->is_feasible()) {
+    best_obj_val = load->constr_profile->obj_val;
+  }
+  for (const auto & vehicle_usage : vehicle_resource->vehicle_usages) {
+    if (vehicle_usage->vehicle == best_vehicle) {
+      continue;;
+    }
+    if (vehicle_usage->has_available_vehicle()) {
+      load->change_vehicle(vehicle_usage->vehicle);
+      this->eval_load(load);
+      if (load->is_feasible() && load->constr_profile->obj_val < best_obj_val) {
+        best_vehicle = vehicle_usage->vehicle;
+        best_obj_val = load->constr_profile->obj_val;
+      }
+    }
+  }
+  // 切换最优车型
+  load->change_vehicle(best_vehicle);
+  this->eval_load(load);
+  // 占用车型
+  vehicle_resource->occupy(best_vehicle);
+}
+
+void Problem::tmp_select_best_vehicle(Load* load, VehicleResource::UPtr& vehicle_resource) const {
+  const Vehicle* best_vehicle = load->vehicle;
+  double best_obj_val = std::numeric_limits<double>::max();
+  if (load->is_feasible()) {
+    best_obj_val = load->constr_profile->obj_val;
+  }
+  for (const auto & vehicle_usage : vehicle_resource->vehicle_usages) {
+    if (vehicle_usage->vehicle == best_vehicle) {
+      continue;;
+    }
+    if (vehicle_usage->has_available_vehicle()) {
+      load->change_vehicle(vehicle_usage->vehicle);
+      this->eval_load(load);
+      if (load->is_feasible() && load->constr_profile->obj_val < best_obj_val) {
+        best_vehicle = vehicle_usage->vehicle;
+        best_obj_val = load->constr_profile->obj_val;
+      }
+    }
+  }
+  // 切换最优车型
+  load->change_vehicle(best_vehicle);
+  this->eval_load(load);
+}
+
 InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) const {
   // construct order
   auto cargo_orders = std::vector<CargoOrder*>({cargo_order});
@@ -119,43 +171,42 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) c
   return infeasible_cargo_order;
 }
 
-Load* Problem::construct_load_by_order(std::vector<const Order*>& orders) const {
+Load* Problem::construct_load_by_order(std::vector<const Order*>& orders,
+                                       VehicleResource::UPtr& vehicle_resource) const {
   Load* load = this->pd_pattern->create_load(this->load_context);
   for (const auto order : orders) {
-    this->pd_pattern->insert_last_drop(load, order);
+    this->pd_pattern->insert_last_delivery(load, order);
   }
   // try using different vehicle
-  const std::vector<Vehicle*>& vehicles = this->scenario->carrier_manager->vehicles;
   LoadConstrProfile::UPtr best_profile = nullptr;
-  Vehicle* best_vehicle = nullptr;
-  for (const auto vehicle : vehicles) {
+  VehicleUsage* best_vehicle_usage = nullptr;
+  for (const auto& vehicle_usage : vehicle_resource->vehicle_usages) {
     // check vehicle resource
-    if (vehicle->unusable()) {
+    if (!vehicle_usage->has_available_vehicle()) {
       continue;
     }
     // change vehicle
-    load->change_vehicle(vehicle);
+    load->change_vehicle(vehicle_usage->vehicle);
     // temporary evaluate of load
     auto cur_constr_profile = this->tmp_eval_load(load);
     if (cur_constr_profile->is_infeasible()) {
       continue;
     }
-    if (best_vehicle == nullptr) {
+    if (best_vehicle_usage == nullptr || cur_constr_profile->dominate(best_profile)) {
       best_profile = std::move(cur_constr_profile);
-      best_vehicle = vehicle;
-    } else if (cur_constr_profile->dominate(best_profile)) {
-      best_profile = std::move(cur_constr_profile);
-      best_vehicle = vehicle;
+      best_vehicle_usage = vehicle_usage.get();
     }
   }
   // 没有任何可行车辆时不能切换车辆，直接标记不可行交由调用方处理
-  if (best_vehicle == nullptr) {
+  if (best_vehicle_usage == nullptr) {
     load->constr_profile->set_infeasible();
     return load;
   }
   // change vehicle
-  load->change_vehicle(best_vehicle);
+  load->change_vehicle(best_vehicle_usage->vehicle);
   this->eval_load(load);
+  // 占用车辆资源
+  best_vehicle_usage->occupy_vehicle();
 
   return load;
 }
@@ -163,7 +214,7 @@ Load* Problem::construct_load_by_order(std::vector<const Order*>& orders) const 
 Load* Problem::construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle) const {
   Load* load = this->pd_pattern->create_load(this->load_context);
   for (const auto order : orders) {
-    this->pd_pattern->insert_last_drop(load, order);
+    this->pd_pattern->insert_last_delivery(load, order);
   }
   load->change_vehicle(vehicle);
   this->eval_load(load);

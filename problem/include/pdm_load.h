@@ -48,7 +48,7 @@ class Load {
   /**
    * @brief vehicle
    */
-  Vehicle* vehicle;
+  const Vehicle* vehicle;
   /**
    * @brief first node of the load
    */
@@ -74,13 +74,15 @@ class Load {
 
   void reset_route_profile() const;
 
-  void change_vehicle(Vehicle* vehicle);
+  void change_vehicle(const Vehicle* _vehicle);
 
   [[nodiscard]] long get_total_dist() const;
 
   [[nodiscard]] Bitset* get_available_vehicle_bitset();
 
   [[nodiscard]] bool is_infeasible() const;
+
+  [[nodiscard]] bool is_feasible() const;
 
   void update_node_dist_time();
 

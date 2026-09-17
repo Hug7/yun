@@ -59,7 +59,7 @@ void Load::reset_route_profile() const {
   this->route_profile->reset_dirty_marks();
 }
 
-void Load::change_vehicle(Vehicle* vehicle) {
+void Load::change_vehicle(const Vehicle* _vehicle) {
   // check if the routing network has changed
   // if change, update the distance and time between nodes
   bool network_change_flag = false;
@@ -67,21 +67,21 @@ void Load::change_vehicle(Vehicle* vehicle) {
       this->prev_dist_matrix_code != this->vehicle->get_dist_matrix_code()) {
     network_change_flag = true;
   }
-  this->vehicle = vehicle;
+  this->vehicle = _vehicle;
   this->prev_dist_matrix_code = this->vehicle->get_dist_matrix_code();
 
   // change start node
-  const bool change_start_node_flag = this->first_node->loc != vehicle->orig_loc;
+  const bool change_start_node_flag = this->first_node->loc != this->vehicle->orig_loc;
   if (change_start_node_flag) {
-    auto node = std::make_unique<Node>(ActivityType::START, vehicle->orig_loc);
+    auto node = std::make_unique<Node>(ActivityType::START, this->vehicle->orig_loc);
     this->first_node->next->prev = node.get();
     node->next = std::move(this->first_node->next);
     this->first_node = std::move(node);
   }
   // change end node
-  const bool change_end_node_flag = this->last_node->loc != vehicle->dest_loc;
+  const bool change_end_node_flag = this->last_node->loc != this->vehicle->dest_loc;
   if (change_end_node_flag) {
-    auto node = std::make_unique<Node>(ActivityType::END, vehicle->dest_loc);
+    auto node = std::make_unique<Node>(ActivityType::END, this->vehicle->dest_loc);
     Node* node_ptr = node.get();
     node->prev = this->last_node->prev;
     this->last_node->prev->next = std::move(node);
@@ -133,6 +133,10 @@ Bitset* Load::get_available_vehicle_bitset() {
 
 bool Load::is_infeasible() const {
   return this->constr_profile->is_infeasible();
+}
+
+bool Load::is_feasible() const {
+  return this->constr_profile->is_feasible();
 }
 
 void Load::update_node_dist_time() {

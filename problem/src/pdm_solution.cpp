@@ -33,7 +33,7 @@ void Solution::add_load(Load* load) {
   // 添加load
   this->loads.push_back(load);
   // 占用车辆资源
-  this->vehicle_resource->occupy(load->vehicle);
+  // this->vehicle_resource->occupy(load->vehicle);
 }
 
 void Solution::add_unassigned_order(const Order* order) {

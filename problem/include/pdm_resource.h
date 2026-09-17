@@ -41,6 +41,8 @@ class VehicleUsage {
   void occupy_vehicle();
 
   void release_vehicle();
+
+  [[nodiscard]] bool has_available_vehicle() const {return this->cur_usage < this->max_usable;};
 };
 
 /**

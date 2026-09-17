@@ -79,4 +79,9 @@ class Workspace {
    * @return solution
    */
   [[nodiscard]] Solution* generate_sol() const;
+  /**
+   * @brief solution覆盖workspace
+   * @param sol solution
+   */
+  void move_solution(Solution* sol);
 };

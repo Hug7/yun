@@ -59,3 +59,13 @@ Solution* Workspace::generate_sol() const {
   sol->unassigned_orders = this->unassigned_orders;
   return sol;
 }
+
+void Workspace::move_solution(Solution* sol) {
+  this->vehicle_resource = std::move(sol->vehicle_resource);
+  this->unassigned_orders.clear();
+  this->unassigned_orders = std::move(sol->unassigned_orders);
+  this->loads.clear();
+  this->loads = std::move(sol->loads);
+
+  delete sol;
+}

@@ -46,7 +46,7 @@ LoadSPMD* PatternSPMD::deep_copy_load(const Load* other) const {
   return new LoadSPMD(other);
 }
 
-bool PatternSPMD::insert_last_drop(Load* load, const Order* order) const {
+bool PatternSPMD::insert_last_delivery(Load* load, const Order* order) const {
   // 重置route profile
   load->reset_route_profile();
   // 找到第一个pick node
@@ -74,15 +74,15 @@ bool PatternSPMD::insert_last_drop(Load* load, const Order* order) const {
     auto last_drop_node = load->last_node->prev;
     if (last_drop_node->loc != order->drop_loc) {
       auto cur_drop_node = NodeFactory::create_drop_node(order, std::move(activities_it.second));
-      Node* cur_drop_node_ptr = cur_drop_node.get();
+      // Node* cur_drop_node_ptr = cur_drop_node.get();
       // link C->prev = A
       cur_drop_node->prev = last_drop_node;
-      // link B->prev = C
-      load->last_node->prev = cur_drop_node_ptr;
       // link C->next = B
       cur_drop_node->next = std::move(last_drop_node->next);
       // link A->next = C
       last_drop_node->next = std::move(cur_drop_node);
+      // link B->prev = C
+      load->last_node->prev = last_drop_node->next.get();
     } else {
       last_drop_node->add_front_activity(std::move(activities_it.second));
     }
