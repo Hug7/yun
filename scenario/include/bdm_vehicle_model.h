@@ -59,14 +59,14 @@ class VehicleModel : public Item {
    * @param dim dimension
    * @param dim_val value of dimension
    */
-  void update_dim_value(Dimension* dim, const double dim_val);
+  void update_dim_value(const Dimension* dim, const double dim_val);
 
   /**
    * @brief Update labelset value and labelset value bitset
    * @param label_ind4labelset index of label in labelset
    * @param label_value label value
    */
-  void update_labelset_value(const int label_ind4labelset, LabelValue* label_value);
+  void update_labelset_value(const int label_ind4labelset, LabelValue* label_value) const;
 };
 
 /**

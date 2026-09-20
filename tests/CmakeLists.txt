@@ -15,6 +15,10 @@ add_executable(c_log_test common/c_log_test.cpp)
 target_link_libraries(c_log_test PRIVATE yun_common GTest::gtest_main)
 add_test(NAME c_log_test COMMAND c_log_test)
 
+add_executable(c_time_utils_test common/c_time_utils_test.cpp)
+target_link_libraries(c_time_utils_test PRIVATE yun_common GTest::gtest_main)
+add_test(NAME c_time_utils_test COMMAND c_time_utils_test)
+
 add_executable(pdm_node_test problem/pdm_node_test.cpp)
 target_link_libraries(pdm_node_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME pdm_node_test COMMAND pdm_node_test)

@@ -50,6 +50,7 @@
 **外键依赖**: 无
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | VehicleModelDimensionValue | DimensionCode | 1 : N |
@@ -71,6 +72,7 @@
 **外键依赖**: 无
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | LabelValue | LabelCode | 1 : N |
@@ -93,11 +95,13 @@
 | 2 | LabelValue | string | 是 | 标签取值 | |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | LabelCode | Label | Code |
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | LocationLabelValue | (LabelCode, LabelValue) | 1 : N |
@@ -118,6 +122,7 @@
 | 2 | ApplyItem | string | 是 | 适用实体类型 | Location / VehicleModel / Order / Carrier |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | LabelCode | Label | Code |
@@ -143,6 +148,7 @@
 **外键依赖**: 无
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | LocationLabelValue | LocationCode | 1 : N |
@@ -172,6 +178,7 @@
 | 3 | LabelValue | string | 是 | 标签取值 | 必须存在于 LabelValue(LabelCode, LabelValue) |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | LocationCode | Location | Code |
@@ -194,6 +201,7 @@
 | 3 | VehicleModelCode | string | 是 | 车型编码 | 必须存在于 VehicleModel.Code；同时 (CarrierCode, VehicleModelCode) 必须存在于 Vehicle |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | LocationCode | Location | Code |
@@ -216,9 +224,11 @@
 | 3 | Daily | string | 是 | 每天的时间窗列表, 格式应遵循`%H%M%H%M;%H%M%H%M`, 其中`%H%M%H%M`是一段时间窗使用 `";"` 作为分割符 |  |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | LocationCode | Location | Code |
+
 **被依赖**: 无
 
 **互斥**: 和`WorkCalendarWeekly`互斥, 相同主键的只能存在一个
@@ -243,6 +253,7 @@
 | 9 | Sunday | string | 否 | 周日的时间窗列表, 格式应遵循`%H%M%H%M;%H%M%H%M`, 其中`%H%M%H%M`是一段时间窗使用 `";"` 作为分割符, 为空时则不限制 | |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | LocationCode | Location | Code |
@@ -265,6 +276,7 @@
 | 3 | FixedDropTime | int | 否 | 固定卸货时间, 单位: 秒, 为空时为0 | |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | LocationCode | Location | Code |
@@ -286,6 +298,7 @@
 | 4 | PerHourProcessQuantity | double | 是 | 每小时处理量, 单位: 单位/小时, 最大支持小数点后4位 | |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | LocationCode | Location | Code |
@@ -309,11 +322,13 @@
 | 3 | DistMatrixCode | string | 是 | 使用的距离矩阵编码 | 必须存在于 DistMatrixCode.Code |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | DistMatrixCode | DistMatrixCode | Code |
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | VehicleModelDimensionValue | VehicleModelCode | 1 : N |
@@ -335,6 +350,7 @@
 | 3 | DimensionValue | double | 是 | 维度值 | |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | VehicleModelCode | VehicleModel | Code |
@@ -356,6 +372,7 @@
 | 3 | LabelValue | string | 是 | 标签取值 | 必须存在于 LabelValue(LabelCode, LabelValue) |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | VehicleModelCode | VehicleModel | Code |
@@ -381,6 +398,7 @@
 **外键依赖**: 无
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | CarrierLabelValue | CarrierCode | 1 : N |
@@ -401,6 +419,7 @@
 | 3 | LabelValue | string | 是 | 标签取值 | 必须存在于 LabelValue(LabelCode, LabelValue) |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | CarrierCode | Carrier | Code |
@@ -425,6 +444,7 @@
 | 5 | DestinationLocationCode | string | 否 | 目标站点编码 | 不为空时, 必须存在于 Location.Code |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | CarrierCode | Carrier | Code |
@@ -433,6 +453,7 @@
 | DestinationLocationCode | Location | Code |
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | LocationAvailableVehicle | (CarrierCode, VehicleModelCode) | 1 : N |
@@ -454,6 +475,7 @@
 **外键依赖**: 无
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | DistMatrix | (DistMatrixCode) | 1 : N |
@@ -474,6 +496,7 @@
 | 5 | Time | int | 是 | 耗时，单位：秒 | >=0 & <=2160000000  |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | FromLocationCode | Location | Code |
@@ -503,12 +526,14 @@
 | 8 | LatestDropDateTime | string | 是 | 最晚卸货时间, 时间格式%Y-%m-%d %H:%M | 必须 ≥ EarliestDropDateTime |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | PickLocationCode | Location | Code |
 | DropLocationCode | Location | Code |
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | CargoSubOrder | CargoOrderCode | 1 : N |
@@ -530,11 +555,13 @@
 | 4 | Quantity | int | 是 | 货量 | |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | CargoOrderCode | CargoOrder | Code |
 
 **被依赖**:
+
 | 依赖方表 | 依赖方字段 | 关系 |
 |---|---|---|
 | CargoSubOrderDimensionValue | (CargoOrderCode, CargoSubOrderCode) | 1 : N |
@@ -555,6 +582,7 @@
 | 4 | DimensionValue | double | 是 | 维度值 | |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | (CargoOrderCode, CargoSubOrderCode) | CargoSubOrder | (CargoOrderCode, CargoSubOrderCode) |
@@ -577,6 +605,7 @@
 | 4 | LabelValue | string | 是 | 标签取值 | 必须存在于 LabelValue(LabelCode, LabelValue) |
 
 **外键依赖**:
+
 | 本表字段 | 引用表 | 引用字段 |
 |---|---|---|
 | (CargoOrderCode, CargoSubOrderCode) | CargoSubOrder | (CargoOrderCode, CargoSubOrderCode) |

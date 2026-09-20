@@ -189,7 +189,7 @@ LabelsetValueBitset* Load::get_order_labelset_value_bitset_sp() const {
   if (head_node->activity_type == ActivityType::PICK) {
     auto tail_activity = head_node->last;
     while (tail_activity != nullptr) {
-      this->route_profile->pick_loc_labelset_value_bitset->merge(
+      this->route_profile->order_labelset_value_bitset->merge(
           tail_activity->order->labelset_value_bitset);
       tail_activity = tail_activity->prev;
     }
@@ -206,7 +206,7 @@ LabelsetValueBitset* Load::get_order_labelset_value_bitset_sd() const {
   if (tail_node->activity_type == ActivityType::DROP) {
     auto tail_activity = tail_node->last;
     while (tail_activity != nullptr) {
-      this->route_profile->pick_loc_labelset_value_bitset->merge(
+      this->route_profile->order_labelset_value_bitset->merge(
           tail_activity->order->labelset_value_bitset);
       tail_activity = tail_activity->prev;
     }
@@ -224,7 +224,7 @@ LabelsetValueBitset* Load::get_order_labelset_value_bitset_mp() const {
   while (head_node->activity_type == ActivityType::PICK) {
     auto tail_activity = head_node->last;
     while (tail_activity != nullptr) {
-      this->route_profile->pick_loc_labelset_value_bitset->merge(
+      this->route_profile->order_labelset_value_bitset->merge(
           tail_activity->order->labelset_value_bitset);
       tail_activity = tail_activity->prev;
     }

@@ -17,29 +17,29 @@ TimeWindowPlan::UPtr TimeWindowInfer::forward_s_s(TimeWindowPlan::UPtr& pre_node
                                                   const TimeWindow* ori_tw) {
   TimeWindowPlan::UPtr cur_tw = std::make_unique<TimeWindowPlan>();
 
-  long plan_early_arr = pre_node_plan_tw->early_dest + cost_time;
-  long plan_late_arr = pre_node_plan_tw->late_dest + cost_time;
+  long plan_early_arr = pre_node_plan_tw->early_depart + cost_time;
+  long plan_late_arr = pre_node_plan_tw->late_depart + cost_time;
 
   if (plan_early_arr <= ori_tw->late) {
     if (plan_late_arr >= ori_tw->early) {
       cur_tw->early_arr = std::max(plan_early_arr, ori_tw->early);
       cur_tw->late_arr = std::min(plan_late_arr, ori_tw->late);
-      cur_tw->early_dest = cur_tw->early_arr + work_time;
-      cur_tw->late_dest = cur_tw->late_arr + work_time;
+      cur_tw->early_depart = cur_tw->early_arr + work_time;
+      cur_tw->late_depart = cur_tw->late_arr + work_time;
     } else {
       // wait time case
       cur_tw->early_arr = plan_late_arr;
       cur_tw->late_arr = plan_late_arr;
-      cur_tw->early_dest = ori_tw->early + work_time;
-      cur_tw->late_dest = ori_tw->early + work_time;
+      cur_tw->early_depart = ori_tw->early + work_time;
+      cur_tw->late_depart = ori_tw->early + work_time;
       cur_tw->wait_time = ori_tw->early - plan_late_arr;
     }
   } else {
     // over time case
     cur_tw->early_arr = plan_early_arr;
     cur_tw->late_arr = plan_early_arr;
-    cur_tw->early_dest = plan_early_arr + work_time;
-    cur_tw->late_dest = plan_early_arr + work_time;
+    cur_tw->early_depart = plan_early_arr + work_time;
+    cur_tw->late_depart = plan_early_arr + work_time;
     cur_tw->over_time = plan_early_arr - ori_tw->late;
   }
 
@@ -55,8 +55,8 @@ void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const 
     non_wait_over_flag = true;
   }
 
-  long plan_early_arr = pre_node_plan_tw->early_dest + cost_time;
-  long plan_late_arr = pre_node_plan_tw->late_dest + cost_time;
+  long plan_early_arr = pre_node_plan_tw->early_depart + cost_time;
+  long plan_late_arr = pre_node_plan_tw->late_depart + cost_time;
 
   for (const auto& cur_ori_tw : ori_tws) {
     if (plan_late_arr < cur_ori_tw->early) {

@@ -92,6 +92,8 @@ class Load {
 
   void update_time_window();
 
+  [[nodiscard]] std::vector<Node*> unfold_node_linked() const;
+
   virtual const std::vector<long>& get_peak_load_dims() = 0;
 
   virtual int get_pick_node_count() = 0;

@@ -95,7 +95,7 @@ Parameter* load_parameter(const Scenario* scenario) {
  * @param parameter 参数
  */
 Problem* create_problem(const Scenario* scenario, Parameter* parameter) {
-  Problem* problem = new Problem(scenario, parameter);
+  const auto problem = new Problem(scenario, parameter);
 
   // hard constraints: base
   problem->hc_manager->add_constr(new HcVehicleCapacity());
@@ -147,7 +147,7 @@ SolverContext::SolverContext(std::string root_dir, const std::string& log_dir,
   // 读取参数
   this->parameter = load_parameter(this->scenario);
   // 可视化管理器
-  this->visual_manager = new VisualManager(this->output_dir, this->logger);
+  this->visual_manager = new VisualManager(this->output_dir, this->scenario, this->logger);
   // 创建问题
   this->problem = create_problem(this->scenario, this->parameter);
 }

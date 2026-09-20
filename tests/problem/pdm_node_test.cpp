@@ -112,8 +112,8 @@ TEST(NodeOpsDeepCopyChain, ClonesNodesAndActivityChains) {
       EXPECT_NE(copy_node->ptws[u].get(), src_node->ptws[u].get());
       EXPECT_EQ(copy_node->ptws[u]->early_arr, src_node->ptws[u]->early_arr);
       EXPECT_EQ(copy_node->ptws[u]->late_arr, src_node->ptws[u]->late_arr);
-      EXPECT_EQ(copy_node->ptws[u]->early_dest, src_node->ptws[u]->early_dest);
-      EXPECT_EQ(copy_node->ptws[u]->late_dest, src_node->ptws[u]->late_dest);
+      EXPECT_EQ(copy_node->ptws[u]->early_depart, src_node->ptws[u]->early_depart);
+      EXPECT_EQ(copy_node->ptws[u]->late_depart, src_node->ptws[u]->late_depart);
       EXPECT_EQ(copy_node->ptws[u]->wait_time, src_node->ptws[u]->wait_time);
       EXPECT_EQ(copy_node->ptws[u]->over_time, src_node->ptws[u]->over_time);
     }

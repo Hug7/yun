@@ -23,5 +23,5 @@ class CcDist : public CostConstraint {
   /**
    * @brief evaluate the score of the cost constraint
    */
-  CostConstrScore::UPtr eval(Load* load);
+  CostConstrScore::UPtr eval(Load* load) override;
 };

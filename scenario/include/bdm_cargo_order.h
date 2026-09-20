@@ -52,14 +52,14 @@ class CargoSubOrder : public Item {
    * @param dim dimension
    * @param dim_val value of dimension
    */
-  void update_dim_value(Dimension* dim, double dim_val);
+  void update_dim_value(const Dimension* dim, double dim_val);
 
   /**
    * @brief Update labelset value and labelset value bitset
    * @param label_ind4labelset index of label in labelset
    * @param label_value label value
    */
-  void update_labelset_value(int label_ind4labelset, LabelValue* label_value);
+  void update_labelset_value(int label_ind4labelset, LabelValue* label_value) const;
 };
 
 /**
@@ -113,11 +113,11 @@ class CargoOrder : public Item {
   /**
    * @brief 设置提货时间窗
    */
-  void set_pick_time_window(TimeWindow* pick_time_window);
+  void set_pick_time_window(TimeWindow* _pick_time_window);
   /**
    * @brief 设置卸货时间窗
    */
-  void set_drop_time_window(TimeWindow* drop_time_window);
+  void set_drop_time_window(TimeWindow* _drop_time_window);
   /**
    * @brief 创建子订单
    * @param code 子订单编码

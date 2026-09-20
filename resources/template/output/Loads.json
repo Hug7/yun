@@ -1,0 +1,31 @@
+[
+  {
+    "LoadCode": "L0001",
+    "CarrierCode": "C1",
+    "VehicleModelCode": "4M2",
+    "VehicleLoadDimensions": [{"DimensionCode": "Weight", "DimensionValue": 10}],
+    "LoadDimensions": [{"DimensionCode": "Weight", "DimensionValue": 9}],
+    "LoadingRateDimensions": [{"DimensionCode": "Weight", "DimensionValue": 0.9}],
+    "LoadingRate": 0.9,
+    "TotalDrivingDistanceMeter": 100,
+    "TotalDrivingTimeSecond": 100,
+    "TotalWorkTimeSecond": 100,
+    "TotalWaitTimeSecond": 100,
+    "TotalCostTimeSecond": 100,
+    "SoftPenaltyValue": 50.0,
+    "CostValue": 100.0,
+    "ObjectValue": 150.0,
+    "PickLocationLabels": [{"LabelCode": "City", "LabelValues": ["Shanghai"]}],
+    "DropLocationLabels": [{"LabelCode": "City", "LabelValues": ["SuZhou", "HangZhou"]}],
+    "OrderLabels": [{"LabelCode": "Commodity", "LabelValues": ["Norm", "Freeze"]}],
+    "LocationSequences": ["VehicleDepot01", "SHDC01", "SZ01", "HZ01", "VehicleDepot01"],
+    "PlanEarliestStartTime": "2026-06-06 00:00:00",
+    "PlanEarliestStartTimestamp": 1780675200,
+    "PlanEarliestEndTime": "2026-06-06 23:59:00",
+    "PlanEarliestEndTimestamp": 1780739940,
+    "PlanLatestStartTime": "2026-06-06 06:00:00",
+    "PlanLatestStartTimestamp": 1780696800,
+    "PlanLatestEndTime": "2026-06-06 23:59:00",
+    "PlanLatestEndTimestamp": 1780761540
+  }
+]

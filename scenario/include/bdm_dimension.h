@@ -8,15 +8,10 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "bdm_common.h"
-
-/**
- * @brief 精度的幂
- * @details 0:10^0:1, 1:10^1:10, 2:10^2:100, 3:10^3:1000, 4:10^4:10000
- */
-constexpr int PRECISION_POW[5] = {1, 10, 100, 1000, 10000};
 
 /**
  * @brief 计算维度
@@ -42,8 +37,8 @@ class Dimension {
    */
   const int precision;
 
-  Dimension(const std::string& code, const std::string& name, int ind, int precision)
-      : code(code), name(name), ind(ind), precision(precision) {};
+  Dimension(std::string  code, std::string  name, const int ind, const int precision)
+      : code(std::move(code)), name(std::move(name)), ind(ind), precision(precision) {};
 
   ~Dimension() = default;
 };

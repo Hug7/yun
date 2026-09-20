@@ -84,4 +84,14 @@ class Workspace {
    * @param sol solution
    */
   void move_solution(Solution* sol);
+  /**
+   * @brief 获取workspace所有load的视图
+   * @return 所有load的视图
+   */
+  std::vector<Load*> loads_view();
+  /**
+   * @brief 获取workspace所有未指派order的视图
+   * @return 所有未指派order的视图
+   */
+  std::vector<const Order*> unassigned_orders_view();
 };

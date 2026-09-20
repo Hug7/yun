@@ -26,8 +26,8 @@ void ExpectPlan(TimeWindowPlan::UPtr& plan, long early_arr, long late_arr, long 
   ASSERT_NE(plan, nullptr);
   EXPECT_EQ(plan->early_arr, early_arr);
   EXPECT_EQ(plan->late_arr, late_arr);
-  EXPECT_EQ(plan->early_dest, early_dest);
-  EXPECT_EQ(plan->late_dest, late_dest);
+  EXPECT_EQ(plan->early_depart, early_dest);
+  EXPECT_EQ(plan->late_depart, late_dest);
   EXPECT_EQ(plan->wait_time, wait_time);
   EXPECT_EQ(plan->over_time, over_time);
 }

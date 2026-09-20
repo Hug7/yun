@@ -13,6 +13,7 @@
 #include "bdm_label.h"
 #include "bdm_predefine.h"
 #include "bdm_work_plan.h"
+#include "c_constant.h"
 
 /**
  * @brief 站点类
@@ -59,7 +60,7 @@ class Location : public Item {
   ~Location();
 
   /**
-   * @brief 添加标签属性值到位置标签集合
+   * @brief 添加标签属性值到站点标签集合
    * @param label_ind 站点标签索引
    * @param label_value 标签属性值对象指针
    */
@@ -70,6 +71,11 @@ class Location : public Item {
    * @param available_vehicle 可用车辆集合对象指针
    */
   void set_available_vehicle(AvailableVehicle* available_vehicle);
+
+  /**
+   * @brief 是否为默认站点
+   */
+  bool is_default() const { return this->code == LocationParameter::DEFAULT_LOCATION_CODE; };
 
   bool operator==(const Location* other) const noexcept { return ind == other->ind; }
 

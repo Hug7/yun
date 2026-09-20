@@ -7,6 +7,6 @@
 
 // ====== implement of Load CcDist ======
 SoftConstrScore::UPtr ScDist::eval(Load* load) {
-  return std::make_unique<SoftConstrScore>(this->code, 1,
-                                           this->dist_factor * load->get_total_dist());
+  return std::make_unique<SoftConstrScore>(
+      this->code, 1, this->dist_factor * static_cast<double>(load->get_total_dist()));
 }

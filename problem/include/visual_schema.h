@@ -31,3 +31,5 @@ class PrecheckInfeasibleCargoOrderSchema {
       "InfeasibleReasonMessageEN",
   };
 };
+
+static constexpr char LOADS_FILE_NAME[] = "Loads.json";

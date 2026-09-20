@@ -19,7 +19,7 @@ class ScDist : public SoftConstraint {
    */
   const double dist_factor;
 
-  ScDist(const double dist_factor)
+  explicit ScDist(const double dist_factor)
       : SoftConstraint("ScDist", 0, true, false), dist_factor(dist_factor) {}
   /**
    * @brief evaluate the score of the soft constraint

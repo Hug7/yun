@@ -46,5 +46,6 @@ void Solver::solve() {
   // 执行策略
   strategy_manager->exec_script(this->context);
   // 结果转换并导出
-
+  this->context->visual_manager->localization_load(workspace->loads_view(),
+                                                   workspace->unassigned_orders_view());
 }

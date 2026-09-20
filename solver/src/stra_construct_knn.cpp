@@ -212,7 +212,7 @@ void select_order_construct_load(std::unordered_map<int, const Order*>& unassign
     }
     // 判断seed order是否可以构造load
     const auto seed_order = unassigned_orders[seed_order_ind];
-    unassigned_orders.erase(seed_order_ind); // 移除未指派订单
+    unassigned_orders.erase(seed_order_ind);  // 移除未指派订单
     auto cur_orders = std::vector<const Order*>{seed_order};
     Load* load = problem->construct_load_by_order(cur_orders, sol->vehicle_resource);
     if (load->is_infeasible()) {
@@ -319,7 +319,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
     }
   }
   // 将最后结果归档
-  for (const auto & load : candidate_loads) {
+  for (const auto& load : candidate_loads) {
     sol->add_load(load);
   }
   candidate_loads.clear();

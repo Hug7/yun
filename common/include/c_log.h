@@ -27,7 +27,7 @@ namespace LogManager {
 /**
  * @brief 日志格式：时间(毫秒) + 线程号 + 等级 + 内容
  */
-inline constexpr const char* PATTERN = "[%Y-%m-%d %H:%M:%S.%e] [%t] [%l] %v";
+inline constexpr auto PATTERN = "[%Y-%m-%d %H:%M:%S.%e] [%t] [%l] %v";
 
 namespace detail {
 

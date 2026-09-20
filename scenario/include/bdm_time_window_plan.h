@@ -23,13 +23,13 @@ class TimeWindowPlan {
    */
   long late_arr;
   /**
-   * early destination time
+   * early departure time
    */
-  long early_dest;
+  long early_depart;
   /**
-   * late destination time
+   * late departure time
    */
-  long late_dest;
+  long late_depart;
   /**
    * wait time
    */
@@ -40,14 +40,14 @@ class TimeWindowPlan {
   long over_time;
 
   TimeWindowPlan()
-      : early_arr(0), late_arr(0), early_dest(0), late_dest(0), wait_time(0), over_time(0) {};
+      : early_arr(0), late_arr(0), early_depart(0), late_depart(0), wait_time(0), over_time(0) {};
 
-  TimeWindowPlan(long early_arr, long late_arr, long early_dest, long late_dest, long wait_time,
-                 long over_time)
+  TimeWindowPlan(const long early_arr, const long late_arr, const long early_depart,
+                 const long late_depart, long wait_time, const long over_time)
       : early_arr(early_arr),
         late_arr(late_arr),
-        early_dest(early_dest),
-        late_dest(late_dest),
+        early_depart(early_depart),
+        late_depart(late_depart),
         wait_time(wait_time),
         over_time(over_time) {};
 
@@ -82,5 +82,5 @@ TimeWindowPlan::VecUPtr default_time_window_plans();
 /**
  * @brief 根据时间窗构造时间窗计划列表
  */
-TimeWindowPlan::VecUPtr create_time_window_plans(const std::vector<TimeWindow*> &time_windows);
+TimeWindowPlan::VecUPtr create_time_window_plans(const std::vector<TimeWindow*>& time_windows);
 }  // namespace TimeWindowPlanFactory

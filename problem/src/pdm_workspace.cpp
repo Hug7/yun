@@ -5,13 +5,17 @@
 
 #include "pdm_workspace.h"
 
+#include <ranges>
+
 // ====== implement of Workspace ======
-Workspace::Workspace(const SolverContext* _context, const OrderPool* order_pool) : context(_context) {
+Workspace::Workspace(const SolverContext* _context, const OrderPool* order_pool)
+    : context(_context) {
   // this->unassigned_orders.reserve(order_pool->len);
   for (const auto order : order_pool->orders) {
     this->unassigned_orders.emplace(order->ind, order);
   }
-  this->vehicle_resource = ResourceFactory::create_vehicle_resource(_context->scenario->carrier_manager);
+  this->vehicle_resource =
+      ResourceFactory::create_vehicle_resource(_context->scenario->carrier_manager);
 }
 
 Workspace::~Workspace() {
@@ -68,4 +72,41 @@ void Workspace::move_solution(Solution* sol) {
   this->loads = std::move(sol->loads);
 
   delete sol;
+}
+
+std::vector<Load*> Workspace::loads_view() {
+  std::vector<Load*> shadow_clone_loads;
+  shadow_clone_loads.insert(shadow_clone_loads.end(), this->loads.begin(), this->loads.end());
+  std::stack<LoadOrderBuffer::UPtr> tmp_load_order_stack;
+  while (!this->load_order_stack.empty()) {
+    auto tmp_load_order = std::move(this->load_order_stack.top());
+    this->load_order_stack.pop();
+    shadow_clone_loads.insert(shadow_clone_loads.end(), tmp_load_order->loads.begin(),
+                              tmp_load_order->loads.end());
+
+    tmp_load_order_stack.push(std::move(tmp_load_order));
+  }
+  this->load_order_stack = std::move(tmp_load_order_stack);
+
+  return shadow_clone_loads;
+}
+
+std::vector<const Order*> Workspace::unassigned_orders_view() {
+  std::vector<const Order*> shadow_clone_unassigned_orders;
+  for (const auto& order : this->unassigned_orders | std::views::values) {
+    shadow_clone_unassigned_orders.emplace_back(order);
+  }
+  std::stack<LoadOrderBuffer::UPtr> tmp_load_order_stack;
+  while (!this->load_order_stack.empty()) {
+    auto tmp_load_order = std::move(this->load_order_stack.top());
+    this->load_order_stack.pop();
+    for (const auto& order : tmp_load_order->unassigned_orders | std::views::values) {
+      shadow_clone_unassigned_orders.emplace_back(order);
+    }
+
+    tmp_load_order_stack.push(std::move(tmp_load_order));
+  }
+  this->load_order_stack = std::move(tmp_load_order_stack);
+
+  return shadow_clone_unassigned_orders;
 }

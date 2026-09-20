@@ -52,12 +52,25 @@ inline std::pair<int, int> hhmmhhmm_parse_time_range(const std::string& str) {
 }  // namespace TimeFromatted
 
 namespace TimeParse {
-static const char* fmt_yyyymmddhhmm_1 = "%Y-%m-%d %H:%M";
+static auto fmt_yyyymmddhhmm_1 = "%Y-%m-%d %H:%M";
 
-static const char* fmt_yyyymmddhhmm_2 = "%Y%m%d%H%M";
+static auto fmt_yyyymmddhhmm_2 = "%Y%m%d%H%M";
+
+static auto fmt_yyyymmddhhmm_3 = "%Y-%m-%d %H:%M:%S";
 
 inline long parse_tm_to_sec(const std::string& time_str, const char* fmt) {
   chrono_util::DateTime dt = chrono_util::parse(time_str, fmt);
   return static_cast<long>(chrono_util::to_unix(dt));
+}
+/**
+ * @brief 时间戳(秒) -> 时间字符串
+ * @details 时区与 parse_tm_to_sec 一致(chrono_util 的全局默认时区)
+ * @param time_sec 时间戳(秒)
+ * @param fmt
+ * @return
+ */
+inline std::string format_sec_to_tm(const long time_sec, const char* fmt) {
+  const chrono_util::DateTime dt = chrono_util::from_unix(static_cast<int64_t>(time_sec));
+  return chrono_util::format(dt, fmt);
 }
 }  // namespace TimeParse

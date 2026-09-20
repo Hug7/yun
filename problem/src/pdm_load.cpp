@@ -186,6 +186,18 @@ void Load::update_time_window() {
     auto cur_tws = tw_cache->get_pick_drop_time_windows(head_node);
     const long work_time = head_node->get_work_time();
     head_node->ptws = TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);
+    pre_node = head_node;
     head_node = head_node->next.get();
   }
+}
+
+std::vector<Node*> Load::unfold_node_linked() const{
+  std::vector<Node*> reverse_nodes;
+  auto tail_node = this->last_node;
+  while (tail_node != nullptr) {
+    reverse_nodes.push_back(tail_node);
+    tail_node = tail_node->prev;
+  }
+  std::ranges::reverse(reverse_nodes);
+  return reverse_nodes;
 }
