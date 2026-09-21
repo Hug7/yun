@@ -1,9 +1,9 @@
 [
   {
-    "LoadId": "L0001",
-    "CarrierId": "C1",
-    "VehicleModelId": "4M2",
-    "LocationId": "VehicleDepot01",
+    "LoadCode": "L0001",
+    "CarrierCode": "C1",
+    "VehicleModelCode": "4M2",
+    "LocationCode": "VehicleDepot01",
     "ActivityType": "START",
     "CargoOrders": [],
     "LocationLabels": [],
@@ -25,10 +25,10 @@
     "PlanLatestDepartTimestamp": 1780739940
   },
   {
-    "LoadId": "L0001",
-    "CarrierId": "C1",
-    "VehicleModelId": "4M2",
-    "LocationId": "SHDC01",
+    "LoadCode": "L0001",
+    "CarrierCode": "C1",
+    "VehicleModelCode": "4M2",
+    "LocationCode": "SHDC01",
     "ActivityType": "PICK",
     "CargoOrders": [
       {
@@ -65,10 +65,10 @@
     "PlanLatestDepartTimestamp": 1780739940
   },
   {
-    "LoadId": "L0001",
-    "CarrierId": "C1",
-    "VehicleModelId": "4M2",
-    "LocationId": "SZ01",
+    "LoadCode": "L0001",
+    "CarrierCode": "C1",
+    "VehicleModelCode": "4M2",
+    "LocationCode": "SZ01",
     "ActivityType": "DROP",
     "CargoOrders": [
       {
@@ -98,10 +98,10 @@
     "PlanLatestDepartTimestamp": 1780739940
   },
   {
-    "LoadId": "L0001",
-    "CarrierId": "C1",
-    "VehicleModelId": "4M2",
-    "LocationId": "HZ01",
+    "LoadCode": "L0001",
+    "CarrierCode": "C1",
+    "VehicleModelCode": "4M2",
+    "LocationCode": "HZ01",
     "ActivityType": "DROP",
     "CargoOrders": [
       {
@@ -131,10 +131,10 @@
     "PlanLatestDepartTimestamp": 1780739940
   },
   {
-    "LoadId": "L0001",
-    "CarrierId": "C1",
-    "VehicleModelId": "4M2",
-    "LocationId": "VehicleDepot01",
+    "LoadCode": "L0001",
+    "CarrierCode": "C1",
+    "VehicleModelCode": "4M2",
+    "LocationCode": "VehicleDepot01",
     "ActivityType": "END",
     "CargoOrders": [],
     "LocationLabels": [],

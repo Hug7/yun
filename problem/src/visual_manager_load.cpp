@@ -14,10 +14,9 @@
 #include <vector>
 
 #include "c_numerical_utils.h"
-#include "c_rapidcsv.h"
 #include "c_time_utils.h"
-#include "visual_load.h"
 #include "visual_manager.h"
+#include "visual_plan_result_load.h"
 #include "visual_schema.h"
 
 // ====== implement of Load VisualManager ======
@@ -108,46 +107,11 @@ void fill_labels(const LabelManager* label_manager, VisualLoad& visual_load, Loa
 /**
  * @brief 反向推导时间窗, 填充等待时长和计划起止时间
  * @param visual_load 车次可视化数据
- * @param nodes 车次的节点链
+ * @param load 车次
  */
-void fill_plan_time(VisualLoad& visual_load, const std::vector<Node*>& nodes) {
-  // 推导时间窗-反向推导(非最优且不能兼容限制时间窗)
-  const int node_len = static_cast<int>(nodes.size());
-  std::vector<TimeWindowPlan::UPtr> time_window_plans;
-  time_window_plans.push_back(nodes[node_len - 1]->ptws[0]->deep_copy());
-  int pre_ptw_ind = 0;
-  auto pre_node = nodes[node_len - 1];
-  for (int nu = node_len - 2; nu >= 0; --nu) {
-    const auto cur_node = nodes[nu];
-    auto cur_time_window_plan = std::make_unique<TimeWindowPlan>();
-    cur_time_window_plan->early_depart =
-        time_window_plans[pre_ptw_ind]->early_arr - pre_node->travel_time;
-    cur_time_window_plan->late_depart =
-        time_window_plans[pre_ptw_ind]->late_arr - pre_node->travel_time;
-    long cur_early_arr = cur_time_window_plan->early_depart - cur_node->get_work_time();
-    long cur_late_arr = cur_time_window_plan->late_depart - cur_node->get_work_time();
-    for (const auto& twp : cur_node->ptws) {
-      if (twp->wait_time > 0) {
-        cur_time_window_plan->early_arr = cur_early_arr - twp->wait_time;
-        cur_time_window_plan->late_arr = cur_late_arr - twp->wait_time;
-        cur_time_window_plan->wait_time = twp->wait_time;
-        break;
-      } else if (twp->over_time > 0) {
-        cur_time_window_plan->early_arr = cur_early_arr;
-        cur_time_window_plan->late_arr = cur_late_arr;
-        cur_time_window_plan->over_time = twp->over_time;
-        break;
-      } else if (twp->early_arr <= cur_early_arr && twp->late_arr >= cur_late_arr) {
-        cur_time_window_plan->early_arr = cur_early_arr;
-        cur_time_window_plan->late_arr = cur_late_arr;
-        break;
-      }
-    }
-    pre_node = cur_node;
-    ++pre_ptw_ind;
-    time_window_plans.push_back(std::move(cur_time_window_plan));
-  }
-  std::ranges::reverse(time_window_plans);
+void fill_plan_time(VisualLoad& visual_load, const Load* load) {
+  const auto time_window_plans = load->infer_time_window_plans();
+  const int node_len = static_cast<int>(time_window_plans.size());
 
   for (const auto& twp : time_window_plans) {
     visual_load.total_wait_time_second += twp->wait_time;
@@ -195,22 +159,25 @@ VisualLoad build_visual_load(const Scenario* scenario, Load* load, const size_t 
   // 站点标签、订单标签
   fill_labels(scenario->label_manager, visual_load, load);
   // 等待时长、计划起止时间
-  fill_plan_time(visual_load, nodes);
+  fill_plan_time(visual_load, load);
   return visual_load;
 }
 }  // namespace
 
-void VisualManager::localization_load(const std::vector<Load*>& loads,
-                                      const std::vector<const Order*>& unassigned_orders,
-                                      const std::string& target_dir) const {
-  // 目标文件夹
-  const std::string target_dir_path = this->resolve_target_dir(target_dir);
+std::vector<VisualLoad> VisualManager::loads_to_visual_loads(const std::vector<Load*>& loads) const {
   // 拼装visual load
   std::vector<VisualLoad> visual_loads;
   visual_loads.reserve(loads.size());
   for (size_t l = 0; l < loads.size(); ++l) {
     visual_loads.emplace_back(build_visual_load(this->scenario, loads[l], l));
   }
+
+  return visual_loads;
+}
+
+void VisualManager::visual_load_to_json(const std::vector<VisualLoad>& visual_loads,
+                                 const std::string& target_dir_path) const {
+
   // 写出json文件
   const std::string file_path = target_dir_path + "/" + LOADS_FILE_NAME;
   std::ofstream file(file_path);
@@ -220,9 +187,4 @@ void VisualManager::localization_load(const std::vector<Load*>& loads,
   }
   file << VisualJson::dumps(visual_loads);
   file.close();
-}
-
-void VisualManager::localization_load(const std::vector<Load*>& loads,
-                                      const std::vector<const Order*>& unassigned_orders) const {
-  this->localization_load(loads, unassigned_orders, "");
 }

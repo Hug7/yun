@@ -9,6 +9,7 @@
 
 #include <filesystem>
 
+#include "visual_manager.h"
 #include "stra_construct.h"
 
 // ====== implement of StrategyManager::Private ======
@@ -26,6 +27,10 @@ void StrategyManager::register_common_func(Workspace* workspace) {
   });
   this->lua_vm.set_function("log_error", [logger = context->logger](const std::string& msg) {
     logger->error("[lua] {}", msg);
+  });
+  // 注册-结果可视化
+  this->lua_vm.set_function("snapshot", [workspace](const std::string& target_dir) {
+    workspace->context->visual_manager->localization_plan_result(workspace->loads_view(), workspace->unassigned_orders_view(), target_dir);
   });
 }
 

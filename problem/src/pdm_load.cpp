@@ -201,3 +201,46 @@ std::vector<Node*> Load::unfold_node_linked() const{
   std::ranges::reverse(reverse_nodes);
   return reverse_nodes;
 }
+
+TimeWindowPlan::VecUPtr Load::infer_time_window_plans() const {
+  const std::vector<Node*>& nodes = this->unfold_node_linked();
+  // 推导时间窗-反向推导(非最优且不能兼容限制时间窗)
+  const int node_len = static_cast<int>(nodes.size());
+  TimeWindowPlan::VecUPtr time_window_plans;
+  time_window_plans.push_back(nodes[node_len - 1]->ptws[0]->deep_copy());
+  int pre_ptw_ind = 0;
+  auto pre_node = nodes[node_len - 1];
+  for (int nu = node_len - 2; nu >= 0; --nu) {
+    const auto cur_node = nodes[nu];
+    auto cur_time_window_plan = std::make_unique<TimeWindowPlan>();
+    cur_time_window_plan->early_depart =
+        time_window_plans[pre_ptw_ind]->early_arr - pre_node->travel_time;
+    cur_time_window_plan->late_depart =
+        time_window_plans[pre_ptw_ind]->late_arr - pre_node->travel_time;
+    long cur_early_arr = cur_time_window_plan->early_depart - cur_node->get_work_time();
+    long cur_late_arr = cur_time_window_plan->late_depart - cur_node->get_work_time();
+    for (const auto& twp : cur_node->ptws) {
+      if (twp->wait_time > 0) {
+        cur_time_window_plan->early_arr = cur_early_arr - twp->wait_time;
+        cur_time_window_plan->late_arr = cur_late_arr - twp->wait_time;
+        cur_time_window_plan->wait_time = twp->wait_time;
+        break;
+      } else if (twp->over_time > 0) {
+        cur_time_window_plan->early_arr = cur_early_arr;
+        cur_time_window_plan->late_arr = cur_late_arr;
+        cur_time_window_plan->over_time = twp->over_time;
+        break;
+      } else if (twp->early_arr <= cur_early_arr && twp->late_arr >= cur_late_arr) {
+        cur_time_window_plan->early_arr = cur_early_arr;
+        cur_time_window_plan->late_arr = cur_late_arr;
+        break;
+      }
+    }
+    pre_node = cur_node;
+    ++pre_ptw_ind;
+    time_window_plans.push_back(std::move(cur_time_window_plan));
+  }
+  std::ranges::reverse(time_window_plans);
+
+  return time_window_plans;
+}

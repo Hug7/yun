@@ -33,3 +33,7 @@ class PrecheckInfeasibleCargoOrderSchema {
 };
 
 static constexpr char LOADS_FILE_NAME[] = "Loads.json";
+
+static constexpr char LOAD_LOCATIONS_FILE_NAME[] = "LoadLocations.json";
+
+static constexpr char UNASSIGNED_CARGO_ORDERS_FILE_NAME[] = "UnassignedCargoOrders.json";

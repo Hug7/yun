@@ -1,0 +1,20 @@
+[
+  {
+    "CargoOrderCode": "O001",
+    "CargoSubOrderCode": "O001_01",
+    "Quantity": 1,
+    "OrderDimensions": [{"DimensionCode": "case", "DimensionValue": 1}, {"DimensionCode": "volume", "DimensionValue": 0.01}, {"DimensionCode": "weight", "DimensionValue": 255}],
+    "PickLocationCode": "P1",
+    "DropLocationCode": "D1",
+    "OrderLabels": [{"LabelCode": "commodity", "LabelValues": []}]
+  },
+  {
+    "CargoOrderCode": "O001",
+    "CargoSubOrderCode": "O001_02",
+    "Quantity": 1,
+    "OrderDimensions": [{"DimensionCode": "case", "DimensionValue": 1}, {"DimensionCode": "volume", "DimensionValue": 0.01}, {"DimensionCode": "weight", "DimensionValue": 2692}],
+    "PickLocationCode": "P1",
+    "DropLocationCode": "D2",
+    "OrderLabels": [{"LabelCode": "commodity", "LabelValues": []}]
+  }
+]

@@ -36,6 +36,10 @@ struct VisualCargoOrder {
 
   std::vector<VisualDimension> order_dimensions;
 
+  std::string pick_location_code;
+
+  std::string drop_location_code;
+
   std::vector<VisualLabel> order_labels;
 
   VisualCargoOrder() = default;
@@ -108,6 +112,8 @@ struct VisualLoadLocation {
 
   std::string vehicle_model_code;
 
+  std::string location_code;
+
   std::string activity_type;
 
   std::vector<VisualCargoOrder> cargo_orders;
@@ -151,8 +157,26 @@ struct VisualLoadLocation {
   VisualLoadLocation() = default;
 };
 
-struct VisualInfeasibleCargoOrder {
+struct VisualUnassignedCargoOrder {
   std::vector<VisualCargoOrder> cargo_orders;
+
+  VisualUnassignedCargoOrder() = default;
+};
+
+struct VisualInfeasibleCargoOrder {
+  std::string cargo_order_code;
+
+  std::string carrier_code;
+
+  std::string vehicle_model_code;
+
+  std::string infeasible_reason_code;
+
+  std::string infeasible_reason_constr_code;
+
+  std::string infeasible_reason_message_cn;
+
+  std::string infeasible_reason_message_en;
 
   VisualInfeasibleCargoOrder() = default;
 };
@@ -164,4 +188,22 @@ namespace VisualJson {
  * @return json文本, 结构见 resources/template/output/Loads.json
  */
 std::string dumps(const std::vector<VisualLoad>& visual_loads);
+/**
+ * @brief 将车次站点集合序列化为json文本
+ * @param visual_load_locations 车次站点集合
+ * @return json文本, 结构见 resources/template/output/LoadLocations.json
+ */
+std::string dumps(const std::vector<VisualLoadLocation>& visual_load_locations);
+/**
+ * @brief 将订单明细集合序列化为json文本
+ * @param visual_cargo_orders 订单明细集合
+ * @return json文本
+ */
+std::string dumps(const std::vector<VisualCargoOrder>& visual_cargo_orders);
+/**
+ * @brief 将不可解订单集合序列化为json文本
+ * @param visual_infeasible_cargo_orders 不可解订单集合
+ * @return json文本, 字段同 PrecheckInfeasibleCargoOrderSchema::headers
+ */
+std::string dumps(const std::vector<VisualInfeasibleCargoOrder>& visual_infeasible_cargo_orders);
 }  // namespace VisualJson
