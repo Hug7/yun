@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "visual_plan_result_load.h"
+#include "visual_plan_result.h"
 
 #include <cmath>
 #include <format>
@@ -235,24 +235,69 @@ std::string load_location_to_json(const VisualLoadLocation& load_location,
 }
 
 /**
- * @brief 单个不可解订单记录转为json对象
- * @param infeasible_cargo_order 不可解订单记录
+ * @brief 单个不可解原因转为json对象
+ * @param infeasible_reason 不可解原因
  * @param indent 对象自身的缩进
  */
-std::string infeasible_cargo_order_to_json(const VisualInfeasibleCargoOrder& infeasible_cargo_order,
-                                           const std::string& indent) {
+std::string infeasible_reason_to_json(const VisualInfeasibleReason& infeasible_reason,
+                                      const std::string& indent) {
   const std::vector<std::string> fields = {
-      std::format("\"CargoOrderCode\": {}", str(infeasible_cargo_order.cargo_order_code)),
-      std::format("\"CarrierCode\": {}", str(infeasible_cargo_order.carrier_code)),
-      std::format("\"VehicleModelCode\": {}", str(infeasible_cargo_order.vehicle_model_code)),
-      std::format("\"InfeasibleReasonCode\": {}",
-                  str(infeasible_cargo_order.infeasible_reason_code)),
-      std::format("\"InfeasibleReasonConstraintCode\": {}",
-                  str(infeasible_cargo_order.infeasible_reason_constr_code)),
-      std::format("\"InfeasibleReasonMessageCN\": {}",
-                  str(infeasible_cargo_order.infeasible_reason_message_cn)),
-      std::format("\"InfeasibleReasonMessageEN\": {}",
-                  str(infeasible_cargo_order.infeasible_reason_message_en)),
+      std::format("\"ReasonCode\": {}", str(infeasible_reason.reason_code)),
+      std::format("\"ConstraintCode\": {}", str(infeasible_reason.constraint_code)),
+      std::format("\"MessageCN\": {}", str(infeasible_reason.message_cn)),
+      std::format("\"MessageEN\": {}", str(infeasible_reason.message_en)),
+  };
+  return obj_to_json(fields, indent);
+}
+
+/**
+ * @brief 单个车辆维度不可解原因转为json对象
+ * @param vehicle_infeasible_reason 车辆维度不可解原因
+ * @param indent 对象自身的缩进
+ */
+std::string vehicle_infeasible_reason_to_json(
+    const VisualVehicleInfeasibleReason& vehicle_infeasible_reason, const std::string& indent) {
+  const std::string pad = indent + "  ";
+  std::vector<std::string> infeasible_reasons;
+  infeasible_reasons.reserve(vehicle_infeasible_reason.infeasible_reasons.size());
+  for (const auto& infeasible_reason : vehicle_infeasible_reason.infeasible_reasons) {
+    infeasible_reasons.emplace_back(infeasible_reason_to_json(infeasible_reason, pad + "  "));
+  }
+  const std::vector<std::string> fields = {
+      std::format("\"CarrierCode\": {}", str(vehicle_infeasible_reason.carrier_code)),
+      std::format("\"VehicleModelCode\": {}", str(vehicle_infeasible_reason.vehicle_model_code)),
+      std::format("\"InfeasibleReasons\": {}", arr_to_json(infeasible_reasons, pad)),
+  };
+  return obj_to_json(fields, indent);
+}
+
+/**
+ * @brief 单个不可解订单记录转为json对象
+ * @param visual_infeasible_cargo_order 不可解订单记录
+ * @param indent 对象自身的缩进
+ */
+std::string infeasible_cargo_order_to_json(
+    const VisualInfeasibleCargoOrder& visual_infeasible_cargo_order, const std::string& indent) {
+  const std::string pad = indent + "  ";
+  std::vector<std::string> common_infeasible_reasons;
+  common_infeasible_reasons.reserve(visual_infeasible_cargo_order.common_infeasible_reasons.size());
+  for (const auto& infeasible_reason : visual_infeasible_cargo_order.common_infeasible_reasons) {
+    common_infeasible_reasons.emplace_back(
+        infeasible_reason_to_json(infeasible_reason, pad + "  "));
+  }
+  std::vector<std::string> vehicle_infeasible_reasons;
+  vehicle_infeasible_reasons.reserve(
+      visual_infeasible_cargo_order.vehicle_infeasible_reasons.size());
+  for (const auto& vehicle_infeasible_reason :
+       visual_infeasible_cargo_order.vehicle_infeasible_reasons) {
+    vehicle_infeasible_reasons.emplace_back(
+        vehicle_infeasible_reason_to_json(vehicle_infeasible_reason, pad + "  "));
+  }
+  const std::vector<std::string> fields = {
+      std::format("\"CargoOrderCodes\": {}",
+                  strs_to_json(visual_infeasible_cargo_order.cargo_order_codes)),
+      std::format("\"CommonInfeasibleReasons\": {}", arr_to_json(common_infeasible_reasons, pad)),
+      std::format("\"VehicleInfeasibleReasons\": {}", arr_to_json(vehicle_infeasible_reasons, pad)),
   };
   return obj_to_json(fields, indent);
 }

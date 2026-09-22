@@ -2,8 +2,6 @@
 
 ![alt text](resources/assets/logo.png)
 
-![alt text](resources/assets/logo_v2.png)
-
 # 安装conan
 
 ```txt

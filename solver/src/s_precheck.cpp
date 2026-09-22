@@ -23,7 +23,7 @@ bool SolverPrecheck::call() {
     this->context->logger->warn("number of cargo orders {} are infeasible!",
                                 this->infeasible_cargo_orders.size());
     // 将不可解的订单和原因记录到csv文件中
-    this->context->visual_manager->infeasible_cargo_order_to_csv(this->infeasible_cargo_orders);
+    this->context->visual_manager->visual_infeasible_cargo_order_to_json(this->infeasible_cargo_orders);
   }
 
   return this->infeasible_cargo_orders.empty();

@@ -47,7 +47,6 @@ class StrategyManager {
 
   /**
    * @brief 执行脚本
-   * @param context solver上下文
    */
-  void exec_script(const SolverContext* context);
+  void exec_script();
 };

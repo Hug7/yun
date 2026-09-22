@@ -44,7 +44,7 @@ void Solver::solve() {
   // 注册策略
   const auto strategy_manager = std::make_unique<StrategyManager>(this->workspace);
   // 执行策略
-  strategy_manager->exec_script(this->context);
+  strategy_manager->exec_script();
   // 结果转换并导出
   this->context->visual_manager->localization_plan_result(workspace->loads_view(),
                                                    workspace->unassigned_orders_view());

@@ -9,6 +9,43 @@
 #include <utility>
 #include <vector>
 
+struct VisualInfeasibleReason {
+  std::string reason_code;
+
+  std::string constraint_code;
+
+  std::string message_cn;
+
+  std::string message_en;
+
+  VisualInfeasibleReason(std::string reason_code, std::string constraint_code,
+                         std::string message_cn, std::string message_en)
+      : reason_code(std::move(reason_code)),
+        constraint_code(std::move(constraint_code)),
+        message_cn(std::move(message_cn)),
+        message_en(std::move(message_en)) {};
+};
+
+struct VisualVehicleInfeasibleReason {
+  std::string carrier_code;
+
+  std::string vehicle_model_code;
+
+  std::vector<VisualInfeasibleReason> infeasible_reasons;
+
+  VisualVehicleInfeasibleReason() = default;
+};
+
+struct VisualInfeasibleCargoOrder {
+  std::vector<std::string> cargo_order_codes;
+
+  std::vector<VisualInfeasibleReason> common_infeasible_reasons;
+
+  std::vector<VisualVehicleInfeasibleReason> vehicle_infeasible_reasons;
+
+  VisualInfeasibleCargoOrder() = default;
+};
+
 struct VisualDimension {
   std::string dimension_code;
 
@@ -163,35 +200,17 @@ struct VisualUnassignedCargoOrder {
   VisualUnassignedCargoOrder() = default;
 };
 
-struct VisualInfeasibleCargoOrder {
-  std::string cargo_order_code;
-
-  std::string carrier_code;
-
-  std::string vehicle_model_code;
-
-  std::string infeasible_reason_code;
-
-  std::string infeasible_reason_constr_code;
-
-  std::string infeasible_reason_message_cn;
-
-  std::string infeasible_reason_message_en;
-
-  VisualInfeasibleCargoOrder() = default;
-};
-
 namespace VisualJson {
 /**
  * @brief 将车次集合序列化为json文本
  * @param visual_loads 车次集合
- * @return json文本, 结构见 resources/template/output/Loads.json
+ * @return json文本, 结构见 resources/template/visual/Loads.json
  */
 std::string dumps(const std::vector<VisualLoad>& visual_loads);
 /**
  * @brief 将车次站点集合序列化为json文本
  * @param visual_load_locations 车次站点集合
- * @return json文本, 结构见 resources/template/output/LoadLocations.json
+ * @return json文本, 结构见 resources/template/visual/LoadLocations.json
  */
 std::string dumps(const std::vector<VisualLoadLocation>& visual_load_locations);
 /**

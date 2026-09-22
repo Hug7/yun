@@ -5,35 +5,10 @@
 
 #pragma once
 
-#include <array>
-
-class PrecheckInfeasibleCargoOrderSchema {
- public:
-  static constexpr char file_name[] = "PrecheckInfeasibleCargoOrder.csv";
-
-  enum Col {
-    CARGO_ORDER_CODE,
-    CARRIER_CODE,
-    VEHICLE_MODEL_CODE,
-    INFEASIBLE_REASON_CODE,
-    INFEASIBLE_REASON_CONSTRAINT_CODE,
-    INFEASIBLE_REASON_MESSAGE_CN,
-    INFEASIBLE_REASON_MESSAGE_EN,
-  };
-
-  static constexpr std::array headers{
-      "CargoOrderCode",
-      "CarrierCode",
-      "VehicleModelCode",
-      "InfeasibleReasonCode",
-      "InfeasibleReasonConstraintCode",
-      "InfeasibleReasonMessageCN",
-      "InfeasibleReasonMessageEN",
-  };
-};
-
 static constexpr char LOADS_FILE_NAME[] = "Loads.json";
 
 static constexpr char LOAD_LOCATIONS_FILE_NAME[] = "LoadLocations.json";
 
 static constexpr char UNASSIGNED_CARGO_ORDERS_FILE_NAME[] = "UnassignedCargoOrders.json";
+
+static constexpr char INFEASIBLE_CARGO_ORDERS_FILE_NAME[] = "InfeasibleCargoOrders.json";

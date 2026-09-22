@@ -1,0 +1,27 @@
+[
+  {
+    "CargoOrderCodes": ["O001"],
+    "CommonInfeasibleReasons": [
+      {
+        "ReasonCode": "1008",
+        "ConstraintCode": "HcLoadUnloadPolicyFILO",
+        "MessageCN": "订单提卸货顺序不满足先入后出(FILO)",
+        "MessageEN": "the order pickup/drop sequence violates the FILO policy"
+      }
+    ],
+    "VehicleInfeasibleReasons": [
+      {
+        "CarrierCode": "C1",
+        "VehicleModelCode": "4M2",
+        "InfeasibleReasons": [
+          {
+            "ReasonCode": "1005",
+            "ConstraintCode": "HcVehicleCapacity",
+            "MessageCN": "超过车次的最大装载",
+            "MessageEN": "out of vehicle capacity in load"
+          }
+        ]
+      }
+    ]
+  }
+]

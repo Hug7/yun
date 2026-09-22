@@ -16,7 +16,7 @@
 #include "c_numerical_utils.h"
 #include "c_time_utils.h"
 #include "visual_manager.h"
-#include "visual_plan_result_load.h"
+#include "visual_plan_result.h"
 #include "visual_schema.h"
 
 // ====== implement of Load VisualManager ======

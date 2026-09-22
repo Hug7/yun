@@ -9,8 +9,8 @@
 
 #include <filesystem>
 
-#include "visual_manager.h"
 #include "stra_construct.h"
+#include "visual_manager.h"
 
 // ====== implement of StrategyManager::Private ======
 void StrategyManager::register_common_func(Workspace* workspace) {
@@ -30,7 +30,8 @@ void StrategyManager::register_common_func(Workspace* workspace) {
   });
   // 注册-结果可视化
   this->lua_vm.set_function("snapshot", [workspace](const std::string& target_dir) {
-    workspace->context->visual_manager->localization_plan_result(workspace->loads_view(), workspace->unassigned_orders_view(), target_dir);
+    workspace->context->visual_manager->localization_plan_result(
+        workspace->loads_view(), workspace->unassigned_orders_view(), target_dir);
   });
 }
 
@@ -86,7 +87,7 @@ StrategyManager::StrategyManager(Workspace* workspace) {
   this->load_script();
 }
 
-void StrategyManager::exec_script(const SolverContext* context) {
+void StrategyManager::exec_script() {
   const sol::protected_function solve = this->lua_vm["solve"];
   const sol::protected_function_result call_result = solve();
   if (!call_result.valid()) {
