@@ -38,7 +38,7 @@ YUN 是一个面向城配和干线取送货场景的车辆路径规划（VRP）�
 
 ```lua
 function solve()
-    log_info("hello world")
+    log("hello world")
     snapshot("A")
     construct_knn()
     snapshot("B")

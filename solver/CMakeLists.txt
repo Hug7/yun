@@ -24,7 +24,7 @@ target_include_directories(yun_solver
 )
 
 # 4. linked dependencies
-target_link_libraries(yun_solver PUBLIC yun_common yun_scenario yun_problem)
+target_link_libraries(yun_solver PUBLIC yun_common yun_scenario yun_problem yun_algorithm)
 
 find_package(lua CONFIG REQUIRED)
 find_package(sol2 CONFIG REQUIRED)

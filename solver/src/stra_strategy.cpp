@@ -16,18 +16,23 @@
 void StrategyManager::register_common_func(Workspace* workspace) {
   const SolverContext* context = workspace->context;
   // 注册-日志
-  this->lua_vm.set_function("log_info", [logger = context->logger](const std::string& msg) {
-    logger->info("[lua] {}", msg);
-  });
-  this->lua_vm.set_function("log_debug", [logger = context->logger](const std::string& msg) {
-    logger->debug("[lua] {}", msg);
-  });
-  this->lua_vm.set_function("log_warn", [logger = context->logger](const std::string& msg) {
-    logger->warn("[lua] {}", msg);
-  });
-  this->lua_vm.set_function("log_error", [logger = context->logger](const std::string& msg) {
-    logger->error("[lua] {}", msg);
-  });
+  this->lua_vm.set_function(
+      "log",
+      sol::overload(
+
+          [logger = context->logger](const std::string& msg) { logger->info("[lua] {}", msg); },
+
+          [logger = context->logger](const std::string& msg, const int log_level) {
+            if (log_level == 1) {
+              logger->debug("[lua] {}", msg);
+            } else if (log_level == 2) {
+              logger->warn("[lua] {}", msg);
+            } else if (log_level == 3) {
+              logger->error("[lua] {}", msg);
+            } else {
+              logger->info("[lua] {}", msg);
+            }
+          }));
   // 注册-结果可视化
   this->lua_vm.set_function("snapshot", [workspace](const std::string& target_dir) {
     workspace->context->visual_manager->localization_plan_result(
