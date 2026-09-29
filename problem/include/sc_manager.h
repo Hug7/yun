@@ -31,5 +31,5 @@ class SoftConstraintManager {
   /**
    * @brief evaluate the all soft constraints
    */
-  void eval_constrs(Load* load, LoadConstrProfile::UPtr& constr_profile);
+  void eval_constrs(Load* load, const LoadConstrProfile::UPtr& constr_profile) const;
 };

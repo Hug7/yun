@@ -24,7 +24,11 @@ target_include_directories(yun_algorithm
 )
 
 # 4. linked dependencies
-target_link_libraries(yun_algorithm PUBLIC yun_common)
+target_link_libraries(yun_algorithm PUBLIC yun_common yun_problem)
+
+find_package(lua CONFIG REQUIRED)
+find_package(sol2 CONFIG REQUIRED)
+target_link_libraries(yun_algorithm PRIVATE sol2::sol2 lua::lua)
 
 # 5. install
 install(TARGETS yun_algorithm

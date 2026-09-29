@@ -3,10 +3,5 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#pragma once
+#include "algo_alns_solver.h"
 
-class AlnsModel {
-public:
-
-  AlnsModel() = default;
-};

@@ -21,7 +21,7 @@ class StrategyManager {
   /**
    * @brief lua虚拟机
    */
-  sol::state lua_vm;
+  sol::state lua;
   /**
    * @brief 日志器，本次请求专属
    */
@@ -37,6 +37,11 @@ class StrategyManager {
    * @param workspace 工作空间
    */
   void register_construct_heuristic_func(Workspace* workspace);
+  /**
+   * @brief 注册-alns的算法方法
+   * @param workspace 工作空间
+   */
+  void register_alns_func(Workspace* workspace);
   /**
    * @brief 加载脚本
    */

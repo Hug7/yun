@@ -9,6 +9,9 @@
 
 #include <filesystem>
 
+#include "algo_alns_operator.h"
+#include "algo_alns_parameter.h"
+#include "algo_alns_ruin.h"
 #include "stra_construct.h"
 #include "visual_manager.h"
 
@@ -16,7 +19,7 @@
 void StrategyManager::register_common_func(Workspace* workspace) {
   const SolverContext* context = workspace->context;
   // 注册-日志
-  this->lua_vm.set_function(
+  this->lua.set_function(
       "log",
       sol::overload(
 
@@ -34,7 +37,7 @@ void StrategyManager::register_common_func(Workspace* workspace) {
             }
           }));
   // 注册-结果可视化
-  this->lua_vm.set_function("snapshot", [workspace](const std::string& target_dir) {
+  this->lua.set_function("snapshot", [workspace](const std::string& target_dir) {
     workspace->context->visual_manager->localization_plan_result(
         workspace->loads_view(), workspace->unassigned_orders_view(), target_dir);
   });
@@ -44,11 +47,11 @@ void StrategyManager::register_construct_heuristic_func(Workspace* workspace) {
   // 注册-knn
   // --knn参数
   constexpr auto constructors = sol::constructors<KnnParameter(), KnnParameter(int)>();
-  this->lua_vm.new_usertype<KnnParameter>("KnnParameter", constructors, sol::call_constructor,
-                                          constructors, "neighbor_count",
-                                          &KnnParameter::neighbor_count);
+  this->lua.new_usertype<KnnParameter>("KnnParameter", constructors, sol::call_constructor,
+                                       constructors, "neighbor_count",
+                                       &KnnParameter::neighbor_count);
   // --knn方法
-  this->lua_vm.set_function("construct_knn", [workspace](const sol::object& knn_parameter) {
+  this->lua.set_function("construct_knn", [workspace](const sol::object& knn_parameter) {
     if (!knn_parameter.valid()) {
       // 入参为KnnParameter，不传参或传nil时用结构体里的默认值
       ConstructHeuristic::k_nearest_neighbor(workspace, KnnParameter());
@@ -58,10 +61,31 @@ void StrategyManager::register_construct_heuristic_func(Workspace* workspace) {
   });
 }
 
+void StrategyManager::register_alns_func(Workspace* workspace) {
+  // 注册-alns
+  /**
+   * Lua 侧配置示例：
+   * ruin_operator_params = {
+   *   { code = "RuinRandomLoad", params = { min_rate = 0.1, max_rate = 0.3 } },
+   *   { code = "RuinRandomLoad", params = { min_rate = 0.4, max_rate = 0.6 } },  -- 同算子不同参数
+   *   { code = "RuinRandomLoad" }  -- params 可缺省，算子内部用默认值
+   * }
+   */
+  this->lua.set_function("alns", [workspace](const sol::table& cfg) {
+    // 解析alns参数
+    const auto alns_parameter = parse_alns_parameter(cfg);
+    // 解析alns算子
+    create_alns_operator(cfg, alns_parameter, workspace);
+    // 构建alns model
+
+    // 求解alns
+  });
+}
+
 void StrategyManager::load_script() {
   // safe_script_file + pass_on_error：脚本出错时不抛异常，统一在下面判断
   const sol::protected_function_result load_result =
-      this->lua_vm.safe_script_file(this->strategy_file_path, sol::script_pass_on_error);
+      this->lua.safe_script_file(this->strategy_file_path, sol::script_pass_on_error);
   if (!load_result.valid()) {
     const sol::error err = load_result;
     this->logger->error("策略脚本 {} 加载失败: {}", this->strategy_file_path, err.what());
@@ -83,17 +107,19 @@ StrategyManager::StrategyManager(Workspace* workspace) {
     throw std::runtime_error(msg);
   }
   // 为lua虚拟机提供基本库
-  this->lua_vm.open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math);
+  this->lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math);
   // 注册-公共方法
   this->register_common_func(workspace);
   // 注册-构造启发式方法
   this->register_construct_heuristic_func(workspace);
+  // 注册-构造alns
+  this->register_alns_func(workspace);
   // 加载脚本
   this->load_script();
 }
 
 void StrategyManager::exec_script() {
-  const sol::protected_function solve = this->lua_vm["solve"];
+  const sol::protected_function solve = this->lua["solve"];
   const sol::protected_function_result call_result = solve();
   if (!call_result.valid()) {
     const sol::error err = call_result;

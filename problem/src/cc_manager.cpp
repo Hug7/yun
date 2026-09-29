@@ -7,7 +7,7 @@
 
 // ====== implement of Load CostConstraintManager ======
 CostConstraintManager::~CostConstraintManager() {
-  for (auto& constr : this->constrs) {
+  for (const auto& constr : this->constrs) {
     delete constr;
   }
 }
@@ -22,11 +22,12 @@ void CostConstraintManager::add_constr(CostConstraint* constr) {
       [](const CostConstraint* a, const CostConstraint* b) { return a->priority > b->priority; });
 }
 
-void CostConstraintManager::eval_constrs(Load* load, LoadConstrProfile::UPtr& constr_profile) {
-  for (auto& constr : this->constrs) {
-    auto cost_socre = constr->eval(load);
-    constr_profile->infeasible |= cost_socre->is_infeasible();
-    constr_profile->total_cost += cost_socre->get_score();
-    constr_profile->cost_constr_scores.push_back(std::move(cost_socre));
+void CostConstraintManager::eval_constrs(Load* load,
+                                         const LoadConstrProfile::UPtr& constr_profile) const {
+  for (const auto& constr : this->constrs) {
+    auto cost_score = constr->eval(load);
+    constr_profile->infeasible |= cost_score->is_infeasible();
+    constr_profile->total_cost += cost_score->get_score();
+    constr_profile->cost_constr_scores.push_back(std::move(cost_score));
   }
 }

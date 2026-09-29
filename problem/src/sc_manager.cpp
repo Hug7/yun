@@ -7,7 +7,7 @@
 
 // ====== implement of Load SoftConstraintManager ======
 SoftConstraintManager::~SoftConstraintManager() {
-  for (auto& constraint : this->constrs) {
+  for (const auto& constraint : this->constrs) {
     delete constraint;
   }
 }
@@ -21,7 +21,8 @@ void SoftConstraintManager::add_constr(SoftConstraint* constr) {
       [](const SoftConstraint* a, const SoftConstraint* b) { return a->priority > b->priority; });
 }
 
-void SoftConstraintManager::eval_constrs(Load* load, LoadConstrProfile::UPtr& constr_profile) {
+void SoftConstraintManager::eval_constrs(Load* load,
+                                         const LoadConstrProfile::UPtr& constr_profile) const {
   for (const auto& constr : this->constrs) {
     auto soft_score = constr->eval(load);
     if (soft_score->value > 0) {
