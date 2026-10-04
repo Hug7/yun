@@ -26,7 +26,7 @@ LabelsetValueBitset* LoadSPMD::get_order_labelset_value_bitset() {
   return this->get_order_labelset_value_bitset_sp();
 }
 
-std::vector<const Order*> LoadSPMD::get_all_orders() {
+std::vector<const Order*> LoadSPMD::get_orders() {
   if (this->first_node->next->activity_type != ActivityType::PICK) {
     return {};
   }
@@ -37,4 +37,18 @@ std::vector<const Order*> LoadSPMD::get_all_orders() {
     tail_activity = tail_activity->prev;
   }
   return res;
+}
+
+int LoadSPMD::get_order_count() const {
+  if (this->first_node->next->activity_type != ActivityType::PICK) {
+    return 0;
+  }
+  return this->first_node->next->get_activity_count();
+}
+
+int LoadSPMD::get_activity_count() const {
+  if (this->first_node->next->activity_type != ActivityType::PICK) {
+    return 0;
+  }
+  return this->first_node->next->get_activity_count() * 2;
 }

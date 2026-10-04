@@ -11,7 +11,7 @@
 #include "c_random_utils.h"
 
 /**
- * @brief ALNS 算法的参数在lua中的字段集合
+ * @brief alns ruin算子`RuinRandomLoad`的参数在lua中的字段集合
  */
 class AlnsRuinRandomLoadLuaField {
 public:
@@ -26,6 +26,10 @@ public:
 class AlnsRuinRandomLoad : public AlnsRuinOperator {
  public:
   /**
+   * @brief 随机种子
+   */
+  int select_load_random_seed{37};
+  /**
    * @brief 随机数
    */
   RandomUtils::UPtr select_load_random;
@@ -38,10 +42,8 @@ class AlnsRuinRandomLoad : public AlnsRuinOperator {
    */
   double select_load_max_rate{0.4};
 
-  explicit AlnsRuinRandomLoad(const SolverContext* _context, int default_random_seed);
+  explicit AlnsRuinRandomLoad(const SolverContext* _context, const sol::table& cfg);
 
-  explicit AlnsRuinRandomLoad(const SolverContext* _context, int default_random_seed,
-                              sol::table cfg);
+  std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) override;
 
-  void call(Solution* sol) override;
 };

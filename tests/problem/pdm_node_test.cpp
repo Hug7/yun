@@ -38,7 +38,7 @@ int ActivityChainLen(const Activity* first) {
 }
 
 // 构造 START -> PICK(2 activity) -> DROP(2 activity) -> END
-// pick activity 的 related 指向配对的 drop activity, related_node 指向 drop 所在 node
+// pick activity 的 related 指向配对的 drop activity; owner_node 由 add_back_activity 维护
 Node::UPtr BuildChain() {
   auto start = std::make_unique<Node>(ActivityType::START, nullptr);
   auto pick_node = std::make_unique<Node>(ActivityType::PICK, nullptr);
@@ -47,9 +47,6 @@ Node::UPtr BuildChain() {
 
   auto pair_a = ActivityFactory::create_pair_activity(nullptr);
   auto pair_b = ActivityFactory::create_pair_activity(nullptr);
-  pair_a.first->set_related_node(drop_node.get());
-  pair_b.first->set_related_node(drop_node.get());
-
   pick_node->add_back_activity(std::move(pair_a.first));
   pick_node->add_back_activity(std::move(pair_b.first));
   drop_node->add_back_activity(std::move(pair_a.second));
@@ -75,6 +72,77 @@ Node::UPtr BuildChain() {
 }
 
 }  // namespace
+
+TEST(NodeRemoveActivity, RemovesFirstAndKeepsRest) {
+  Node::UPtr head = BuildChain();
+  Node* pick_node = head->next.get();
+  Activity* second = pick_node->first->next.get();
+
+  EXPECT_FALSE(pick_node->remove_activity(pick_node->first.get()));
+  EXPECT_EQ(pick_node->first.get(), second);
+  EXPECT_EQ(pick_node->first->prev, nullptr);
+  EXPECT_EQ(pick_node->last, second);
+  EXPECT_EQ(ActivityChainLen(pick_node->first.get()), 1);
+}
+
+TEST(NodeRemoveActivity, RemovesLastAndFixesLast) {
+  Node::UPtr head = BuildChain();
+  Node* pick_node = head->next.get();
+  Activity* first = pick_node->first.get();
+
+  EXPECT_FALSE(pick_node->remove_activity(pick_node->last));
+  EXPECT_EQ(pick_node->first.get(), first);
+  EXPECT_EQ(pick_node->last, first);
+  EXPECT_EQ(pick_node->last->next, nullptr);
+}
+
+TEST(NodeRemoveActivity, RemovesMiddleAndRelinks) {
+  Node::UPtr head = BuildChain();
+  Node* pick_node = head->next.get();
+  auto extra = ActivityFactory::create_pair_activity(nullptr);
+  pick_node->add_back_activity(std::move(extra.first));
+  Activity* first = pick_node->first.get();
+  Activity* last = pick_node->last;
+
+  EXPECT_FALSE(pick_node->remove_activity(first->next.get()));
+  EXPECT_EQ(first->next.get(), last);
+  EXPECT_EQ(last->prev, first);
+  EXPECT_EQ(pick_node->last, last);
+  EXPECT_EQ(ActivityChainLen(pick_node->first.get()), 2);
+}
+
+TEST(NodeRemoveActivity, ReturnsTrueWhenNodeBecomesEmpty) {
+  Node::UPtr head = BuildChain();
+  Node* pick_node = head->next.get();
+
+  EXPECT_FALSE(pick_node->remove_activity(pick_node->first.get()));
+  EXPECT_TRUE(pick_node->remove_activity(pick_node->first.get()));
+  EXPECT_EQ(pick_node->first, nullptr);
+  EXPECT_EQ(pick_node->last, nullptr);
+}
+
+TEST(NodeOwnerNode, SetByNodeCtorAndAddActivity) {
+  auto pair = ActivityFactory::create_pair_activity(nullptr);
+  auto extra = ActivityFactory::create_pair_activity(nullptr);
+  Node::UPtr node = std::make_unique<Node>(ActivityType::PICK, nullptr, std::move(pair.first));
+  EXPECT_EQ(node->first->owner_node, node.get());
+
+  node->add_front_activity(std::move(pair.second));
+  EXPECT_EQ(node->first->owner_node, node.get());
+  EXPECT_EQ(node->last->owner_node, node.get());
+
+  node->add_back_activity(std::move(extra.first));
+  EXPECT_EQ(node->last->owner_node, node.get());
+}
+
+TEST(NodeOwnerNode, SurvivingActivityKeepsOwnerAfterRemove) {
+  Node::UPtr head = BuildChain();
+  Node* pick_node = head->next.get();
+  Activity* survivor = pick_node->last;
+
+  pick_node->remove_activity(pick_node->first.get());
+  EXPECT_EQ(survivor->owner_node, pick_node);
+}
 
 TEST(NodeOpsDeepCopyChain, NullHeadReturnsNull) {
   EXPECT_EQ(NodeOps::deep_copy_chain(nullptr), nullptr);
@@ -168,11 +236,13 @@ TEST(NodeOpsDeepCopyChain, RemapsRelatedPointersIntoCopiedChain) {
     EXPECT_EQ(activity->related->related, activity);
   }
 
-  // related_node 指向新链里的 drop node
-  EXPECT_EQ(copy_pick_node->first->related_node, copy_drop_node);
-  EXPECT_EQ(copy_pick_node->last->related_node, copy_drop_node);
+  // owner_node 指向 activity 自己所在的 node, 且已重映射到克隆链
+  EXPECT_EQ(copy_pick_node->first->owner_node, copy_pick_node);
+  EXPECT_EQ(copy_pick_node->last->owner_node, copy_pick_node);
+  EXPECT_EQ(copy_drop_node->first->owner_node, copy_drop_node);
+  EXPECT_EQ(copy_drop_node->last->owner_node, copy_drop_node);
 
   // 源链未被改写
   EXPECT_EQ(src_pick_node->first->related, src_drop_node->first.get());
-  EXPECT_EQ(src_pick_node->first->related_node, src_drop_node);
+  EXPECT_EQ(src_pick_node->first->owner_node, src_pick_node);
 }

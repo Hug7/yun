@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -76,7 +77,14 @@ class NodeTimeWindowCache {
 
   std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> other_cache;
 
-  NodeTimeWindowCache(const PlanDatetimeRange* plan_datetime_range)
+  /**
+   * @brief 缓存访问锁
+   * @todo 并行下所有 load 副本共享同一份缓存(Load 拷贝只复制 context 指针), 加锁后仍有竞争开销;
+   * 后续改为每个 worker 一份缓存, 结束后再合并回主缓存, 可彻底去掉这把锁
+   */
+  std::mutex cache_mutex;
+
+  explicit NodeTimeWindowCache(const PlanDatetimeRange* plan_datetime_range)
       : plan_datetime_range(plan_datetime_range), pick_drop_cache(), other_cache() {}
 
   ~NodeTimeWindowCache();

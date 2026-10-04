@@ -10,7 +10,7 @@ Activity::Activity() : activity_type(ActivityType::NONE), order(nullptr) {
   this->prev = nullptr;
   this->next = nullptr;
   this->related = nullptr;
-  this->related_node = nullptr;
+  this->owner_node = nullptr;
 }
 
 Activity::Activity(const ActivityType activity_type, const Order* order)
@@ -18,7 +18,7 @@ Activity::Activity(const ActivityType activity_type, const Order* order)
   this->prev = nullptr;
   this->next = nullptr;
   this->related = nullptr;
-  this->related_node = nullptr;
+  this->owner_node = nullptr;
 }
 
 void Activity::set_prev(Activity* prev) { this->prev = prev; }
@@ -27,7 +27,7 @@ void Activity::set_next(Activity::UPtr next) { this->next = std::move(next); }
 
 void Activity::set_related(Activity* related) { this->related = related; }
 
-void Activity::set_related_node(Node* related_node) { this->related_node = related_node; }
+void Activity::set_owner_node(Node* owner_node) { this->owner_node = owner_node; }
 
 bool Activity::hase_next() { return this->next != nullptr; }
 

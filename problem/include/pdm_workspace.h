@@ -75,23 +75,29 @@ class Workspace {
    */
   void pop();
   /**
-   * @brief 生成solution
+   * @brief 生成 solution
    * @return solution
    */
   [[nodiscard]] Solution* generate_sol() const;
   /**
-   * @brief solution覆盖workspace
+   * @brief 深度克隆 solution
+   * @param other_sol other solution
+   * @return solution
+   */
+  [[nodiscard]] Solution* deep_copy_sol(const Solution* other_sol) const;
+  /**
+   * @brief solution 覆盖 workspace
    * @param sol solution
    */
   void move_solution(Solution* sol);
   /**
-   * @brief 获取workspace所有load的视图
-   * @return 所有load的视图
+   * @brief 获取 workspace 所有 load 的视图
+   * @return 所有 load 的视图
    */
   std::vector<Load*> loads_view();
   /**
-   * @brief 获取workspace所有未指派order的视图
-   * @return 所有未指派order的视图
+   * @brief 获取 workspace 所有未指派 order 的视图
+   * @return 所有未指派 order 的视图
    */
   std::vector<const Order*> unassigned_orders_view();
 };

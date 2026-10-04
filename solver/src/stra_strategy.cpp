@@ -9,6 +9,7 @@
 
 #include <filesystem>
 
+#include "algo_alns_model.h"
 #include "algo_alns_operator.h"
 #include "algo_alns_parameter.h"
 #include "algo_alns_ruin.h"
@@ -74,11 +75,14 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
   this->lua.set_function("alns", [workspace](const sol::table& cfg) {
     // 解析alns参数
     const auto alns_parameter = parse_alns_parameter(cfg);
+    // 线程池寿命跟随本次 alns 调用, 不依赖 AlnsModel 的析构
+    ThreadPool thread_pool;
     // 解析alns算子
-    create_alns_operator(cfg, alns_parameter, workspace);
+    const auto operator_manager = create_alns_operator(cfg, alns_parameter, workspace, &thread_pool);
     // 构建alns model
-
-    // 求解alns
+    AlnsModel* alns_model = new AlnsModel(workspace, alns_parameter, operator_manager, &thread_pool);
+    // 求解
+    alns_model->solve();
   });
 }
 

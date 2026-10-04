@@ -42,9 +42,9 @@ class Load {
    */
   LoadContext* context;
   /**
-   * @brief previous dist matrix code
+   * @brief dist matrix code
    */
-  const DistMatrixCode* prev_dist_matrix_code;
+  const DistMatrixCode* dist_matrix_code;
   /**
    * @brief vehicle
    */
@@ -78,19 +78,30 @@ class Load {
 
   [[nodiscard]] long get_total_dist() const;
 
+  [[nodiscard]] double get_obj_val() const;
+
   [[nodiscard]] Bitset* get_available_vehicle_bitset();
 
   [[nodiscard]] bool is_infeasible() const;
 
   [[nodiscard]] bool is_feasible() const;
 
+  [[nodiscard]] bool is_empty() const;
+
   void update_node_dist_time();
 
   void update_start_node_dist_time();
 
-  void update_end_node_dist_time();
+  void update_end_node_dist_time() const;
 
-  void update_time_window();
+  void update_time_window() const;
+
+  /**
+   * @brief 从 load 中摘除 activities
+   * @details activities 需按 order 成对给出(提+卸); 摘除后若 node 已无 activity,
+   * 则同步摘除该 node(首尾哨兵除外)
+   */
+  void remove_activities(const std::vector<Activity*>& activities) const;
 
   [[nodiscard]] std::vector<Node*> unfold_node_linked() const;
 
@@ -108,7 +119,11 @@ class Load {
 
   virtual LabelsetValueBitset* get_order_labelset_value_bitset() = 0;
 
-  virtual std::vector<const Order*> get_all_orders() = 0;
+  virtual std::vector<const Order*> get_orders() = 0;
+
+  [[nodiscard]] virtual int get_order_count() const = 0;
+
+  [[nodiscard]] virtual int get_activity_count() const = 0;
 
  protected:
   [[nodiscard]] const std::vector<long>& get_peak_load_dims_sp() const;
@@ -163,5 +178,9 @@ class LoadSPMD : public Load {
 
   LabelsetValueBitset* get_order_labelset_value_bitset() override;
 
-  std::vector<const Order*> get_all_orders() override;
+  std::vector<const Order*> get_orders() override;
+
+  [[nodiscard]] int get_order_count() const override;
+
+  [[nodiscard]] int get_activity_count() const override;
 };

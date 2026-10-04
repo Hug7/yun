@@ -61,6 +61,34 @@ Solution* Workspace::generate_sol() const {
   }
   // copy-未指派订单
   sol->unassigned_orders = this->unassigned_orders;
+  // 订单视图
+  for (size_t u = 0; u < load_len; ++u) {
+    for (const auto& order : sol->loads[u]->get_orders()) {
+      sol->orders_view[order->ind] = order;
+    }
+  }
+  for (const auto& [fst, snd] : sol->unassigned_orders) {
+    sol->orders_view.emplace(fst, snd);
+  }
+  return sol;
+}
+
+Solution* Workspace::deep_copy_sol(const Solution* other_sol) const {
+  const auto sol = new Solution();
+  // copy-车辆资源
+  sol->vehicle_resource = other_sol->vehicle_resource->deep_copy();
+  // copy-load
+  const auto pd_pattern = this->context->problem->pd_pattern;
+  const size_t load_len = other_sol->loads.size();
+  sol->loads = std::vector<Load*>(load_len);
+  for (size_t u = 0; u < load_len; ++u) {
+    sol->loads[u] = pd_pattern->deep_copy_load(other_sol->loads[u]);
+  }
+  // copy-未指派订单
+  sol->unassigned_orders = other_sol->unassigned_orders;
+  // copy-订单视图
+  sol->orders_view = other_sol->orders_view;
+
   return sol;
 }
 

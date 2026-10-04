@@ -11,6 +11,7 @@ const std::vector<long>& Load::get_peak_load_dims_sp() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PEAK_LOAD_DIMS)) {
     return peak_load_dims;
   }
+  std::ranges::fill(peak_load_dims, 0L);
   const size_t dim_size = peak_load_dims.size();
   const Node* head_node = this->first_node->next.get();
   if (head_node->activity_type == ActivityType::PICK) {

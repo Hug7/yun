@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <queue>
 #include <ranges>
 #include <unordered_map>
 #include <utility>
@@ -13,6 +12,7 @@
 
 #include "bdm_dist_matrix.h"
 #include "bdm_location.h"
+#include "c_rang_utils.h"
 #include "pdm_load.h"
 #include "pdm_order.h"
 #include "prob_problem.h"
@@ -37,13 +37,15 @@ struct OrderPairEdge {
 /**
  * @brief 选取种子订单
  * @details 取货时间窗结束最早的订单优先成车；时间相同时取索引小的，保证结果可复现
- * @param unassigned_orders 未指派的订单集合
+ * @param unassigned_order_indices 未指派的订单索引集合
+ * @param sol solution
  * @return 种子订单，集合为空时返回nullptr
  */
-int select_seed_order_ind(const std::unordered_map<int, const Order*>& unassigned_orders) {
+int select_seed_order_ind(std::unordered_set<int>& unassigned_order_indices, Solution* sol) {
   long seed_minimum_latest_drop_time = std::numeric_limits<long>::max();  // 最小的最晚卸货时间
   int seed_order_ind = -1;                                                // 选中的订单索引
-  for (auto& [ind, order] : unassigned_orders) {
+  for (int order_ind : unassigned_order_indices) {
+    const Order* order = sol->unassigned_orders[order_ind];
     if (order->drop_time_windows.empty()) {
       continue;
     }
@@ -51,14 +53,22 @@ int select_seed_order_ind(const std::unordered_map<int, const Order*>& unassigne
 
     if (latest_drop_time < seed_minimum_latest_drop_time) {
       seed_minimum_latest_drop_time = latest_drop_time;
-      seed_order_ind = ind;
-    } else if (latest_drop_time == seed_minimum_latest_drop_time && ind < seed_order_ind) {
-      seed_order_ind = ind;
+      seed_order_ind = order_ind;
+    } else if (latest_drop_time == seed_minimum_latest_drop_time && order_ind < seed_order_ind) {
+      seed_order_ind = order_ind;
     }
   }
   return seed_order_ind;
 }
 
+/**
+ * @brief 构造始发 order 与目的 orders 的边权重
+ * @param from_order 始发 order
+ * @param orders 目的 orders 列表
+ * @param context solver上下文
+ * @param k_neighbor_count k近邻数量
+ * @return 始发 order 与目的 orders 的边权重
+ */
 std::unordered_map<int, int> construct_knn_edge(const Order* from_order,
                                                 const std::vector<const Order*>& orders,
                                                 const SolverContext* context,
@@ -140,7 +150,7 @@ std::unordered_map<int, int> construct_knn_edge(const Order* from_order,
   // 对rank从小到大排序，取前K个不同rank值的订单Ind集合
   std::vector<std::pair<int, int>> rank_pairs;
   rank_pairs.reserve(ranks.size());
-  for (auto [fst, snd] : ranks) {
+  for (auto& [fst, snd] : ranks) {
     rank_pairs.emplace_back(fst, snd);
   }
   std::ranges::sort(rank_pairs, [](const auto& pair_a, const auto& pair_b) {
@@ -148,14 +158,14 @@ std::unordered_map<int, int> construct_knn_edge(const Order* from_order,
   });
   std::unordered_map<int, int> knn_order_edges;
   int pre_rank = -1;
-  for (const auto& rank_pair : rank_pairs) {
-    if (rank_pair.second != pre_rank) {
+  for (const auto& [fst, snd] : rank_pairs) {
+    if (snd != pre_rank) {
       ++pre_rank;
       if (pre_rank >= k_neighbor_count) {
         break;
       }
     }
-    knn_order_edges[rank_pair.first] = pre_rank;
+    knn_order_edges[fst] = pre_rank;
   }
   return knn_order_edges;
 }
@@ -177,7 +187,7 @@ std::unordered_map<int, std::unordered_map<int, int>> construct_knn_graph(
   }
   // 拼装load中订单
   for (const auto load : sol->loads) {
-    auto cur_orders = load->get_all_orders();
+    auto cur_orders = load->get_orders();
     orders.insert(orders.end(), cur_orders.begin(), cur_orders.end());
   }
   // 构造订单间的knn图
@@ -191,35 +201,33 @@ std::unordered_map<int, std::unordered_map<int, int>> construct_knn_graph(
 
 /**
  * @brief 选择订单构造车次添加到候选车次中
- * @param unassigned_orders 未指派订单
- * @param candidate_loads 候选loads
+ * @param candidate_load_indices 候选 load indices
+ * @param unassigned_order_indices 待指派的 order indices
  * @param sol solution
  * @param problem problem
  */
-void select_order_construct_load(std::unordered_map<int, const Order*>& unassigned_orders,
-                                 std::vector<Load*>& candidate_loads, Solution* sol,
+void select_order_construct_load(std::unordered_set<int>& candidate_load_indices,
+                                 std::unordered_set<int>& unassigned_order_indices, Solution* sol,
                                  const Problem* problem) {
   // 选择一个order构造新的load
-  const size_t unassigned_order_len = unassigned_orders.size();
+  const size_t unassigned_order_len = unassigned_order_indices.size();
   for (size_t u = 0; u < unassigned_order_len; ++u) {
-    int seed_order_ind = select_seed_order_ind(unassigned_orders);
+    int seed_order_ind = select_seed_order_ind(unassigned_order_indices, sol);
     if (seed_order_ind == -1) {
-      for (const auto order : unassigned_orders | std::views::values) {
-        sol->add_unassigned_order(order);
-      }
-      unassigned_orders.clear();
       return;
     }
+    // 从 unassigned_order_indices 移除
+    unassigned_order_indices.erase(seed_order_ind);
     // 判断seed order是否可以构造load
-    const auto seed_order = unassigned_orders[seed_order_ind];
-    unassigned_orders.erase(seed_order_ind);  // 移除未指派订单
+    const auto seed_order = sol->unassigned_orders[seed_order_ind];
+    sol->remove_unassigned_order_by_key(seed_order_ind);  // 移除未指派订单
     auto cur_orders = std::vector<const Order*>{seed_order};
     Load* load = problem->construct_load_by_order(cur_orders, sol->vehicle_resource);
     if (load->is_infeasible()) {
-      sol->add_unassigned_order(seed_order);
       delete load;
     } else {
-      candidate_loads.push_back(load);
+      candidate_load_indices.insert(static_cast<int>(sol->loads.size()));
+      sol->add_load(load, cur_orders);
       return;
     }
   }
@@ -237,29 +245,34 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
 
   // 构造knn关系图(knn graph)
   auto knn_graph = construct_knn_graph(context, sol, parameter.neighbor_count);
-  // copy loads
-  auto candidate_loads = std::move(sol->loads);
-  // copy unassigned_orders
-  auto unassigned_orders = std::move(sol->unassigned_orders);
+  // candidate load indices
+  std::unordered_set<int> candidate_load_indices =
+      RangeUtils::range_set(static_cast<int>(sol->loads.size()));
+  // unassigned order indices
+  std::unordered_set<int> unassigned_order_indices;
+  unassigned_order_indices.reserve(sol->unassigned_orders.size());
+  for (const auto& order_ind : sol->unassigned_orders | std::views::keys) {
+    unassigned_order_indices.insert(order_ind);
+  }
   // 处理待分配的订单
-  const size_t unassigned_order_len = unassigned_orders.size();
+  const size_t unassigned_order_len = unassigned_order_indices.size();
   for (size_t u = 0; u < unassigned_order_len; ++u) {
     // 根据 knn graph 中rank尝试将unassigned_orders逐个插入loads中；
     // 如果unassigned_orders都不能插入到loads中，那么则按照min(order最晚卸货时间)选择一个订单构造新的load，此外将没有希望的loads归档到solution中；
     // 如果load出现对所有的unassigned_orders都不可插入，那么将该load归档到solution中，减少重复计算；
-    if (unassigned_orders.empty()) {
+    if (unassigned_order_indices.empty()) {
       break;
     }
-    const int candidate_load_len = static_cast<int>(candidate_loads.size());
 
     std::vector<int> archived_load_indices;
     int best_rank = std::numeric_limits<int>::max();
     int best_rank_for_load_ind = -1;
     int best_rank_for_order_ind = -1;
-    for (int l = 0; l < candidate_load_len; ++l) {
-      const auto cur_load = candidate_loads[l];
+    for (const int& candidate_load_ind : candidate_load_indices) {
+      const auto cur_load = sol->loads[candidate_load_ind];
       bool cur_load_can_insert = false;
-      for (const auto& cur_order : unassigned_orders | std::views::values) {
+      for (const int& unassigned_order_ind : unassigned_order_indices) {
+        const auto& cur_order = sol->unassigned_orders[unassigned_order_ind];
         if (cur_load->last_node->prev->activity_type == ActivityType::DROP) {
           auto cur_load_last_delivery_order = cur_load->last_node->prev->last->order;
           if (knn_graph[cur_order->ind].contains(cur_load_last_delivery_order->ind)) {
@@ -278,7 +291,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
                 cur_load_can_insert = true;
                 if (cur_rank < best_rank) {
                   best_rank = cur_rank;
-                  best_rank_for_load_ind = l;
+                  best_rank_for_load_ind = candidate_load_ind;
                   best_rank_for_order_ind = cur_order->ind;
                 }
               }
@@ -289,40 +302,34 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
         }
       }
       if (!cur_load_can_insert) {
-        archived_load_indices.push_back(l);
+        archived_load_indices.push_back(candidate_load_ind);
       }
     }
     if (best_rank_for_order_ind == -1) {
       // 所有unassigned order不能插入，将candidate load放入solution中
-      for (const auto& candidate_load : candidate_loads) {
-        sol->add_load(candidate_load);
-      }
-      candidate_loads.clear();
+      candidate_load_indices.clear();
       // 所有unassigned order不能插入，选择订单构造车次添加到候选车次中
-      select_order_construct_load(unassigned_orders, candidate_loads, sol, problem);
+      select_order_construct_load(candidate_load_indices, unassigned_order_indices, sol, problem);
     } else {
       // 将选中的order插入到指定的load
-      auto cur_order = unassigned_orders[best_rank_for_order_ind];
+      auto cur_order = sol->unassigned_orders[best_rank_for_order_ind];
       // 将选中的order从unassigned_orders中移除
-      unassigned_orders.erase(best_rank_for_order_ind);
+      unassigned_order_indices.erase(best_rank_for_order_ind);
+      sol->remove_unassigned_order_by_key(best_rank_for_order_ind);
       // 选择最优车辆
-      auto cur_load = candidate_loads[best_rank_for_load_ind];
+      auto cur_load = sol->loads[best_rank_for_load_ind];
       problem->pd_pattern->insert_last_delivery(cur_load, cur_order);
       problem->eval_load(cur_load);
-      problem->select_best_vehicle(cur_load, sol->vehicle_resource);
+      sol->release_vehicle_resource(cur_load);
+      problem->tmp_select_best_vehicle(cur_load, sol->vehicle_resource);
+      sol->occupy_vehicle_resource(cur_load);
       // 将所有unassigned orders不能插入的candidate load归档
-      int archived_load_len = static_cast<int>(archived_load_indices.size());
-      for (int a_l = archived_load_len - 1; a_l >= 0; --a_l) {
-        sol->add_load(candidate_loads[a_l]);
-        candidate_loads.erase(candidate_loads.begin() + a_l);
+      for (int archived_load_ind : archived_load_indices) {
+        candidate_load_indices.erase(archived_load_ind);
       }
     }
   }
-  // 将最后结果归档
-  for (const auto& load : candidate_loads) {
-    sol->add_load(load);
-  }
-  candidate_loads.clear();
+  candidate_load_indices.clear();
 
   // 将solution中结果覆盖workspace
   workspace->move_solution(sol);

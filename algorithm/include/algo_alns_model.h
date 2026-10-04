@@ -5,43 +5,46 @@
 
 #pragma once
 
-#include <sol/sol.hpp>
-
 #include "algo_alns_operator.h"
 #include "algo_alns_parameter.h"
+#include "algo_alns_solution_manager.h"
+#include "algo_segment_builder.h"
+#include "algo_thread_pool.h"
 #include "pdm_solution.h"
 #include "pdm_workspace.h"
 
-class AlnsSolutionManager {
- public:
-  /**
-   * @brief 最优解
-   */
-  Solution* best_sol;
-  /**
-   * @brief 当前最优解
-   */
-  Solution* cur_sol;
-  /**
-   * @brief 临时解
-   */
-  Solution* tmp_sol;
-
-  explicit AlnsSolutionManager(const Workspace* _workspace);
-
-  ~AlnsSolutionManager();
-};
-
 class AlnsModel {
  public:
+  /**
+   * @brief 工作台
+   */
   const Workspace* workspace;
-
+  /**
+   * @brief alns 算法参数
+   */
   const AlnsParameter* parameter;
-
-  const AlnsOperatorManager* operator_manager;
-
-  const AlnsSolutionManager* sol_manager;
+  /**
+   * @brief alns 算子管理器
+   */
+  AlnsOperatorManager* operator_manager;
+  /**
+   * @brief alns solution管理器
+   */
+  AlnsSolutionManager* sol_manager;
+  /**
+   * @brief segment 生成器
+   */
+  SegmentBuilder* segment_builder;
+  /**
+   * @brief 线程池
+   * @details 由外层调用方持有, 本类不负责释放; 寿命不依赖析构(当前析构不会被执行)
+   */
+  ThreadPool* thread_pool;
 
   explicit AlnsModel(const Workspace* _workspace, const AlnsParameter* _parameter,
-                     const AlnsOperatorManager* operator_manager);
+                     AlnsOperatorManager* operator_manager, ThreadPool* _thread_pool);
+
+  ~AlnsModel();
+
+  Solution* solve();
 };

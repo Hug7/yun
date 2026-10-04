@@ -21,7 +21,7 @@ LoadContext::~LoadContext() {
 
 // ====== implement of Load ======
 Load::Load(LoadContext* context)
-    : context(context), prev_dist_matrix_code(nullptr), vehicle(nullptr) {
+    : context(context), dist_matrix_code(nullptr), vehicle(nullptr) {
   Location* default_loc = context->scenario->location_manager->get_default_location();
   this->first_node = std::make_unique<Node>(ActivityType::START, default_loc);
   auto end_node = std::make_unique<Node>(ActivityType::END, default_loc);
@@ -36,7 +36,7 @@ Load::Load(const Load* other) {
   // copy-context
   this->context = other->context;
   // copy-距离矩阵编码
-  this->prev_dist_matrix_code = other->prev_dist_matrix_code;
+  this->dist_matrix_code = other->dist_matrix_code;
   // copy-车辆
   this->vehicle = other->vehicle;
   // copy-route属性
@@ -64,11 +64,11 @@ void Load::change_vehicle(const Vehicle* _vehicle) {
   // if change, update the distance and time between nodes
   bool network_change_flag = false;
   if (this->vehicle != nullptr &&
-      this->prev_dist_matrix_code != this->vehicle->get_dist_matrix_code()) {
+      this->dist_matrix_code != this->vehicle->get_dist_matrix_code()) {
     network_change_flag = true;
   }
   this->vehicle = _vehicle;
-  this->prev_dist_matrix_code = this->vehicle->get_dist_matrix_code();
+  this->dist_matrix_code = this->vehicle->get_dist_matrix_code();
 
   // change start node
   const bool change_start_node_flag = this->first_node->loc != this->vehicle->orig_loc;
@@ -115,6 +115,10 @@ long Load::get_total_dist() const {
   return total_dist;
 }
 
+double Load::get_obj_val() const {
+  return this->constr_profile->obj_val;
+}
+
 Bitset* Load::get_available_vehicle_bitset() {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::AVAILABLE_VEHICLE_BITSET)) {
     return this->route_profile->available_vehicle_bitset.get();
@@ -137,6 +141,10 @@ bool Load::is_infeasible() const {
 
 bool Load::is_feasible() const {
   return this->constr_profile->is_feasible();
+}
+
+bool Load::is_empty() const {
+  return this->first_node->next.get() == this->last_node;
 }
 
 void Load::update_node_dist_time() {
@@ -166,7 +174,7 @@ void Load::update_start_node_dist_time() {
   // todo updata time window
 }
 
-void Load::update_end_node_dist_time() {
+void Load::update_end_node_dist_time() const {
   const DistMatrix* dist_matrix = this->vehicle->get_dist_matrix();
   auto dist_time =
       dist_matrix->get_dist_time(this->last_node->prev->loc->ind, this->last_node->loc->ind);
@@ -176,7 +184,7 @@ void Load::update_end_node_dist_time() {
   // todo updata time window
 }
 
-void Load::update_time_window() {
+void Load::update_time_window() const {
   const auto tw_cache = this->context->node_time_window_cache;
   // 第一个node(车场，可能为虚拟车场)
   Node* pre_node = this->first_node.get();
@@ -188,6 +196,17 @@ void Load::update_time_window() {
     head_node->ptws = TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);
     pre_node = head_node;
     head_node = head_node->next.get();
+  }
+}
+
+void Load::remove_activities(const std::vector<Activity*>& activities) const {
+  // 借 Activity::owner_node 直接定位所属 node, 无需遍历整条链
+  for (Activity* activity : activities) {
+    Node* cur_node = activity->owner_node;
+    if (cur_node->remove_activity(activity)) {
+      // node 已无 activity: 摘除并释放(cur_node 必为前驱 next 所指)
+      NodeOps::splice_out(cur_node->prev->next, cur_node);
+    }
   }
 }
 

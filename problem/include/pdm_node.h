@@ -6,6 +6,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "bdm_location.h"
@@ -50,7 +51,7 @@ class Node {
   /**
    * @brief next node
    */
-  Node::UPtr next;
+  UPtr next;
   /**
    * @brief distance for previous node to this node
    */
@@ -80,11 +81,19 @@ class Node {
 
   void add_back_activity(Activity::UPtr activity);
 
+  /**
+   * @brief 摘除 activity
+   * @return true 表示该 node 已无 activity
+   */
+  bool remove_activity(Activity* activity);
+
   [[nodiscard]] std::vector<TimeWindow*> intersection_time_windows() const;
 
   [[nodiscard]] std::vector<const Order*> get_orders() const;
 
   [[nodiscard]] long get_work_time() const;
+
+  [[nodiscard]] int get_activity_count() const;
 };
 
 namespace NodeFactory {
@@ -112,7 +121,7 @@ struct NodeOps {
   static Node::UPtr reverse_chain(Node::UPtr chain);
 
   // 深度克隆整条链 [head ... 尾节点]
-  // 克隆 node 标量属性、ptws、activity 子链, 修正 prev 与 related/related_node 指向
+  // 克隆 node 标量属性、ptws、activity 子链, 修正 prev 与 related 指向
   // 返回: 新链的头节点 (prev 为 nullptr)
   static Node::UPtr deep_copy_chain(const Node* head);
 };

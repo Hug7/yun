@@ -33,15 +33,17 @@ class Activity {
   /**
    * @brief next activity
    */
-  Activity::UPtr next;
+  UPtr next;
   /**
    * @brief related activity
    */
   Activity* related;
   /**
-   * @brief related node
+   * @brief 所属 node
+   * @details 由 Node 的构造函数/add_front_activity/add_back_activity 维护, 摘除 activity 后该指针随
+   * activity 一起销毁; 深拷贝时由 add_*_activity 重映射到克隆链
    */
-  Node* related_node;
+  Node* owner_node;
 
   Activity();
 
@@ -53,7 +55,7 @@ class Activity {
 
   void set_related(Activity* related);
 
-  void set_related_node(Node* related_node);
+  void set_owner_node(Node* owner_node);
 
   bool hase_next();
 

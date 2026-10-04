@@ -43,5 +43,11 @@ inline double unscale_from_long(const long value, const int precision) {
   const double result = static_cast<double>(value) / static_cast<double>(PRECISION_POW[precision]);
   return decimal_places(result, precision);
 }
+/**
+ * @brief 将 double 转为 int
+ * @param value double value
+ * @return int value
+ */
+inline int double_to_int(const double value) { return static_cast<int>(std::round(value)); }
 
-}  // namespace
+}  // namespace NumUtil

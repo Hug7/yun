@@ -29,6 +29,7 @@ Node::Node(const ActivityType activity_type, const Location* loc,
   this->ptws = std::vector<std::unique_ptr<TimeWindowPlan>>();
   this->first = std::move(activity);
   this->last = this->first.get();
+  this->first->owner_node = this;
   this->next = nullptr;
   this->prev = nullptr;
   this->travel_dist = 0;
@@ -40,6 +41,7 @@ void Node::set_travel_dist(long travel_dist) { this->travel_dist = travel_dist; 
 void Node::set_travel_time(long travel_time) { this->travel_time = travel_time; }
 
 void Node::add_front_activity(Activity::UPtr activity) {
+  activity->owner_node = this;
   if (this->first != nullptr) {
     this->first->prev = activity.get();
     activity->next = std::move(this->first);
@@ -51,6 +53,7 @@ void Node::add_front_activity(Activity::UPtr activity) {
 }
 
 void Node::add_back_activity(Activity::UPtr activity) {
+  activity->owner_node = this;
   if (this->last != nullptr) {
     activity->prev = this->last;
     this->last->next = std::move(activity);
@@ -59,6 +62,27 @@ void Node::add_back_activity(Activity::UPtr activity) {
     this->first = std::move(activity);
     this->last = this->first.get();
   }
+}
+
+bool Node::remove_activity(Activity* activity) {
+  Activity* prev_activity = activity->prev;
+  if (prev_activity == nullptr) {
+    // 摘除首 activity: 所有权从 first 转移到其后继
+    this->first = std::move(activity->next);
+    if (this->first != nullptr) {
+      this->first->prev = nullptr;
+    } else {
+      this->last = nullptr;
+    }
+  } else {
+    prev_activity->next = std::move(activity->next);
+    if (prev_activity->next != nullptr) {
+      prev_activity->next->prev = prev_activity;
+    } else {
+      this->last = prev_activity;
+    }
+  }
+  return this->first == nullptr;
 }
 
 std::vector<TimeWindow*> Node::intersection_time_windows() const {
@@ -112,6 +136,16 @@ long Node::get_work_time() const {
   return work_time;
 }
 
+int Node::get_activity_count() const {
+  int res = 0;
+  auto tail_activity = this->last;
+  while (tail_activity) {
+    ++res;
+    tail_activity = tail_activity->prev;
+  }
+  return res;
+}
+
 // ====== implement of NodeFactory ======
 std::unique_ptr<Node> NodeFactory::create_pick_node(const Order* order, Activity::UPtr activity) {
   return std::make_unique<Node>(ActivityType::PICK, order->pick_loc, std::move(activity));
@@ -146,7 +180,7 @@ Node* NodeOps::tail(const Node::UPtr& head) {
 }
 
 Node::UPtr NodeOps::splice_out(Node::UPtr& from_ptr, Node* to) {
-  auto subchain = std::move(from_ptr);  // 摘下整段
+  auto subchain = std::move(from_ptr);
   Node* pred = subchain->prev;          // 记住前驱
 
   from_ptr = std::move(to->next);  // 后半段接回前驱
@@ -242,10 +276,7 @@ Node::UPtr NodeOps::deep_copy_chain(const Node* head) {
         const auto related_it = activity_map.find(src_activity->related);
         copy_activity->related = related_it == activity_map.end() ? nullptr : related_it->second;
       }
-      if (src_activity->related_node != nullptr) {
-        const auto node_it = node_map.find(src_activity->related_node);
-        copy_activity->related_node = node_it == node_map.end() ? nullptr : node_it->second;
-      }
+      // owner_node 无需重映射: 第一遍的 add_back_activity 已指向克隆链上的 node
     }
   }
 

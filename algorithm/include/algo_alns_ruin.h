@@ -7,6 +7,8 @@
 
 #include <magic_enum/magic_enum.hpp>
 #include <string>
+#include <unordered_set>
+#include <unordered_map>
 
 #include "pdm_context.h"
 #include "pdm_solution.h"
@@ -18,13 +20,29 @@ enum class AlnsRuinOperatorCode {
   RuinRandomLoad,
 };
 
-constexpr AlnsRuinOperatorCode parse_alns_ruin_operator_code(const std::string& code) {
+constexpr AlnsRuinOperatorCode convert_alns_ruin_operator_code(const std::string& code) {
   if (code == "RuinRandomLoad") {
     return AlnsRuinOperatorCode::RuinRandomLoad;
   } else {
     throw std::invalid_argument("Invalid AlnsRuinOperatorCode = " + code);
   }
 }
+
+class AlnsRuinLoadActivity {
+ public:
+  using UPtr = std::unique_ptr<AlnsRuinLoadActivity>;
+  /**
+   * @brief load索引
+   */
+  const int load_ind;
+  /**
+   * @brief activity 列表
+   * @details activity数量是偶数，因为是 order 的提卸动作
+   */
+  std::vector<Activity*> activities;
+
+  explicit AlnsRuinLoadActivity(const int load_ind) : load_ind(load_ind), activities() {};
+};
 
 /**
  * @brief alns ruin算子父类
@@ -45,5 +63,7 @@ class AlnsRuinOperator {
 
   virtual ~AlnsRuinOperator() = default;
 
-  virtual void call(Solution* sol) = 0;
+  virtual std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) = 0;
+
+  void call(Solution* sol);
 };

@@ -49,13 +49,6 @@ class Problem {
 
   virtual LoadConstrProfile::UPtr tmp_eval_load(Load* load) const;
   /**
-   * @brief 选择最合适的车
-   * @details 不占用车辆资源
-   * @param load 车次
-   * @param vehicle_resource 车辆资源
-   */
-  virtual void select_best_vehicle(Load* load, VehicleResource::UPtr& vehicle_resource) const;
-  /**
    * @brief 选择最合适的车-临时解
    * @details 不占用车辆资源
    * @param load 车次
@@ -78,4 +71,13 @@ class Problem {
    * @brief construct a new Load object for a vehicle
    */
   virtual Load* construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle) const;
+  /**
+   * @brief 将 segment 贪心插入 load
+   * @param ori_load origin load
+   * @param segment 带顺序的订单片段
+   * @param vehicle_resource 车辆资源
+   * @return
+   */
+  virtual Load* greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
+                                              VehicleResource::UPtr& vehicle_resource) const;
 };
