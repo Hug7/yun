@@ -31,7 +31,7 @@ enum class ActivityType {
   DROP,
   START,
   END,
-  NONE, // 必须放在最后，在部分场景用于计数，如应用在WorkEffect
+  NONE,  // 必须放在最后，在部分场景用于计数，如应用在WorkEffect
 };
 
 static inline const std::unordered_map<std::string, ActivityType> ActivityTypeMap = {
@@ -150,7 +150,7 @@ namespace SoftConstraintParameter {
  */
 constexpr int SC_DIST_DEFAULT_DIST_FACTOR = 0;
 
-}  // namespace CostConstraintParameter
+}  // namespace SoftConstraintParameter
 
 namespace CostConstraintParameter {
 /**
@@ -167,3 +167,10 @@ namespace LoadParameter {
  */
 constexpr double INIT_LOAD_OBJ_VAL = 1000000000.0;
 }  // namespace LoadParameter
+
+namespace CacheParameter {
+/**
+ * @brief 构造时预分配的桶位数, 与 cache_capacity 无关
+ */
+static constexpr int LRU_RESERVED_ENTRY_COUNT = 20000;
+}

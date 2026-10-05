@@ -93,9 +93,7 @@ class Node {
    * @brief 收集节点上的订单
    * @param out 出参, 由调用方持有以便跨调用复用容量
    */
-  void collect_orders(std::vector<const Order*>& out) const;
-
-  [[nodiscard]] std::vector<const Order*> get_orders() const;
+  void get_orders(std::vector<const Order*>& out) const;
 
   [[nodiscard]] long get_work_time() const;
 

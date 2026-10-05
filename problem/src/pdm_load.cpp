@@ -11,8 +11,10 @@
 #include "bdm_time_window_utils.h"
 
 // ====== implement of LoadContext ======
-LoadContext::LoadContext(const Scenario* scenario, const PlanDatetimeRange* plan_datetime_range)
-    : scenario(scenario), plan_datetime_range(plan_datetime_range) {}
+LoadContext::LoadContext(const Scenario* scenario, const Parameter* parameter)
+    : scenario(scenario),
+      plan_datetime_range(parameter->plan_datetime_range),
+      node_tw_cache_capacity(parameter->node_time_window_cache_capacity) {}
 
 LoadContext::~LoadContext() {
   this->scenario = nullptr;
@@ -34,7 +36,7 @@ NodeTimeWindowCache* LoadContext::get_node_time_window_cache() {
   auto it = this->thread_tw_caches.find(thread_id);
   if (it == this->thread_tw_caches.end()) {
     it = this->thread_tw_caches
-             .emplace(thread_id, new NodeTimeWindowCache(this->plan_datetime_range))
+             .emplace(thread_id, new NodeTimeWindowCache(this->plan_datetime_range, this->node_tw_cache_capacity))
              .first;
   }
   tls_owner = this;
@@ -43,8 +45,7 @@ NodeTimeWindowCache* LoadContext::get_node_time_window_cache() {
 }
 
 // ====== implement of Load ======
-Load::Load(LoadContext* context)
-    : context(context), dist_matrix_code(nullptr), vehicle(nullptr) {
+Load::Load(LoadContext* context) : context(context), dist_matrix_code(nullptr), vehicle(nullptr) {
   Location* default_loc = context->scenario->location_manager->get_default_location();
   this->first_node = std::make_unique<Node>(ActivityType::START, default_loc);
   auto end_node = std::make_unique<Node>(ActivityType::END, default_loc);
@@ -78,16 +79,13 @@ Load::~Load() {
   this->constr_profile.reset();
 }
 
-void Load::reset_route_profile() const {
-  this->route_profile->reset_dirty_marks();
-}
+void Load::reset_route_profile() const { this->route_profile->reset_dirty_marks(); }
 
 void Load::change_vehicle(const Vehicle* _vehicle) {
   // check if the routing network has changed
   // if change, update the distance and time between nodes
   bool network_change_flag = false;
-  if (this->vehicle != nullptr &&
-      this->dist_matrix_code != this->vehicle->get_dist_matrix_code()) {
+  if (this->vehicle != nullptr && this->dist_matrix_code != this->vehicle->get_dist_matrix_code()) {
     network_change_flag = true;
   }
   this->vehicle = _vehicle;
@@ -138,9 +136,7 @@ long Load::get_total_dist() const {
   return total_dist;
 }
 
-double Load::get_obj_val() const {
-  return this->constr_profile->obj_val;
-}
+double Load::get_obj_val() const { return this->constr_profile->obj_val; }
 
 Bitset* Load::get_available_vehicle_bitset() {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::AVAILABLE_VEHICLE_BITSET)) {
@@ -158,17 +154,11 @@ Bitset* Load::get_available_vehicle_bitset() {
   return this->route_profile->available_vehicle_bitset.get();
 }
 
-bool Load::is_infeasible() const {
-  return this->constr_profile->is_infeasible();
-}
+bool Load::is_infeasible() const { return this->constr_profile->is_infeasible(); }
 
-bool Load::is_feasible() const {
-  return this->constr_profile->is_feasible();
-}
+bool Load::is_feasible() const { return this->constr_profile->is_feasible(); }
 
-bool Load::is_empty() const {
-  return this->first_node->next.get() == this->last_node;
-}
+bool Load::is_empty() const { return this->first_node->next.get() == this->last_node; }
 
 void Load::update_node_dist_time() {
   if (this->route_profile->get_dirty_mark(LoadRouteProfileField::NODE_DIST_TIME)) {
@@ -211,12 +201,14 @@ void Load::update_time_window() const {
   const auto tw_cache = this->context->get_node_time_window_cache();
   // 第一个node(车场，可能为虚拟车场)
   Node* pre_node = this->first_node.get();
-  pre_node->ptws = TimeWindowPlanFactory::create_time_window_plans(tw_cache->get_other_time_windows(pre_node));
+  pre_node->ptws =
+      TimeWindowPlanFactory::create_time_window_plans(tw_cache->get_other_time_windows(pre_node));
   Node* head_node = pre_node->next.get();
   while (head_node != nullptr) {
     auto cur_tws = tw_cache->get_pick_drop_time_windows(head_node);
     const long work_time = head_node->get_work_time();
-    head_node->ptws = TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);
+    head_node->ptws =
+        TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);
     pre_node = head_node;
     head_node = head_node->next.get();
   }
@@ -233,7 +225,7 @@ void Load::remove_activities(const std::vector<Activity*>& activities) const {
   }
 }
 
-std::vector<Node*> Load::unfold_node_linked() const{
+std::vector<Node*> Load::unfold_node_linked() const {
   std::vector<Node*> reverse_nodes;
   auto tail_node = this->last_node;
   while (tail_node != nullptr) {

@@ -102,10 +102,9 @@ Problem* create_problem(const Scenario* scenario, Parameter* parameter) {
   problem->hc_manager->add_constr(new HcAvailableVehicle());
 
   // add hard constraints by scenario
-  // -- hard constraints: max pick node count
-  if (parameter->time_window_constr_enabled) {
-    problem->hc_manager->add_constr(new HcTimeWindow());
-  }
+  // -- hard constraints: time window
+  problem->hc_manager->add_constr(new HcTimeWindow());
+
   // -- hard constraints: max drop node count
   if (parameter->max_pick_node_count > HardConstraintParameter::DEFAULT_MAX_PICK_NODE_COUNT) {
     problem->hc_manager->add_constr(new HcMaxPickNodeCount(parameter->max_pick_node_count));

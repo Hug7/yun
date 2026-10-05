@@ -106,17 +106,7 @@ std::vector<TimeWindow*> Node::intersection_time_windows() const {
   return TimeWindowUntils::intersection_tws_arr(ori_tws_arr);
 }
 
-std::vector<const Order*> Node::get_orders() const {
-  std::vector<const Order*> orders;
-  auto tail_activity = this->last;
-  while (tail_activity) {
-    orders.push_back(tail_activity->order);
-    tail_activity = tail_activity->prev;
-  }
-  return orders;
-}
-
-void Node::collect_orders(std::vector<const Order*>& out) const {
+void Node::get_orders(std::vector<const Order*>& out) const {
   out.clear();
   auto tail_activity = this->last;
   while (tail_activity) {

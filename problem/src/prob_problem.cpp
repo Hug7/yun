@@ -26,7 +26,7 @@ Problem::Problem(const Scenario* scenario, Parameter* parameter)
       break;
   }
 
-  this->load_context = new LoadContext(this->scenario, this->parameter->plan_datetime_range);
+  this->load_context = new LoadContext(this->scenario, this->parameter);
 
   this->hc_manager = new HardConstraintManager();
   this->sc_manager = new SoftConstraintManager();

@@ -32,6 +32,11 @@ class LoadContext {
   const PlanDatetimeRange* plan_datetime_range;
 
   /**
+   * @brief node_tw 缓存容量
+   */
+  const int node_tw_cache_capacity;
+
+  /**
    * @brief 按线程隔离的时间窗缓存
    * @details 并行下所有 load 副本共享同一份 LoadContext(深拷贝只复制 context 指针),
    * 因此缓存必须按线程拆分, 否则所有 worker 抢同一把锁。每个线程一份后查找路径零同步。
@@ -43,7 +48,7 @@ class LoadContext {
    */
   std::mutex thread_tw_cache_mutex;
 
-  LoadContext(const Scenario* scenario, const PlanDatetimeRange* plan_datetime_range);
+  LoadContext(const Scenario* scenario, const Parameter* parameter);
 
   ~LoadContext();
 

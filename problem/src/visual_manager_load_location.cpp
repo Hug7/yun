@@ -129,8 +129,10 @@ void fill_labels(const Scenario* scenario, VisualLoadLocation& visual_load_locat
   visual_load_location.location_labels =
       decode_labels(label_manager->location_labelset, node->loc->labelset_value_bitset.get());
   // 站点上订单的标签
+  std::vector<const Order*> orders;
+  node->get_orders(orders);
   visual_load_location.order_labels =
-      decode_orders_labels(label_manager->order_labelset, node->get_orders());
+      decode_orders_labels(label_manager->order_labelset, orders);
 }
 /**
  * @brief 填充行驶信息、等待和作业时长、计划时间

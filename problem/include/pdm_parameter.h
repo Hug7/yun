@@ -117,10 +117,6 @@ class Parameter {
    */
   int max_drop_node_count{HardConstraintParameter::DEFAULT_MAX_DROP_NODE_COUNT};
   /**
-   * @brief hard constraint: 时间窗约束开关
-   */
-  bool time_window_constr_enabled{true};
-  /**
    * @brief soft constraint: "ScDist" default distance factor
    */
   double sc_constr_dist_factor{SoftConstraintParameter::SC_DIST_DEFAULT_DIST_FACTOR};
@@ -128,6 +124,16 @@ class Parameter {
    * @brief cost constraint: "CcDist" default distance factor
    */
   double cc_constr_dist_factor{CostConstraintParameter::CC_DIST_DEFAULT_DIST_FACTOR};
+
+  // cache
+  /**
+   * @brief node 指定订单交集时间窗的缓存容量
+   */
+  int node_time_window_cache_capacity{2000000};
+  /**
+   * @brief load 时间窗推导结果的缓存容量
+   */
+  int load_time_window_cache_capacity{500000};
 
   explicit Parameter(const Labelset* order_labelset);
 
