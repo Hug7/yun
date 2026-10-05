@@ -22,8 +22,8 @@ AlnsModel::~AlnsModel() {
   delete this->segment_builder;
 }
 
-Solution* AlnsModel::solve() {
-  auto logger = this->workspace->context->logger;
+Solution* AlnsModel::solve() const {
+  const auto logger = this->workspace->context->logger;
   int pre_update_best_sol_iter = -1;
 
   for (int iter = 0; iter < this->parameter->max_iter; ++iter) {

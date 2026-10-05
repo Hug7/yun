@@ -30,6 +30,11 @@ Solver::~Solver() {
 }
 
 void Solver::solve() {
+  // 允许重复调用: 先释放上一轮残留的订单池和工作台, 否则会泄漏
+  delete this->workspace;
+  this->workspace = nullptr;
+  delete this->order_pool;
+  this->order_pool = nullptr;
   // precheck, 发现不可解的订单则提前退出
   const auto solver_precheck = new SolverPrecheck(this->context);
   const bool can_continue_flag = solver_precheck->call();

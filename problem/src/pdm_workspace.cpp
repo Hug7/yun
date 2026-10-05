@@ -96,6 +96,10 @@ void Workspace::move_solution(Solution* sol) {
   this->vehicle_resource = std::move(sol->vehicle_resource);
   this->unassigned_orders.clear();
   this->unassigned_orders = std::move(sol->unassigned_orders);
+  // 释放 this->loads
+  for (const auto& load : this->loads) {
+    delete load;
+  }
   this->loads.clear();
   this->loads = std::move(sol->loads);
 

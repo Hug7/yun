@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -37,6 +38,11 @@ class LoadContext {
   const int node_tw_cache_capacity;
 
   /**
+   * @brief 本实例在进程内的唯一序号, 用于判定 thread_local 缓存的归属
+   */
+  const std::uint64_t cache_id = next_cache_id();
+
+  /**
    * @brief 按线程隔离的时间窗缓存
    * @details 并行下所有 load 副本共享同一份 LoadContext(深拷贝只复制 context 指针),
    * 因此缓存必须按线程拆分, 否则所有 worker 抢同一把锁。每个线程一份后查找路径零同步。
@@ -56,6 +62,14 @@ class LoadContext {
    * @brief 取当前线程专属的时间窗缓存, 首次调用时创建并注册
    */
   NodeTimeWindowCache* get_node_time_window_cache();
+
+  /**
+   * @brief 分配一个进程内单调递增的序号
+   */
+  static std::uint64_t next_cache_id() {
+    static std::atomic<std::uint64_t> seq{0};
+    return seq.fetch_add(1, std::memory_order_relaxed) + 1;
+  }
 };
 
 /**

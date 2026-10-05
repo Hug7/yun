@@ -74,15 +74,21 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
    */
   this->lua.set_function("alns", [workspace](const sol::table& cfg) {
     // 解析alns参数
-    const auto alns_parameter = parse_alns_parameter(cfg);
+    const auto alns_parameter = parse_alns_parameter(cfg, workspace->context->logger);
     // 线程池寿命跟随本次 alns 调用, 不依赖 AlnsModel 的析构
-    ThreadPool thread_pool;
+    ThreadPool thread_pool{alns_parameter->tasks};
     // 解析alns算子
-    const auto operator_manager = create_alns_operator(cfg, alns_parameter, workspace, &thread_pool);
+    const auto operator_manager =
+        create_alns_operator(cfg, alns_parameter, workspace, &thread_pool);
     // 构建alns model
-    AlnsModel* alns_model = new AlnsModel(workspace, alns_parameter, operator_manager, &thread_pool);
+    const AlnsModel* alns_model =
+        new AlnsModel(workspace, alns_parameter, operator_manager, &thread_pool);
     // 求解
-    alns_model->solve();
+    Solution* res_sol = alns_model->solve();
+    // 将结果 res_sol 替换
+    workspace->move_solution(res_sol);
+    // 释放 alns_model
+    delete alns_model;
   });
 }
 

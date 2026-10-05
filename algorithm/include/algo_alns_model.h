@@ -46,5 +46,5 @@ class AlnsModel {
 
   ~AlnsModel();
 
-  Solution* solve();
+  [[nodiscard]] Solution* solve() const;
 };

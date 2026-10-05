@@ -8,10 +8,10 @@
 #include <cassert>
 
 // ====== implement of ThreadPool ======
-ThreadPool::ThreadPool(const std::size_t worker_count) {
+ThreadPool::ThreadPool(const int worker_count) {
   std::lock_guard<std::mutex> guard(this->mu);
   this->workers.reserve(worker_count);
-  for (std::size_t u = 0; u < worker_count; ++u) {
+  for (int u = 0; u < worker_count; ++u) {
     this->workers.emplace_back([this] { this->worker_loop(); });
   }
 }

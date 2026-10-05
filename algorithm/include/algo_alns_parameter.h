@@ -6,12 +6,14 @@
 #pragma once
 
 #include <sol/sol.hpp>
+#include <spdlog/spdlog.h>
 
 /**
  * @brief ALNS 算法的参数在lua中的字段集合
  */
 class AlnsParameterLuaField {
   public:
+  static constexpr const char* TASKS = "tasks";
   static constexpr const char* MAX_ITER = "max_iter";
   static constexpr const char* MAX_SUB_ITER = "max_sub_iter";
   static constexpr const char* MAX_UNIMPROVED_ITER = "max_unimproved_iter";
@@ -33,6 +35,10 @@ class AlnsParameterLuaField {
  */
 class AlnsParameter {
  public:
+  /**
+   * @brief 线程数
+   */
+  int tasks{4};
   /**
    * @brief 最大迭代次数
    */
@@ -82,7 +88,8 @@ class AlnsParameter {
 /**
  * @brief 解析alns参数
  * @param cfg lua中定义的alns参数
+ * @param logger logger
  * @return
  */
-AlnsParameter* parse_alns_parameter(const sol::table& cfg);
+AlnsParameter* parse_alns_parameter(const sol::table& cfg, const std::shared_ptr<spdlog::logger>& logger);
 

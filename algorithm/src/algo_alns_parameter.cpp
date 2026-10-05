@@ -6,9 +6,26 @@
 #include "algo_alns_parameter.h"
 
 // ====== implement of parse_alns_parameter ======
-AlnsParameter* parse_alns_parameter(const sol::table& cfg) {
+AlnsParameter* parse_alns_parameter(const sol::table& cfg,
+                                    const std::shared_ptr<spdlog::logger>& logger) {
   const auto alns_parameter = new AlnsParameter();
 
+  if (cfg[AlnsParameterLuaField::TASKS].valid()) {
+    const int tasks = static_cast<int>(cfg[AlnsParameterLuaField::TASKS]);
+    if (tasks <= 0) {
+      throw std::invalid_argument("AlnsParameter: `tasks` must be > 0");
+    }
+    const int n = static_cast<int>(std::thread::hardware_concurrency());
+    if (tasks >= n) {
+      logger->warn(
+          std::format("AlnsParameter: task={} exceed the maximum number of threads {}, degrade the "
+                      "number of threads to {}",
+                      tasks, n, n - 1));
+      alns_parameter->tasks = n - 1;
+    } else {
+      alns_parameter->tasks = tasks;
+    }
+  }
   if (cfg[AlnsParameterLuaField::MAX_ITER].valid()) {
     alns_parameter->max_iter = static_cast<int>(cfg[AlnsParameterLuaField::MAX_ITER]);
   }
@@ -28,7 +45,7 @@ AlnsParameter* parse_alns_parameter(const sol::table& cfg) {
         static_cast<double>(cfg[AlnsParameterLuaField::OPERATOR_LEARNING_FACTOR]);
     if (alns_parameter->operator_learning_factor <= 0 ||
         alns_parameter->operator_learning_factor >= 1.0) {
-      throw std::invalid_argument("operator_learning_factor must be > 0 and < 1");
+      throw std::invalid_argument("AlnsParameter: `operator_learning_factor` must be > 0 and < 1");
     }
   }
 

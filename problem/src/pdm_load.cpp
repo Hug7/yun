@@ -26,9 +26,11 @@ LoadContext::~LoadContext() {
 
 NodeTimeWindowCache* LoadContext::get_node_time_window_cache() {
   // 每线程只解析一次: 之后走 thread_local 直取, 完全无锁
-  static thread_local const LoadContext* tls_owner = nullptr;
+  // 归属判定用进程唯一序号而不是 LoadContext 指针: 堆地址会被复用,
+  // 析构后重建的 LoadContext 可能落在同一个地址上, 用指针比较会返回已释放的缓存
+  static thread_local std::uint64_t tls_cache_id = 0;
   static thread_local NodeTimeWindowCache* tls_cache = nullptr;
-  if (tls_owner == this) {
+  if (tls_cache_id == this->cache_id) {
     return tls_cache;
   }
   std::lock_guard<std::mutex> guard(this->thread_tw_cache_mutex);
@@ -39,7 +41,7 @@ NodeTimeWindowCache* LoadContext::get_node_time_window_cache() {
              .emplace(thread_id, new NodeTimeWindowCache(this->plan_datetime_range, this->node_tw_cache_capacity))
              .first;
   }
-  tls_owner = this;
+  tls_cache_id = this->cache_id;
   tls_cache = it->second;
   return tls_cache;
 }

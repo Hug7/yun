@@ -22,13 +22,8 @@
  */
 class ThreadPool {
  public:
-  /**
-   * @brief 默认 worker 数(不含提交方线程)
-   * @todo 线程数目前写死, 后续改为由配置传入
-   */
-  static constexpr std::size_t DEFAULT_WORKER_COUNT = 8;
 
-  explicit ThreadPool(std::size_t worker_count = DEFAULT_WORKER_COUNT);
+  explicit ThreadPool(int worker_count);
 
   ThreadPool(const ThreadPool&) = delete;
 
