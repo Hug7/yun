@@ -9,7 +9,7 @@
 
 // ====== implement of NodeTimeWindowKey ======
 NodeTimeWindowKey::NodeTimeWindowKey(ActivityType activity_type, const Location* location)
-    : activity_type(activity_type), location(location), orders() {
+    : activity_type(activity_type), location(location), orders(nullptr) {
   this->order_len = 0;
   this->hash_code = static_cast<int>(activity_type) + 1;
   this->hash_code = this->hash_code * 31 + location->ind;
@@ -17,7 +17,7 @@ NodeTimeWindowKey::NodeTimeWindowKey(ActivityType activity_type, const Location*
 
 NodeTimeWindowKey::NodeTimeWindowKey(ActivityType activity_type, const Location* location,
                                      const std::vector<const Order*>& orders)
-    : activity_type(activity_type), location(location), orders(orders) {
+    : activity_type(activity_type), location(location), orders(orders.data()) {
   this->order_len = static_cast<int>(orders.size());
   this->hash_code = static_cast<int>(activity_type) + 1;
   this->hash_code = this->hash_code * 31 + location->ind;
@@ -46,20 +46,22 @@ std::vector<TimeWindow*> NodeTimeWindowCache::get_pick_drop_time_windows(const N
   if (!(node->is_pick() || node->is_drop())) {
     return this->get_other_time_windows(node);
   }
-  NodeTimeWindowKey key(node->activity_type, node->loc, node->get_orders());
-  std::lock_guard<std::mutex> guard(this->cache_mutex);
+  node->collect_orders(this->orders_scratch);
+  NodeTimeWindowKey key(node->activity_type, node->loc, this->orders_scratch);
   auto it = this->pick_drop_cache.find(key);
   if (it != this->pick_drop_cache.end()) {
     return it->second;
   }
   auto tws = node->intersection_time_windows();
-  this->pick_drop_cache.emplace(std::move(key), tws);
+  // 复用缓冲会被下一次查找覆盖, 入库前先把 orders 落到 arena 上
+  this->orders_arena.emplace_back(this->orders_scratch);
+  key.orders = this->orders_arena.back().data();
+  this->pick_drop_cache.emplace(key, tws);
   return tws;
 }
 
 std::vector<TimeWindow*> NodeTimeWindowCache::get_other_time_windows(const Node* node) {
   NodeTimeWindowKey key(node->activity_type, node->loc);
-  std::lock_guard<std::mutex> guard(this->cache_mutex);
   auto it = this->other_cache.find(key);
   if (it != this->other_cache.end()) {
     return it->second;

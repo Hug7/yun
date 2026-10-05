@@ -5,18 +5,41 @@
 
 #include "pdm_load.h"
 
+#include <ranges>
+
 #include "bdm_time_window_plan.h"
 #include "bdm_time_window_utils.h"
 
 // ====== implement of LoadContext ======
 LoadContext::LoadContext(const Scenario* scenario, const PlanDatetimeRange* plan_datetime_range)
-    : scenario(scenario) {
-  this->node_time_window_cache = new NodeTimeWindowCache(plan_datetime_range);
-}
+    : scenario(scenario), plan_datetime_range(plan_datetime_range) {}
 
 LoadContext::~LoadContext() {
   this->scenario = nullptr;
-  delete this->node_time_window_cache;
+  for (const auto& val : this->thread_tw_caches | std::views::values) {
+    delete val;
+  }
+  this->thread_tw_caches.clear();
+}
+
+NodeTimeWindowCache* LoadContext::get_node_time_window_cache() {
+  // 每线程只解析一次: 之后走 thread_local 直取, 完全无锁
+  static thread_local const LoadContext* tls_owner = nullptr;
+  static thread_local NodeTimeWindowCache* tls_cache = nullptr;
+  if (tls_owner == this) {
+    return tls_cache;
+  }
+  std::lock_guard<std::mutex> guard(this->thread_tw_cache_mutex);
+  const auto thread_id = std::this_thread::get_id();
+  auto it = this->thread_tw_caches.find(thread_id);
+  if (it == this->thread_tw_caches.end()) {
+    it = this->thread_tw_caches
+             .emplace(thread_id, new NodeTimeWindowCache(this->plan_datetime_range))
+             .first;
+  }
+  tls_owner = this;
+  tls_cache = it->second;
+  return tls_cache;
 }
 
 // ====== implement of Load ======
@@ -185,7 +208,7 @@ void Load::update_end_node_dist_time() const {
 }
 
 void Load::update_time_window() const {
-  const auto tw_cache = this->context->node_time_window_cache;
+  const auto tw_cache = this->context->get_node_time_window_cache();
   // 第一个node(车场，可能为虚拟车场)
   Node* pre_node = this->first_node.get();
   pre_node->ptws = TimeWindowPlanFactory::create_time_window_plans(tw_cache->get_other_time_windows(pre_node));

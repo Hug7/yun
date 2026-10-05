@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -18,6 +17,8 @@
 
 /**
  * @brief 节点时间窗键
+ * @details orders 是非持有视图: 查找时指向缓存的复用缓冲, 入库后指向缓存的 orders_arena。
+ * 视图指向的内存在缓存析构前始终有效, 因此查找路径零堆分配。
  */
 class NodeTimeWindowKey {
  public:
@@ -25,7 +26,7 @@ class NodeTimeWindowKey {
 
   const Location* location;
 
-  std::vector<const Order*> orders;
+  const Order* const* orders;
 
   int order_len;
 
@@ -67,22 +68,27 @@ struct hash<NodeTimeWindowKey> {
 
 /**
  * @brief 时间窗缓存
- * @details 时间窗缓存
+ * @details 每个工作线程持有一份(由 LoadContext 按线程分发), 因此内部无需任何同步。
  */
 class NodeTimeWindowCache {
  public:
   const PlanDatetimeRange* plan_datetime_range;
+
+  /**
+   * @brief 入库 key 的 orders 存储
+   * @details 内层 vector 的堆缓冲在 arena 扩容时保持有效, 故 key 可安全持有其 data();
+   * 声明在缓存表之前, 析构时晚于缓存表释放。
+   */
+  std::vector<std::vector<const Order*>> orders_arena;
 
   std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> pick_drop_cache;
 
   std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> other_cache;
 
   /**
-   * @brief 缓存访问锁
-   * @todo 并行下所有 load 副本共享同一份缓存(Load 拷贝只复制 context 指针), 加锁后仍有竞争开销;
-   * 后续改为每个 worker 一份缓存, 结束后再合并回主缓存, 可彻底去掉这把锁
+   * @brief 构造查找 key 时复用的订单缓冲, 容量稳定后每次查找零分配
    */
-  std::mutex cache_mutex;
+  std::vector<const Order*> orders_scratch;
 
   explicit NodeTimeWindowCache(const PlanDatetimeRange* plan_datetime_range)
       : plan_datetime_range(plan_datetime_range), pick_drop_cache(), other_cache() {}

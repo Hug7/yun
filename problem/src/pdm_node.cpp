@@ -116,6 +116,15 @@ std::vector<const Order*> Node::get_orders() const {
   return orders;
 }
 
+void Node::collect_orders(std::vector<const Order*>& out) const {
+  out.clear();
+  auto tail_activity = this->last;
+  while (tail_activity) {
+    out.push_back(tail_activity->order);
+    tail_activity = tail_activity->prev;
+  }
+}
+
 long Node::get_work_time() const {
   long work_time = 0;
   if (this->activity_type == ActivityType::DROP) {

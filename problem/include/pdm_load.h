@@ -5,6 +5,10 @@
 
 #pragma once
 
+#include <mutex>
+#include <thread>
+#include <unordered_map>
+
 #include "bdm_vehicle.h"
 #include "pdm_load_profile.h"
 #include "pdm_node.h"
@@ -21,14 +25,32 @@ class LoadContext {
    * @brief scenario
    */
   const Scenario* scenario;
+
   /**
-   * @brief node time window cache
+   * @brief 规划时间段, 惰性创建线程缓存时透传给 NodeTimeWindowCache
    */
-  NodeTimeWindowCache* node_time_window_cache;
+  const PlanDatetimeRange* plan_datetime_range;
+
+  /**
+   * @brief 按线程隔离的时间窗缓存
+   * @details 并行下所有 load 副本共享同一份 LoadContext(深拷贝只复制 context 指针),
+   * 因此缓存必须按线程拆分, 否则所有 worker 抢同一把锁。每个线程一份后查找路径零同步。
+   */
+  std::unordered_map<std::thread::id, NodeTimeWindowCache*> thread_tw_caches;
+
+  /**
+   * @brief 只保护 thread_tw_caches 的注册(每线程仅一次), 不在热路径上
+   */
+  std::mutex thread_tw_cache_mutex;
 
   LoadContext(const Scenario* scenario, const PlanDatetimeRange* plan_datetime_range);
 
   ~LoadContext();
+
+  /**
+   * @brief 取当前线程专属的时间窗缓存, 首次调用时创建并注册
+   */
+  NodeTimeWindowCache* get_node_time_window_cache();
 };
 
 /**
