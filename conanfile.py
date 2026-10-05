@@ -34,6 +34,7 @@ class YunConan(ConanFile):
         # DSL: lua 虚拟机 + sol2 绑定层(sol2 为 header-only)
         self.requires("lua/5.4.6", override=True, transitive_headers=True, transitive_libs=True)
         self.requires("sol2/3.5.0", transitive_headers=True, transitive_libs=True)
+        self.requires("pybind11/2.13.6", transitive_headers=True)
         # self.requires("boost/1.91.0", transitive_headers=True, transitive_libs=True)
 
     def package(self):

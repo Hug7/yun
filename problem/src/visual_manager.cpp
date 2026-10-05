@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 
 // ====== implement of Load VisualManager ======
@@ -22,6 +23,7 @@ VisualManager::VisualManager(std::string output_dir, const Scenario* scenario,
     } catch (const std::exception& e) {
       this->logger->error(std::format("创建文件夹 {} 失败!", this->output_dir));
       this->logger->error(e.what());
+      throw std::runtime_error(std::format("创建文件夹 {} 失败: {}", this->output_dir, e.what()));
     }
   }
 }
@@ -38,6 +40,7 @@ std::string VisualManager::resolve_target_dir(const std::string& target_dir) con
     } catch (const std::exception& e) {
       this->logger->error(std::format("创建文件夹 {} 失败!", target_dir_path));
       this->logger->error(e.what());
+      throw std::runtime_error(std::format("创建文件夹 {} 失败: {}", target_dir_path, e.what()));
     }
   }
   return target_dir_path;

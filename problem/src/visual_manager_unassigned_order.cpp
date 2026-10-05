@@ -6,6 +6,7 @@
 #include <format>
 #include <fstream>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 
 #include "c_numerical_utils.h"
@@ -62,8 +63,11 @@ void VisualManager::unassigned_order_to_json(const std::vector<const Order*>& un
   std::ofstream file(file_path);
   if (!file.is_open()) {
     this->logger->error(std::format("创建文件 {} 失败!", file_path));
-    return;
+    throw std::runtime_error(std::format("创建文件 {} 失败!", file_path));
   }
   file << VisualJson::dumps(visual_unassigned_cargo_orders);
   file.close();
+  if (!file) {
+    throw std::runtime_error(std::format("写入文件 {} 失败!", file_path));
+  }
 }

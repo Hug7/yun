@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 
-# include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
-
 project(yun VERSION 0.1.0 LANGUAGES C CXX)
 
 export(PACKAGE yun)
@@ -68,6 +66,10 @@ add_subdirectory(scenario)
 add_subdirectory(problem)
 add_subdirectory(algorithm)
 add_subdirectory(solver)
+option(YUN_BUILD_PYTHON "Build the Python pybind11 binding" OFF)
+if(YUN_BUILD_PYTHON)
+    add_subdirectory(python)
+endif()
 add_subdirectory(tests)
 
 
