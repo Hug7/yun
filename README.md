@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-YUN 是一个面向城配和干线取送货场景的车辆路径规划（VRP）求解器。它解决的问题是：在订单、站点、车辆、距离与作业时间等客观条件下，结合业务规则和优化偏好，将货物订单组织为若干车次，为车次选择合适车辆并规划装卸和配送顺序，最终给出车辆路径、成本、计划时间以及未指派订单。
+`YUN` 是一个面向城配和干线取送货场景的车辆路径规划（VRP）`跨编程语言`的求解器。它解决的问题是：在订单、站点、车辆、距离与作业时间等客观条件下，结合业务规则和优化偏好，将货物订单组织为若干车次，为车次选择合适车辆并规划装卸和配送顺序，最终给出车辆路径、成本、计划时间以及未指派订单。
 
 项目把一次求解拆成三个核心概念，分别回答“客观条件是什么”“按什么规则求解”和“具体如何组织求解”：
 
@@ -41,6 +41,7 @@ function solve()
     log("hello world")
     snapshot("A")
     construct_knn()
+    alns({tasks=40, max_iter = 50, ruin_operator_params = {{code = "RuinRandomLoad"}}, repair_operator_params = {{code = "RepairGreedy"}}})
     snapshot("B")
 end
 ```
@@ -63,8 +64,8 @@ workspace[Workspace]
 solution[Solution]
 dsl["DSL<br/>StrategyManager"]
 funcs["Registered Functions<br/>C++ callbacks"]
-algorithm["Algorithm<br/>planned"]:::planned
-construct["Construct Heuristic<br/>current implementation"]
+algorithm["Algorithm"]
+function["Function"]
 scenario[Scenario]
 parameter[Parameter]
 problem[Problem]
@@ -83,8 +84,10 @@ workspace -->|创建 / 应用| solution
 
 dsl -->|使用| workspace
 dsl -->|注册并回调| funcs
-funcs -->|construct_knn| construct
-dsl -.->|planned| algorithm
+funcs -->|使用| function
+funcs -->|使用| algorithm
+function -->|使用| workspace
+algorithm -->|使用| workspace
 
 context -->|持有| scenario
 context -->|持有| parameter
@@ -98,36 +101,6 @@ problem -->|管理| constraints
 classDef planned stroke-dasharray: 5 5
 ```
 
-
-## 运行流程
-
-下图描述一次完整求解从进程启动到结果本地化的当前实现。实线步骤均可在代码中验证；Lua 策略中可以调用不同能力，图中以当前示例实际使用的 `construct_knn` 为默认路径。
-
-```mermaid
-flowchart TD
-  entry["调用方创建 Solver(root_dir, log_dir, log_level)"]
-  context["构造 SolverContext"]
-  request["生成 request_id / output_dir<br/>创建本次请求 logger"]
-  scenario["StandardCsvReader 加载 Scenario"]
-  parameter["创建并后处理 Parameter"]
-  problem["创建 Problem<br/>注册约束"]
-  solve["执行 Solver::solve()"]
-  precheck{"所有 CargoOrder<br/>都能被至少一辆车配送？"}
-  infeasible["VisualManager导出<br/> InfeasibleCargoOrders.json"]
-  pool["OrderPool<br/>分组并合并 CargoOrder 为 Order"]
-  workspace["Workspace<br/>初始化未指派 Order 和车辆资源"]
-  strategy["StrategyManager<br/>校验并加载 strategy.lua"]
-  lua["调用 Lua solve()"]
-  callbacks["Lua 回调已注册函数"]
-  output["VisualManager 导出<br/>Loads.json<br/>LoadLocations.json<br/>UnassignedCargoOrders.json"]
-  release["释放 Solver / Context"]
-
-  entry --> context --> request --> scenario --> parameter --> problem --> solve --> precheck
-  precheck -->|否| infeasible --> release
-  precheck -->|是| pool --> workspace --> strategy --> lua --> callbacks
-  callbacks -->|日志、快照或其他策略编排| output
-  output --> release
-```
 
 ### 1. 本地运行入口
 
@@ -160,19 +133,9 @@ delete solver;
 6. 创建 `VisualManager`，负责当前请求的 JSON 结果导出。
 7. 创建 `Problem`，建立取送货模式、装卸策略、装载上下文和三重约束管理器。
 
-场景加载不是任意文件并行读取，而是按依赖顺序构造：
+输入数据表结构: [scenario_schema_reference](docs/scenario_schema_reference.md)
 
-| 顺序 | 内容 | 依赖 |
-|---|---|---|
-| 1 | `Dimension` | 无 |
-| 2 | `Label`、`LabelValue`、`LabelApply` | `Dimension` |
-| 3 | `Location`、站点标签、工作计划 | `Label`、`Dimension` |
-| 4 | `DistMatrix` | `Location` |
-| 5 | `VehicleModel`、车型维度、车型标签 | `Dimension`、`Label`、`DistMatrix` |
-| 6 | `Carrier`、`Vehicle`、可用车辆 | `Label`、`VehicleModel`、`Location` |
-| 7 | `CargoOrder` 及子订单维度、标签 | `Location`、`Dimension`、`Label` |
-
-`Problem` 创建后立刻注册基础硬约束 `HcVehicleCapacity`、`HcAvailableVehicle`，再根据 `Parameter` 决定是否增加时间窗、最大节点数、距离软约束和距离成本约束。
+输出数据表结构: [visual_schema_reference](docs/visual_schema_reference.md)
 
 ### 3. 主求解链路
 
@@ -187,8 +150,10 @@ delete solver;
     - `snapshot(target_dir)`：把当前 Workspace 快照写入本次输出目录下的子目录。
     - `KnnParameter`：构造 KNN 参数对象。
     - `construct_knn()` 或 `construct_knn(KnnParameter)`：执行 K 近邻构造启发式。
-6. **执行构造启发式**：`construct_knn` 根据提货、卸货距离构造订单邻接关系，优先把订单插入已有 `Load`；无法插入时按最晚卸货时间选择种子订单构造新 `Load`，为每次变更评估约束并选择最佳车辆，最后把结果覆盖回 `Workspace`。
-7. **导出最终结果**：Lua 脚本正常结束后，读取 Workspace 的 `loads_view()` 和 `unassigned_orders_view()`，转换为可视化对象并写入 JSON。
+    - `alns()`：执行 alns 算法优化路由。
+6. **导出最终结果**：Lua 脚本正常结束后，读取 Workspace 的 `loads_view()` 和 `unassigned_orders_view()`，转换为可视化对象并写入 JSON。
+
+使用手册见: [dsl_user_guide](docs/dsl_user_guide.md)
 
 ### 4. 输出与退出
 
@@ -206,9 +171,12 @@ delete solver;
 
 `Solver` 析构时释放 `context`、`order_pool` 和 `workspace`；`SolverContext` 析构时先刷新 logger，再释放 `Scenario`、`Parameter`、`VisualManager` 和 `Problem`。
 
-### 5. 当前边界
+### 5. Continuing
 
-- `Algorithm` 仍是设计目标。当前可执行的构造入口是 `construct_knn`，Lua 负责编排，具体计算留在 C++。
-- `Parameter.csv` 已有表结构定义，但 `load_parameter()` 中的文件读取仍是 `TODO`；当前运行使用 `Parameter` 的默认值，并仅根据场景订单时间范围后处理计划时间范围。
-- Lua `solve()` 是策略脚本的入口。脚本不存在、加载失败、执行失败或未定义可调用的 `solve` 都会使本次求解失败。
-- 预检是全局短路：存在不可解订单时，本次请求不会继续为其余可行订单生成规划结果。
+* 测试用例暂未添加
+
+* [严重缺陷-清单](docs/issues/%E4%B8%A5%E9%87%8D%E7%BC%BA%E9%99%B7-%E6%B8%85%E5%8D%95.md)
+
+* [待优化功能-清单](docs/issues/%E5%BE%85%E4%BC%98%E5%8C%96%E5%8A%9F%E8%83%BD-%E6%B8%85%E5%8D%95.md)
+
+* [待实现功能-清单](docs/issues/%E5%BE%85%E5%AE%9E%E7%8E%B0%E5%8A%9F%E8%83%BD-%E6%B8%85%E5%8D%95.md)[待优化功能-清单.md](docs/issues/%E5%BE%85%E4%BC%98%E5%8C%96%E5%8A%9F%E8%83%BD-%E6%B8%85%E5%8D%95.md)

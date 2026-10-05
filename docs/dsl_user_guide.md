@@ -78,3 +78,96 @@ construct_knn(parameter)
 3. 如果未指派订单无法插入任何候选车次，则从有卸货时间窗的订单中选择最晚卸货时间最小者作为种子订单，构造新的候选车次；种子订单无法成车时保留为未指派订单。
 4. 对已确认无法接收任何未指派订单的候选车次提前归档，减少重复约束计算。
 5. 所有候选车次处理完成后，将结果覆盖回`workspace`。无法构造或插入的订单保留在未指派订单中。
+
+### alns
+
+ALNS（Adaptive Large Neighborhood Search，自适应大邻域搜索）是项目提供的元启发式优化接口。`alns(cfg)` 读取当前`workspace`中的车次与未指派订单作为初始解，在 DSL 配置的算法参数与 ruin/repair 算子组合下搜索更优解，搜索结束后用最优解**覆盖当前`workspace`**，方法无返回值。
+
+`alns` 应在脚本的`solve()`内调用，通常放在`construct_knn`等构造启发式之后作为提升阶段。
+
+#### 调用方式
+
+```lua
+-- 使用全部默认参数运行一次 ALNS
+alns({})
+
+-- 自定义迭代次数与线程数
+alns({
+  max_iter = 500,
+  tasks = 4,
+})
+
+-- 完整配置：算法参数 + ruin/repair 算子
+alns({
+  max_iter = 500,
+  max_unimproved_iter = 200,
+  tasks = 4,
+  ruin_operator_params = {
+    { code = "RuinRandomLoad", params = { select_load_min_rate = 0.1, select_load_max_rate = 0.3 } },
+    { code = "RuinRandomLoad", params = { select_load_min_rate = 0.4, select_load_max_rate = 0.6 } },
+  },
+  repair_operator_params = {
+    { code = "RepairGreedy", params = { top_rate = 0.2 } },
+  },
+})
+```
+
+`alns` 的入参必须是`table`（对应 C++ 的`AlnsParameter`）；不传任何字段（如`alns({})`）时使用全部默认值。
+
+#### 算法参数（cfg 顶层字段）
+
+| 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `tasks` | integer | `4` | 并行线程数。必须 `> 0`；若 `>=` 机器逻辑核数则自动降级为 `核数 - 1` 并打 warning。当前版本每次`alns`调用都会新建并销毁线程池。 |
+| `max_iter` | integer | `200` | 最大迭代次数（外层 ALNS 主循环）。 |
+| `max_sub_iter` | integer | `10` | 最大子迭代次数。 |
+| `max_unimproved_iter` | integer | `100` | 连续无改进次数达到该值时提前终止搜索。 |
+| `max_running_time_sec` | integer | `600` | 最大运行时长（秒），到时终止搜索。 |
+| `operator_learning_factor` | number | `0.35` | 算子权重自适应学习因子。必须满足 `0 < x < 1`，否则抛异常。 |
+| `operator_initial_weight` | number | `100.0` | 算子组合初始权重。必须 `>= 1`，否则抛异常。 |
+| `initial_temperature` | number | `10000.0` | 模拟退火初始温度。 |
+| `min_temperature` | number | `0.97` | 模拟退火最小温度。 |
+| `annealing_factor` | number | `0.97` | 退火系数（每轮温度乘以该系数）。 |
+| `default_random_seed` | integer | `37` | 默认随机种子。 |
+| `ruin_operator_params` | table | 无 | ruin 算子配置数组，详见下文。 |
+| `repair_operator_params` | table | 无 | repair 算子配置数组，详见下文。 |
+
+终止条件：满足`max_iter`、`max_unimproved_iter`、`max_running_time_sec`三者之一即停止。
+
+#### ruin / repair 算子
+
+`ruin`（破坏）与`repair`（修复）算子各以数组形式配置，算法会将所有 ruin 与 repair 算子做**笛卡尔积**展开为算子组合，每个组合按`operator_initial_weight`初始化权重，并在搜索过程中依据`operator_learning_factor`自适应调整。
+
+数组中每个元素为`table`，必含字段`code`（算子编码字符串），可选字段`params`（`table`，算子私有参数，缺省时用算子内部默认值）。同一`code`可配置多组不同`params`，视为不同算子实例。
+
+```lua
+ruin_operator_params = {
+  { code = "RuinRandomLoad", params = { select_load_min_rate = 0.1, select_load_max_rate = 0.3 } },
+  { code = "RuinRandomLoad" },  -- params 缺省，使用算子默认值
+}
+```
+
+#### 支持的算子
+
+**RuinRandomLoad（ruin）** — 随机移除整条车次。
+
+| `params` 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `select_load_min_rate` | number | `0.1` | 被移除车次数占当前车次数的最小比例，区间 `[0, 1]`。 |
+| `select_load_max_rate` | number | `0.4` | 被移除车次数的最大比例，区间 `[0, 1]`；必须 `>= select_load_min_rate`。 |
+| `select_load_random_seed` | integer | `37` | 选择车次的随机种子。 |
+
+> 注：当前`RuinRandomLoad`只挑整条车次、不填充 activities，因此修复算子总是从被移除订单重新构造（走"整 load 删除"分支）。
+
+**RepairGreedy（repair）** — 贪心修复。
+
+| `params` 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `random_seed` | integer | `37` | 随机选择候选方案的随机种子。 |
+| `top_rate` | number | `0.2` | 从修复矩阵中按代价排序取前 `top_rate` 比例的候选方案，再随机选一个落实；区间 `[0, 1]`。 |
+
+#### 错误处理
+
+- `ruin_operator_params` / `repair_operator_params` 中元素缺少`code`字段、或`code`不是已注册算子时，抛异常并中断脚本加载。
+- 算子参数取值非法（如比例越界、`min_rate > max_rate`、学习因子不在`(0,1)`）时抛异常。
+- `params`存在但不是`table`时抛异常。
