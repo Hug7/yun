@@ -10,20 +10,18 @@ AlnsParameter* parse_alns_parameter(const sol::table& cfg,
                                     const std::shared_ptr<spdlog::logger>& logger) {
   const auto alns_parameter = new AlnsParameter();
 
-  if (cfg[AlnsParameterLuaField::TASKS].valid()) {
-    const int tasks = static_cast<int>(cfg[AlnsParameterLuaField::TASKS]);
-    if (tasks <= 0) {
-      throw std::invalid_argument("AlnsParameter: `tasks` must be > 0");
-    }
+  if (cfg[AlnsParameterLuaField::WORKER_COUNT].valid()) {
+    const int worker_count = static_cast<int>(cfg[AlnsParameterLuaField::WORKER_COUNT]);
     const int n = static_cast<int>(std::thread::hardware_concurrency());
-    if (tasks >= n) {
+    if (worker_count >= n) {
       logger->warn(
-          std::format("AlnsParameter: task={} exceed the maximum number of threads {}, degrade the "
-                      "number of threads to {}",
-                      tasks, n, n - 1));
-      alns_parameter->tasks = n - 1;
+        std::format(
+          "AlnsParameter: worker_count={} exceed the maximum number of parallel execute {}, degrade the "
+          "number of threads to {}",
+          worker_count, n, n - 1));
+      alns_parameter->worker_count = n - 1;
     } else {
-      alns_parameter->tasks = tasks;
+      alns_parameter->worker_count = worker_count;
     }
   }
   if (cfg[AlnsParameterLuaField::MAX_ITER].valid()) {

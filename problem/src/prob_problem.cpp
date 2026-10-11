@@ -200,9 +200,12 @@ Load* Problem::construct_load_by_order(std::vector<const Order*>& orders, Vehicl
 }
 
 Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
-                                             VehicleResource::UPtr& vehicle_resource) const {
+                                             VehicleResource::UPtr& vehicle_resource,
+                                             CacheStoreBuffer* store_buffer) const {
   // 只拷贝一次: 后续所有试插都在这份副本上进行, 每次试插后回滚
   Load* load = this->pd_pattern->deep_copy_load(ori_load);
+  // 挂载任务私有写缓冲: 副本内的重复查找(逐槽试插同一个 node 的键)落在这里, 不触碰冻结表
+  load->store_buffer = store_buffer;
   const Vehicle* ori_vehicle = load->vehicle;
   std::vector<InsertSlot> slots = this->pd_pattern->enumerate_insert_slots(load, segment);
 

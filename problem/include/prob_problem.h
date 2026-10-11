@@ -76,8 +76,11 @@ class Problem {
    * @param ori_load origin load
    * @param segment 带顺序的订单片段
    * @param vehicle_resource 车辆资源
-   * @return
+   * @param store_buffer 任务私有的缓存写缓冲, 会挂载到本函数创建的 load 副本上;
+   * 传 nullptr 表示串行阶段(直写请求内共享的冻结表)
+   * @return 插入后的 load 副本; 无可行方案时返回 nullptr
    */
   virtual Load* greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
-                                              VehicleResource::UPtr& vehicle_resource) const;
+                                              VehicleResource::UPtr& vehicle_resource,
+                                              CacheStoreBuffer* store_buffer) const;
 };

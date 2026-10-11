@@ -170,7 +170,7 @@ constexpr double INIT_LOAD_OBJ_VAL = 1000000000.0;
 
 namespace CacheParameter {
 /**
- * @brief 构造时预分配的桶位数, 与 cache_capacity 无关
+ * @brief 构造时预分配的桶位数与 arena 槽位数, 与容量上限无关(缓存不淘汰)
  */
-static constexpr int LRU_RESERVED_ENTRY_COUNT = 20000;
+static constexpr int PICK_DROP_RESERVED_ENTRY_COUNT = 20000;
 }

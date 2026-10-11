@@ -36,7 +36,7 @@ class AlnsRepairGreedy : public AlnsRepairOperator {
    */
   double top_rate{0.2};
 
-  explicit AlnsRepairGreedy(const SolverContext* _context, ThreadPool* _thread_pool,
+  explicit AlnsRepairGreedy(const SolverContext* _context, ParallelExecutor* _parallel_executor,
                             const sol::table& cfg);
 
   void execute(RepairMatrix* repair_matrix) override;

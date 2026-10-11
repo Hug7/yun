@@ -12,7 +12,6 @@
 #include "algo_alns_model.h"
 #include "algo_alns_operator.h"
 #include "algo_alns_parameter.h"
-#include "algo_alns_ruin.h"
 #include "stra_construct.h"
 #include "visual_manager.h"
 
@@ -68,21 +67,21 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
    * Lua 侧配置示例：
    * ruin_operator_params = {
    *   { code = "RuinRandomLoad", params = { min_rate = 0.1, max_rate = 0.3 } },
-   *   { code = "RuinRandomLoad", params = { min_rate = 0.4, max_rate = 0.6 } },  -- 同算子不同参数
-   *   { code = "RuinRandomLoad" }  -- params 可缺省，算子内部用默认值
+   *   { code = "RuinRandomLoad", params = { min_rate = 0.4, max_rate = 0.6 } },
+   * -- 同算子不同参数 { code = "RuinRandomLoad" }  -- params
+   * 可缺省，算子内部用默认值
    * }
    */
-  this->lua.set_function("alns", [workspace](const sol::table& cfg) {
+  this->lua.set_function("alns", [workspace, this](const sol::table& cfg) {
     // 解析alns参数
     const auto alns_parameter = parse_alns_parameter(cfg, workspace->context->logger);
-    // 线程池寿命跟随本次 alns 调用, 不依赖 AlnsModel 的析构
-    ThreadPool thread_pool{alns_parameter->tasks};
+    // 获取执行器
+    const auto parallel_executor = this->get_parallel_executor(alns_parameter->worker_count);
     // 解析alns算子
     const auto operator_manager =
-        create_alns_operator(cfg, alns_parameter, workspace, &thread_pool);
+        create_alns_operator(cfg, alns_parameter, workspace, parallel_executor);
     // 构建alns model
-    const AlnsModel* alns_model =
-        new AlnsModel(workspace, alns_parameter, operator_manager, &thread_pool);
+    const AlnsModel* alns_model = new AlnsModel(workspace, alns_parameter, operator_manager);
     // 求解
     Solution* res_sol = alns_model->solve();
     // 将结果 res_sol 替换
@@ -101,6 +100,14 @@ void StrategyManager::load_script() {
     this->logger->error("策略脚本 {} 加载失败: {}", this->strategy_file_path, err.what());
     throw std::runtime_error(err.what());
   }
+}
+
+ParallelExecutor* StrategyManager::get_parallel_executor(int _parallel_worker_count) {
+  if (this->parallel_worker_count != _parallel_worker_count || this->parallel_executor == nullptr) {
+    this->parallel_worker_count = _parallel_worker_count;
+    this->parallel_executor = std::make_unique<ParallelExecutor>(_parallel_worker_count);
+  }
+  return this->parallel_executor.get();
 }
 
 // ====== implement of StrategyManager::Public ======

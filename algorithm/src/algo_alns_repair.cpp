@@ -7,6 +7,8 @@
 
 #include <queue>
 #include <ranges>
+#include <spdlog/spdlog.h>
+#include <vector>
 
 #include "c_rang_utils.h"
 
@@ -32,9 +34,9 @@ Load* RepairLoad::move_load() {
 }
 
 // ====== implement of RepairMatrix ======
-RepairMatrix::RepairMatrix(ThreadPool* _thread_pool, const SolverContext* _context, Solution* _sol,
-                           std::vector<Segment*> _segments)
-    : thread_pool(_thread_pool), context(_context), sol(_sol), segments(std::move(_segments)) {
+RepairMatrix::RepairMatrix(ParallelExecutor* _executor, const SolverContext* _context,
+                           Solution* _sol, std::vector<Segment*> _segments)
+    : parallel_executor(_executor), context(_context), sol(_sol), segments(std::move(_segments)) {
   this->idle_segment_indices = RangeUtils::range_vector(static_cast<int>(this->segments.size()));
 }
 
@@ -45,10 +47,47 @@ RepairMatrix::~RepairMatrix() {
   }
   // 释放 matrix
   for (const auto& row : this->matrix | std::views::values) {
-    for (const auto& repair_load : row | std::views::values) {
+    for (const auto& repair_load : row) {
       delete repair_load;
     }
   }
+}
+
+void RepairMatrix::run_parallel(const int task_count,
+                                const std::function<void(int, CacheStoreBuffer*)>& task) const {
+  if (task_count <= 0) {
+    return;
+  }
+  LoadContext* load_context = this->context->problem->load_context;
+  // 归档内置在并行入口中: run 返回前所有写缓冲都已并入冻结表
+  this->parallel_executor->run(task_count, load_context, [&](const int u, CacheStoreBuffer* store_buffer) {
+    try {
+      task(u, store_buffer);
+    } catch (const std::exception& e) {
+      // 异常一律收敛在任务体内, 不穿越并行边界: 单个 cell 算不出来不应中断整个 repair
+      spdlog::warn("repair task {} 失败, 按不可行处理: {}", u, e.what());
+    } catch (...) {
+      spdlog::warn("repair task {} 抛出未知异常, 按不可行处理", u);
+    }
+  });
+}
+
+RepairLoad* RepairMatrix::eval_cell(const int segment_ind, const int load_ind,
+                                    CacheStoreBuffer* store_buffer) const {
+  Load* load = nullptr;
+  try {
+    load = this->context->problem->greedy_insert_segment_to_load(
+        this->sol->loads[load_ind], this->segments[segment_ind], this->sol->vehicle_resource, store_buffer);
+  } catch (const std::exception& e) {
+    // 该 cell 不可行: 收敛成占位对象, 不让异常冒穿并行边界
+    spdlog::warn("repair cell (segment={}, load={}) 插入失败: {}", segment_ind, load_ind, e.what());
+    load = nullptr;
+  }
+  if (load != nullptr) {
+    //写缓冲的生命周期只到任务结束, load 可能长期存活: 先解绑, 避免留下悬垂指针
+    load->store_buffer = nullptr;
+  }
+  return new RepairLoad(segment_ind, load_ind, this->sol->loads[load_ind], load);
 }
 
 void RepairMatrix::init() {
@@ -57,41 +96,39 @@ void RepairMatrix::init() {
 
   this->matrix.clear();
   this->matrix.reserve(segments_count);
-  // 串行预建全部键: 并行阶段只允许改写 value, 任何插入都是未定义行为
-  this->matrix.reserve(segments_count);
+  // 串行预建全部行: 并行阶段只允许改写各自的元素, 任何插入/扩容都是未定义行为
+  this->matrix_rows.assign(segments_count, nullptr);
   for (int s = 0; s < segments_count; ++s) {
-    this->matrix[s].reserve(load_count);
-    for (int l = 0; l < load_count; ++l) {
-      this->matrix[s].emplace(l, nullptr);
-    }
+    auto& row = this->matrix[s];
+    row.assign(load_count, nullptr);
+    this->matrix_rows[s] = &row;
   }
 
   // 并行阶段: 每个 (segment, load) 一格, 行主序动态领取
-  this->thread_pool->parallel_for(segments_count * load_count, [&](const int u) {
+  this->run_parallel(segments_count * load_count, [&](const int u, CacheStoreBuffer* store_buffer) {
     const int s = u / load_count;
     const int l = u % load_count;
-    Load* load = this->context->problem->greedy_insert_segment_to_load(sol->loads[l], segments[s],
-                                                                       sol->vehicle_resource);
-    const auto repair_load = new RepairLoad(s, l, sol->loads[l], load);
-    this->add_cell(repair_load);
+    std::vector<RepairLoad*>& row = *this->matrix_rows[static_cast<std::size_t>(s)];
+    delete row[static_cast<std::size_t>(l)];
+    row[static_cast<std::size_t>(l)] = this->eval_cell(s, l, store_buffer);
   });
 }
 
 void RepairMatrix::add_cell(RepairLoad* repair_load) {
-  auto& repair_loads = this->matrix[repair_load->segment_ind];
-  if (repair_loads.contains(repair_load->load_ind)) {
-    delete repair_loads[repair_load->load_ind];
-  }
-  this->matrix[repair_load->segment_ind][repair_load->load_ind] = repair_load;
+  std::vector<RepairLoad*>& row = *this->matrix_rows[static_cast<std::size_t>(repair_load->segment_ind)];
+  const auto ind = static_cast<std::size_t>(repair_load->load_ind);
+  delete row[ind];
+  row[ind] = repair_load;
 }
 
 void RepairMatrix::remove_segment(const int segment_ind) {
   // 移除 segment
   std::erase(this->idle_segment_indices, segment_ind);
-  for (const auto& repair_load : this->matrix[segment_ind] | std::views::values) {
+  for (const auto& repair_load : this->matrix[segment_ind]) {
     delete repair_load;
   }
   this->matrix.erase(segment_ind);
+  this->matrix_rows[static_cast<std::size_t>(segment_ind)] = nullptr;
 }
 
 void RepairMatrix::use_segment_schema(RepairLoad* repair_load) {
@@ -111,9 +148,9 @@ void RepairMatrix::use_segment_schema(RepairLoad* repair_load) {
 
 int RepairMatrix::unfold_matrix_cell_count() {
   int res_count = 0;
-  for (const auto& rows : this->matrix | std::views::values) {
-    for (const auto& repair_load : rows | std::views::values) {
-      if (repair_load->is_feasible) {
+  for (const auto& row : this->matrix | std::views::values) {
+    for (const auto& repair_load : row) {
+      if (repair_load != nullptr && repair_load->is_feasible) {
         res_count++;
       }
     }
@@ -128,9 +165,9 @@ std::vector<RepairLoad*> RepairMatrix::unfold_matrix_top_k(const int k) {
       RepairLoadCompare{}, std::move(repair_loads));
   int repair_load_pq_len = 0;
 
-  for (const auto& rows : this->matrix | std::views::values) {
-    for (const auto& repair_load : rows | std::views::values) {
-      if (repair_load->is_feasible) {
+  for (const auto& row : this->matrix | std::views::values) {
+    for (const auto& repair_load : row) {
+      if (repair_load != nullptr && repair_load->is_feasible) {
         if (repair_load_pq_len < k) {
           repair_load_pq.push(repair_load);
           ++repair_load_pq_len;
@@ -155,17 +192,24 @@ std::vector<RepairLoad*> RepairMatrix::unfold_matrix_top_k(const int k) {
   return res_repair_loads;
 }
 
-void RepairMatrix::update_load(const int load_ind) {
+void RepairMatrix::update_load(const int load_ind) const {
   const int idle_segment_count = static_cast<int>(this->idle_segment_indices.size());
   if (idle_segment_count == 0) {
     return;
   }
-  this->thread_pool->parallel_for(idle_segment_count, [&](const int u) {
+  // 串行补齐新列: 并行阶段不允许任何扩容
+  for (int u = 0; u < idle_segment_count; ++u) {
+    std::vector<RepairLoad*>* row =
+        this->matrix_rows[static_cast<std::size_t>(this->idle_segment_indices[u])];
+    if (static_cast<int>(row->size()) <= load_ind) {
+      row->resize(static_cast<std::size_t>(load_ind) + 1, nullptr);
+    }
+  }
+  this->run_parallel(idle_segment_count, [&](const int u, CacheStoreBuffer* store_buffer) {
     const int segment_ind = this->idle_segment_indices[u];
-    Load* load = this->context->problem->greedy_insert_segment_to_load(
-        sol->loads[load_ind], segments[segment_ind], sol->vehicle_resource);
-    const auto repair_load = new RepairLoad(segment_ind, load_ind, sol->loads[load_ind], load);
-    this->add_cell(repair_load);
+    std::vector<RepairLoad*>& row = *this->matrix_rows[static_cast<std::size_t>(segment_ind)];
+    delete row[static_cast<std::size_t>(load_ind)];
+    row[static_cast<std::size_t>(load_ind)] = this->eval_cell(segment_ind, load_ind, store_buffer);
   });
 }
 
@@ -196,7 +240,7 @@ void AlnsRepairOperator::call(Solution* sol, SegmentBuilder* segment_builder) {
   // 生成 segments
   auto segments = segment_builder->call(sol);
   // 构造 load 和 segment 的成本矩阵
-  auto repair_matrix = new RepairMatrix(this->thread_pool, this->context, sol, std::move(segments));
+  auto repair_matrix = new RepairMatrix(this->parallel_executor, this->context, sol, std::move(segments));
   repair_matrix->init();
   // 执行 repair 操作
   this->execute(repair_matrix);

@@ -127,10 +127,6 @@ class Parameter {
 
   // cache
   /**
-   * @brief node 指定订单交集时间窗的缓存容量
-   */
-  int node_time_window_cache_capacity{2000000};
-  /**
    * @brief load 时间窗推导结果的缓存容量
    */
   int load_time_window_cache_capacity{500000};

@@ -12,38 +12,15 @@
 
 // ====== implement of LoadContext ======
 LoadContext::LoadContext(const Scenario* scenario, const Parameter* parameter)
-    : scenario(scenario),
-      plan_datetime_range(parameter->plan_datetime_range),
-      node_tw_cache_capacity(parameter->node_time_window_cache_capacity) {}
-
-LoadContext::~LoadContext() {
-  this->scenario = nullptr;
-  for (const auto& val : this->thread_tw_caches | std::views::values) {
-    delete val;
-  }
-  this->thread_tw_caches.clear();
+  : scenario(scenario),
+    plan_datetime_range(parameter->plan_datetime_range),
+    cache(new Cache(parameter)) {
 }
 
-NodeTimeWindowCache* LoadContext::get_node_time_window_cache() {
-  // 每线程只解析一次: 之后走 thread_local 直取, 完全无锁
-  // 归属判定用进程唯一序号而不是 LoadContext 指针: 堆地址会被复用,
-  // 析构后重建的 LoadContext 可能落在同一个地址上, 用指针比较会返回已释放的缓存
-  static thread_local std::uint64_t tls_cache_id = 0;
-  static thread_local NodeTimeWindowCache* tls_cache = nullptr;
-  if (tls_cache_id == this->cache_id) {
-    return tls_cache;
-  }
-  std::lock_guard<std::mutex> guard(this->thread_tw_cache_mutex);
-  const auto thread_id = std::this_thread::get_id();
-  auto it = this->thread_tw_caches.find(thread_id);
-  if (it == this->thread_tw_caches.end()) {
-    it = this->thread_tw_caches
-             .emplace(thread_id, new NodeTimeWindowCache(this->plan_datetime_range, this->node_tw_cache_capacity))
-             .first;
-  }
-  tls_cache_id = this->cache_id;
-  tls_cache = it->second;
-  return tls_cache;
+LoadContext::~LoadContext() {
+  delete this->cache;
+  this->cache = nullptr;
+  this->scenario = nullptr;
 }
 
 // ====== implement of Load ======
@@ -140,7 +117,7 @@ long Load::get_total_dist() const {
 
 double Load::get_obj_val() const { return this->constr_profile->obj_val; }
 
-Bitset* Load::get_available_vehicle_bitset() {
+Bitset* Load::get_available_vehicle_bitset() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::AVAILABLE_VEHICLE_BITSET)) {
     return this->route_profile->available_vehicle_bitset.get();
   }
@@ -149,7 +126,7 @@ Bitset* Load::get_available_vehicle_bitset() {
   Node* tail_node = this->last_node->prev;
   while (tail_node->hase_prev()) {
     this->route_profile->available_vehicle_bitset->call_intersection(
-        tail_node->loc->available_vehicle->vehicle_bitset);
+      tail_node->loc->available_vehicle->vehicle_bitset);
     tail_node = tail_node->prev;
   }
 
@@ -162,7 +139,14 @@ bool Load::is_feasible() const { return this->constr_profile->is_feasible(); }
 
 bool Load::is_empty() const { return this->first_node->next.get() == this->last_node; }
 
-void Load::update_node_dist_time() {
+NodeTimeWindowStoreBuffer* Load::get_node_tw_store_buffer() const {
+  if (this->store_buffer == nullptr) {
+    return nullptr;
+  }
+  return this->store_buffer->node_time_window;
+}
+
+void Load::update_node_dist_time() const {
   if (this->route_profile->get_dirty_mark(LoadRouteProfileField::NODE_DIST_TIME)) {
     return;
   }
@@ -171,10 +155,10 @@ void Load::update_node_dist_time() {
   Node* tail_node = this->last_node;
   while (tail_node->hase_prev()) {
     Node* prev_node = tail_node->prev;
-    auto dist_time = dist_matrix->get_dist_time(prev_node->loc->ind, tail_node->loc->ind);
+    auto [tmp_dist, tmp_time] = dist_matrix->get_dist_time(prev_node->loc->ind, tail_node->loc->ind);
 
-    tail_node->travel_dist = dist_time.dist;
-    tail_node->travel_time = dist_time.time;
+    tail_node->travel_dist = tmp_dist;
+    tail_node->travel_time = tmp_time;
     tail_node = prev_node;
   }
 }
@@ -200,14 +184,16 @@ void Load::update_end_node_dist_time() const {
 }
 
 void Load::update_time_window() const {
-  const auto tw_cache = this->context->get_node_time_window_cache();
+  auto* tw_cache = this->context->cache->node_time_window;
   // 第一个node(车场，可能为虚拟车场)
   Node* pre_node = this->first_node.get();
   pre_node->ptws =
-      TimeWindowPlanFactory::create_time_window_plans(tw_cache->get_other_time_windows(pre_node));
+      TimeWindowPlanFactory::create_time_window_plans(
+        tw_cache->lookup(this->get_node_tw_store_buffer(), pre_node));
   Node* head_node = pre_node->next.get();
   while (head_node != nullptr) {
-    auto cur_tws = tw_cache->get_pick_drop_time_windows(head_node);
+    // 冻结表 →写缓冲→ 重算并写入写缓冲; 返回的引用在本次推导内有效
+    const std::vector<TimeWindow*>& cur_tws = tw_cache->lookup(this->get_node_tw_store_buffer(), head_node);
     const long work_time = head_node->get_work_time();
     head_node->ptws =
         TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);

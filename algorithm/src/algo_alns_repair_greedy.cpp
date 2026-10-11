@@ -8,9 +8,9 @@
 #include "c_numerical_utils.h"
 
 // ====== implement of AlnsRepairGreedy ======
-AlnsRepairGreedy::AlnsRepairGreedy(const SolverContext* _context, ThreadPool* _thread_pool,
+AlnsRepairGreedy::AlnsRepairGreedy(const SolverContext* _context, ParallelExecutor* _parallel_executor,
                                    const sol::table& cfg)
-    : AlnsRepairOperator(AlnsRepairOperatorCode::RepairGreedy, _context, _thread_pool) {
+    : AlnsRepairOperator(AlnsRepairOperatorCode::RepairGreedy, _context, _parallel_executor) {
   if (cfg[AlnsRepairGreedyLuaField::RANDOM_SEED].valid()) {
     this->random_seed = static_cast<int>(cfg[AlnsRepairGreedyLuaField::RANDOM_SEED]);
   }

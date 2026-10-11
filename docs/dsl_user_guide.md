@@ -94,7 +94,7 @@ alns({})
 -- 自定义迭代次数与线程数
 alns({
   max_iter = 500,
-  tasks = 4,
+  worker_count = 4,
 })
 
 -- 完整配置：算法参数 + ruin/repair 算子
@@ -118,7 +118,7 @@ alns({
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `tasks` | integer | `4` | 并行线程数。必须 `> 0`；若 `>=` 机器逻辑核数则自动降级为 `核数 - 1` 并打 warning。当前版本每次`alns`调用都会新建并销毁线程池。 |
+| `worker_count` | integer | `-1` | 开启执行器的并行数。每次`alns`调用都会新建并销毁并行执行器。 |
 | `max_iter` | integer | `200` | 最大迭代次数（外层 ALNS 主循环）。 |
 | `max_sub_iter` | integer | `10` | 最大子迭代次数。 |
 | `max_unimproved_iter` | integer | `100` | 连续无改进次数达到该值时提前终止搜索。 |

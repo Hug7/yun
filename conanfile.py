@@ -35,6 +35,7 @@ class YunConan(ConanFile):
         self.requires("lua/5.4.6", override=True, transitive_headers=True, transitive_libs=True)
         self.requires("sol2/3.5.0", transitive_headers=True, transitive_libs=True)
         self.requires("pybind11/2.13.6", transitive_headers=True)
+        self.requires("libfork/3.8.0", transitive_headers=True)
         # self.requires("boost/1.91.0", transitive_headers=True, transitive_libs=True)
 
     def package(self):
@@ -62,7 +63,3 @@ class YunConan(ConanFile):
         # self.cpp_info.components["yun_domain"].libs = ["yun_domain"]
         # self.cpp_info.components["yun_domain"].includedirs = ["include/domain"]
         # self.cpp_info.components["yun_domain"].requires = ["yun_common"]
-
-        # self.cpp_info.components["yun_tsp"].libs = ["yun_tsp"]
-        # self.cpp_info.components["yun_tsp"].includedirs = ["include/tsp"]
-        # self.cpp_info.components["yun_tsp"].requires = ["yun_common", "yun_domain"]

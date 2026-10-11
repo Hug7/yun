@@ -17,9 +17,9 @@ void HardConstraintManager::add_constr(HardConstraint* constr) {
   ++this->len;
 
   // sort the constraints in the order of their priority
-  std::sort(
-      this->constrs.begin(), this->constrs.end(),
-      [](const HardConstraint* a, const HardConstraint* b) { return a->priority > b->priority; });
+  std::ranges::sort(this->constrs, [](const HardConstraint* a, const HardConstraint* b) {
+    return a->priority > b->priority;
+  });
 }
 
 void HardConstraintManager::eval_constrs(Load* load,

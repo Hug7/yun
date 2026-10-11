@@ -13,7 +13,7 @@
  */
 class AlnsParameterLuaField {
   public:
-  static constexpr const char* TASKS = "tasks";
+  static constexpr const char* WORKER_COUNT = "worker_count";
   static constexpr const char* MAX_ITER = "max_iter";
   static constexpr const char* MAX_SUB_ITER = "max_sub_iter";
   static constexpr const char* MAX_UNIMPROVED_ITER = "max_unimproved_iter";
@@ -36,9 +36,9 @@ class AlnsParameterLuaField {
 class AlnsParameter {
  public:
   /**
-   * @brief 线程数
+   * @brief 并行数
    */
-  int tasks{4};
+  int worker_count{-1};
   /**
    * @brief 最大迭代次数
    */

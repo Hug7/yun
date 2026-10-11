@@ -9,7 +9,6 @@
 #include "algo_alns_parameter.h"
 #include "algo_alns_solution_manager.h"
 #include "algo_segment_builder.h"
-#include "algo_thread_pool.h"
 #include "pdm_solution.h"
 #include "pdm_workspace.h"
 
@@ -35,14 +34,9 @@ class AlnsModel {
    * @brief segment 生成器
    */
   SegmentBuilder* segment_builder;
-  /**
-   * @brief 线程池
-   * @details 由外层调用方持有, 本类不负责释放; 寿命不依赖析构(当前析构不会被执行)
-   */
-  ThreadPool* thread_pool;
 
   explicit AlnsModel(const Workspace* _workspace, const AlnsParameter* _parameter,
-                     AlnsOperatorManager* operator_manager, ThreadPool* _thread_pool);
+                     AlnsOperatorManager* operator_manager);
 
   ~AlnsModel();
 

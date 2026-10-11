@@ -127,9 +127,10 @@ class AlnsOperatorManager {
  * @param cfg 算子集合
  * @param alns_parameter alns参数
  * @param workspace lua中定义的alns参数
- * @param thread_pool 线程池, 由调用方持有, repair算子借用其并行构造修复矩阵
+ * @param parallel_executor 线程池, 由调用方持有, repair算子借用其并行构造修复矩阵
  * @return
  */
 AlnsOperatorManager* create_alns_operator(const sol::table& cfg,
                                           const AlnsParameter* alns_parameter,
-                                          const Workspace* workspace, ThreadPool* thread_pool);
+                                          const Workspace* workspace,
+                                          ParallelExecutor* parallel_executor);

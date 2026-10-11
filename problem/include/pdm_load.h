@@ -5,16 +5,12 @@
 
 #pragma once
 
-#include <atomic>
-#include <mutex>
-#include <thread>
-#include <unordered_map>
-
 #include "bdm_vehicle.h"
+#include "pdm_cache.h"
+#include "pdm_cache_time_window.h"
 #include "pdm_load_profile.h"
 #include "pdm_node.h"
 #include "pdm_parameter.h"
-#include "pdm_time_window_cache.h"
 #include "se_scenario.h"
 
 /**
@@ -28,48 +24,21 @@ class LoadContext {
   const Scenario* scenario;
 
   /**
-   * @brief 规划时间段, 惰性创建线程缓存时透传给 NodeTimeWindowCache
+   * @brief 规划时间段
    */
   const PlanDatetimeRange* plan_datetime_range;
 
   /**
-   * @brief node_tw 缓存容量
+   * @brief 缓存
+   * @details 同一请求的所有工作线程共享这一份: 并行阶段只读, 新增条目先落在任务私有的
+   * StoreBuffer 上, 屏障之后由单线程归档进本表。
    */
-  const int node_tw_cache_capacity;
-
-  /**
-   * @brief 本实例在进程内的唯一序号, 用于判定 thread_local 缓存的归属
-   */
-  const std::uint64_t cache_id = next_cache_id();
-
-  /**
-   * @brief 按线程隔离的时间窗缓存
-   * @details 并行下所有 load 副本共享同一份 LoadContext(深拷贝只复制 context 指针),
-   * 因此缓存必须按线程拆分, 否则所有 worker 抢同一把锁。每个线程一份后查找路径零同步。
-   */
-  std::unordered_map<std::thread::id, NodeTimeWindowCache*> thread_tw_caches;
-
-  /**
-   * @brief 只保护 thread_tw_caches 的注册(每线程仅一次), 不在热路径上
-   */
-  std::mutex thread_tw_cache_mutex;
+  Cache* cache;
 
   LoadContext(const Scenario* scenario, const Parameter* parameter);
 
   ~LoadContext();
 
-  /**
-   * @brief 取当前线程专属的时间窗缓存, 首次调用时创建并注册
-   */
-  NodeTimeWindowCache* get_node_time_window_cache();
-
-  /**
-   * @brief 分配一个进程内单调递增的序号
-   */
-  static std::uint64_t next_cache_id() {
-    static std::atomic<std::uint64_t> seq{0};
-    return seq.fetch_add(1, std::memory_order_relaxed) + 1;
-  }
 };
 
 /**
@@ -107,6 +76,14 @@ class Load {
    */
   LoadConstrProfile::UPtr constr_profile;
 
+  /**
+   * @brief 任务私有的缓存写缓冲, 未挂载时为 nullptr(串行阶段直接读写冻结表)
+   * @details 并行任务体创建 load 副本后挂载自己的写缓冲: 副本内部的重算结果落在这里,
+   * 不触碰共享的冻结表。副本进入 solution 之前必须归档并清空。
+   * 本字段不被深拷贝继承: 新副本的写缓冲由当前任务显式挂载。
+   */
+  CacheStoreBuffer* store_buffer{nullptr};
+
   explicit Load(LoadContext* context);
 
   explicit Load(const Load* other);
@@ -121,7 +98,7 @@ class Load {
 
   [[nodiscard]] double get_obj_val() const;
 
-  [[nodiscard]] Bitset* get_available_vehicle_bitset();
+  [[nodiscard]] Bitset* get_available_vehicle_bitset() const;
 
   [[nodiscard]] bool is_infeasible() const;
 
@@ -129,7 +106,9 @@ class Load {
 
   [[nodiscard]] bool is_empty() const;
 
-  void update_node_dist_time();
+  [[nodiscard]] NodeTimeWindowStoreBuffer* get_node_tw_store_buffer() const;
+
+  void update_node_dist_time() const;
 
   void update_start_node_dist_time();
 

@@ -17,7 +17,7 @@ class CcDist : public CostConstraint {
    */
   const double dist_factor;
 
-  CcDist(const double dist_factor)
+  explicit CcDist(const double dist_factor)
       : CostConstraint("CcDist", 0, true, true), dist_factor(dist_factor) {}
 
   /**

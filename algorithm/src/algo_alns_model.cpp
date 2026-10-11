@@ -7,13 +7,12 @@
 
 // ====== implement of AlnsModel ======
 AlnsModel::AlnsModel(const Workspace* _workspace, const AlnsParameter* _parameter,
-                     AlnsOperatorManager* operator_manager, ThreadPool* _thread_pool)
+                     AlnsOperatorManager* operator_manager)
     : workspace(_workspace),
       parameter(_parameter),
       operator_manager(operator_manager),
       sol_manager(new AlnsSolutionManager(workspace, _parameter)),
-      segment_builder(new SegmentBuilder()),
-      thread_pool(_thread_pool) {}
+      segment_builder(new SegmentBuilder()) {}
 
 AlnsModel::~AlnsModel() {
   delete this->parameter;
@@ -37,7 +36,8 @@ Solution* AlnsModel::solve() const {
       // 执行 ruin 算子
       this->operator_manager->ruin_operator(operator_combinations[sub_iter])->call(tmp_sol);
       // 执行 repair 算子
-      this->operator_manager->repair_operator(operator_combinations[sub_iter])->call(tmp_sol, this->segment_builder);
+      this->operator_manager->repair_operator(operator_combinations[sub_iter])
+          ->call(tmp_sol, this->segment_builder);
       // TODO 执行 local search
       // 更新 solution, 使用 sa 判断 tmp_sol 是否被接受
       auto status_code = this->sol_manager->update_sol(tmp_sol);

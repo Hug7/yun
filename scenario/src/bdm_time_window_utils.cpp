@@ -47,11 +47,12 @@ TimeWindowPlan::UPtr TimeWindowInfer::forward_s_s(TimeWindowPlan::UPtr& pre_node
 }
 
 void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const long cost_time,
-                                  const long work_time, std::vector<TimeWindow*>& ori_tws,
+                                  const long work_time, const std::vector<TimeWindow*>& ori_tws,
                                   TimeWindowPlan::VecUPtr& plan_node_tws) {
   bool non_wait_over_flag = false;
-  if (plan_node_tws.size() > 1 ||
-      (plan_node_tws.size() > 0 && plan_node_tws[0]->is_zero_wait_over_time())) {
+  const size_t plan_node_tws_len = plan_node_tws.size();
+  if (plan_node_tws_len > 1 ||
+      (plan_node_tws_len > 0 && plan_node_tws[0]->is_zero_wait_over_time())) {
     non_wait_over_flag = true;
   }
 
@@ -64,7 +65,7 @@ void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const 
       if (non_wait_over_flag) {
         break;
       }
-      if (plan_node_tws.size() == 0 ||
+      if (plan_node_tws_len == 0 ||
           (plan_node_tws[0]->over_time > 0 ||
            (cur_ori_tw->early - plan_late_arr) < plan_node_tws[0]->wait_time)) {
         plan_node_tws.clear();
@@ -76,7 +77,7 @@ void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const 
       if (non_wait_over_flag) {
         continue;
       }
-      if (plan_node_tws.size() == 0 ||
+      if (plan_node_tws_len == 0 ||
           (plan_node_tws[0]->wait_time == 0 &&
            (plan_early_arr - cur_ori_tw->late) < plan_node_tws[0]->over_time)) {
         plan_node_tws.clear();
@@ -96,7 +97,7 @@ void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const 
 
 TimeWindowPlan::VecUPtr TimeWindowInfer::forward(TimeWindowPlan::VecUPtr& pre_node_plan_tws,
                                                  const long cost_time, const long work_time,
-                                                 std::vector<TimeWindow*>& ori_tws) {
+                                                 const std::vector<TimeWindow*>& ori_tws) {
   TimeWindowPlan::VecUPtr plan_node_tws;
   for (auto& pre_node_plan_tw : pre_node_plan_tws) {
     forward_s_m(pre_node_plan_tw, cost_time, work_time, ori_tws, plan_node_tws);
