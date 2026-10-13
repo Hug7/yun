@@ -52,5 +52,5 @@ void Solver::solve() {
   strategy_manager->exec_script();
   // 结果转换并导出
   this->context->visual_manager->localization_plan_result(workspace->loads_view(),
-                                                   workspace->unassigned_orders_view());
+                                                          workspace->unassigned_orders_view());
 }

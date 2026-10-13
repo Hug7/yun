@@ -69,6 +69,7 @@ constexpr std::string CALENDAR_TIME_RANGE = ";";
  */
 constexpr std::string TIME_WINDOW = ";";
 }  // namespace Delimiter
+
 namespace DistMatrixParameter {
 /**
  * @brief maximum driving distance, unit: m
@@ -106,7 +107,7 @@ constexpr int WORK_EFFECT_QUANTITY_PRECISION = 4;
 
 namespace TimeWindowParameter {
 /**
- * @brief default paln datetime range (start), unit: s
+ * @brief default plan datetime range (start), unit: s
  * @details representative 1970-01-01 00:00
  */
 constexpr long DEFAULT_PLAN_DATETIME_RANGE_START = -28800;
@@ -173,4 +174,4 @@ namespace CacheParameter {
  * @brief 构造时预分配的桶位数与 arena 槽位数, 与容量上限无关(缓存不淘汰)
  */
 static constexpr int PICK_DROP_RESERVED_ENTRY_COUNT = 20000;
-}
+} // namespace CacheParameter

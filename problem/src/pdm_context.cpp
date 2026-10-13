@@ -12,7 +12,6 @@
 #include "c_chrono_util.h"
 #include "c_log.h"
 #include "cc_dist.h"
-#include "hc_label.h"
 #include "hc_location.h"
 #include "hc_vehicle.h"
 #include "sc_dist.h"
@@ -64,35 +63,10 @@ std::string generate_request_id() {
 }
 
 /**
- * 读取场景
- * @param root_dir 根目录
- * @param logger 日志器
- * @return 场景
- */
-Scenario* load_scenario(const std::string& root_dir,
-                        const std::shared_ptr<spdlog::logger>& logger) {
-  const auto reader = std::make_unique<StandardCsvReader>(root_dir, logger);
-  Scenario* scenario = reader->loading_scenario();
-  return scenario;
-}
-
-/**
- * @brief 读取参数
- * @param scenario 场景
- */
-Parameter* load_parameter(const Scenario* scenario) {
-  Parameter* parameter = new Parameter(scenario->label_manager->order_labelset);
-  // TODO 实现读取参数
-
-  // 参数后处理
-  parameter->post_process(scenario);
-
-  return parameter;
-}
-/**
  * @brief 创建问题
  * @param scenario 场景
  * @param parameter 参数
+ * @param root_dir 根目录, 约束配置取自 <root_dir>/problem.yaml
  */
 Problem* create_problem(const Scenario* scenario, Parameter* parameter) {
   const auto problem = new Problem(scenario, parameter);
@@ -127,9 +101,9 @@ Problem* create_problem(const Scenario* scenario, Parameter* parameter) {
 }
 
 // ====== implement of Load CcDist ======
-SolverContext::SolverContext(std::string root_dir, const std::string& log_dir,
+SolverContext::SolverContext(std::string _root_dir, const std::string& log_dir,
                              const std::string& log_level)
-    : root_dir(std::move(root_dir)), request_id(generate_request_id()) {
+    : root_dir(std::move(_root_dir)), request_id(generate_request_id()) {
   // 拼装输出目录
   this->output_dir = this->root_dir + "/output/" + this->request_id;
   // 创建本次请求专属的 logger：控制台 + log_dir + output_dir 三处输出
@@ -137,14 +111,14 @@ SolverContext::SolverContext(std::string root_dir, const std::string& log_dir,
   this->logger = LogManager::create(this->request_id, log_dir, this->output_dir, log_level);
   // 读取场景
   try {
-    this->scenario = load_scenario(this->root_dir, this->logger);
+    this->scenario = std::make_unique<StandardCsvReader>(this->root_dir, this->logger)->loading_scenario();
   } catch (const std::exception& e) {
     // common 层的工具函数拿不到 logger，失败原因在这里补记，保证三个输出里都有
     this->logger->error("读取场景失败: {}", e.what());
     throw;
   }
   // 读取参数
-  this->parameter = load_parameter(this->scenario);
+  this->parameter = load_parameter(this->root_dir, this->scenario, this->logger);
   // 可视化管理器
   this->visual_manager = new VisualManager(this->output_dir, this->scenario, this->logger);
   // 创建问题

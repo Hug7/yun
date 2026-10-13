@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <yaml-cpp/yaml.h>
+
+#include <memory>
 #include <string>
 #include <unordered_set>
 
@@ -68,15 +71,18 @@ class CargoOrderGroupRule {
   std::vector<std::unordered_set<int>> label_value_ind_groups;
 
   explicit CargoOrderGroupRule(const Labelset* order_labelset)
-      : order_labelset{order_labelset}, label(nullptr), label_ind4labelset(-1), label_value_ind_groups() {};
+      : order_labelset{order_labelset},
+        label(nullptr),
+        label_ind4labelset(-1),
+        label_value_ind_groups() {};
 
   /**
    * @brief 设置分组规则
    * @param label_code 标签编码
-   * @param label_value_code_groups
+   * @param label_value_groups
    */
   void set_rule(std::string label_code,
-                const std::vector<std::vector<std::string>>& label_value_code_groups);
+                const std::vector<std::vector<std::string>>& label_value_groups);
 };
 
 /**
@@ -84,6 +90,10 @@ class CargoOrderGroupRule {
  */
 class Parameter {
  public:
+  /**
+   * @brief logger
+   */
+  const std::shared_ptr<spdlog::logger> logger;
   /**
    * @brief 计划时间范围
    */
@@ -131,9 +141,19 @@ class Parameter {
    */
   int load_time_window_cache_capacity{500000};
 
-  explicit Parameter(const Labelset* order_labelset);
+  Parameter() = default;
 
   ~Parameter();
+
+  void parse_plan_datetime_range(const YAML::Node& param_node);
+
+  void parse_strategy_file_name(const YAML::Node& param_node);
+
+  void parse_pick_drop_pattern(const YAML::Node& param_node);
+
+  void parse_load_unload_policy(const YAML::Node& param_node);
+
+  void parse_cargo_order_group_rule(const YAML::Node& param_node, Labelset* order_labelset);
 
   /**
    * @brief 后处理
@@ -141,10 +161,13 @@ class Parameter {
    * @param scenario 场景数据
    */
   void post_process(const Scenario* scenario);
-
-  /**
-   * @brief 设置策略文件名
-   * @param file_name 策略文件名
-   */
-  void set_strategy_file_name(const std::string& file_name);
 };
+
+/**
+ * @brief 读取参数
+ * @param root_dir 根文件夹
+ * @param scenario 场景
+ * @param logger logger
+ */
+Parameter* load_parameter(const std::string& root_dir, const Scenario* scenario,
+                          const std::shared_ptr<spdlog::logger>& logger);

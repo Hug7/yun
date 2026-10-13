@@ -55,11 +55,11 @@ public:
 
   /**
    * @brief 构造solver上下文
-   * @param root_dir 文件根目录
+   * @param _root_dir 文件根目录
    * @param log_dir 全局日志目录
    * @param log_level 日志等级
    */
-  explicit SolverContext(std::string root_dir, const std::string& log_dir,
+  explicit SolverContext(std::string _root_dir, const std::string& log_dir,
                          const std::string& log_level);
 
   ~SolverContext();
