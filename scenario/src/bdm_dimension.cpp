@@ -17,10 +17,10 @@ DimensionManager::~DimensionManager() {
 Dimension* DimensionManager::create_dimension(const std::string& code, const std::string& name,
                                               const int precision) {
   if (this->dimension_map.count(code)) {
-    throw new std::runtime_error("Dimension with code " + code + " already exists.");
+    throw std::runtime_error("Dimension with code " + code + " already exists.");
   }
   if (precision < 0 || precision > 4) {
-    throw new std::runtime_error("Precision = " + std::to_string(precision) +
+    throw std::runtime_error("Precision = " + std::to_string(precision) +
                                  " , but must be between 0 and 4.");
   }
 

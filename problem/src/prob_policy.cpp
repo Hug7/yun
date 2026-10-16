@@ -14,7 +14,7 @@
 
 // ====== implement of PolicyNone ======
 
-// ====== implement of PolicyNone ======
+// ====== implement of LoadUnloadPolicyFactory ======
 LoadUnloadPolicy* LoadUnloadPolicyFactory::create_policy(LoadUnloadPolicyType policy_type) {
   switch (policy_type) {
     case LoadUnloadPolicyType::FIFO:

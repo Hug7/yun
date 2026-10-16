@@ -14,6 +14,8 @@
 #include "bdm_label.h"
 #include "bdm_time_window.h"
 #include "c_constant.h"
+#include "c_yaml_utils.h"
+#include "pdm_parameter_constraint.h"
 #include "se_scenario.h"
 
 /**
@@ -97,11 +99,11 @@ class Parameter {
   /**
    * @brief 计划时间范围
    */
-  PlanDatetimeRange* plan_datetime_range;
+  PlanDatetimeRange* plan_datetime_range{nullptr};
   /**
    * @brief 策略文件名
    */
-  std::string strategy_file_name{"strategy.lua"};
+  std::string strategy_file_name{"Strategy.lua"};
   /**
    * @brief 提货和卸货站点的模式
    */
@@ -115,46 +117,35 @@ class Parameter {
   /**
    * @brief cargo order分组规则
    */
-  CargoOrderGroupRule* cargo_order_group_rule;
+  CargoOrderGroupRule* cargo_order_group_rule{nullptr};
 
   // constraints
   /**
-   * @brief hard constraint: load中的最大提货节点数
+   * @brief 硬约束条目列表
    */
-  int max_pick_node_count{HardConstraintParameter::DEFAULT_MAX_PICK_NODE_COUNT};
+  std::vector<HardConstrItem> hard_constr_items{};
   /**
-   * @brief hard constraint: load中的最大卸货节点数
+   * @brief 硬约束条目列表
    */
-  int max_drop_node_count{HardConstraintParameter::DEFAULT_MAX_DROP_NODE_COUNT};
-  /**
-   * @brief soft constraint: "ScDist" default distance factor
-   */
-  double sc_constr_dist_factor{SoftConstraintParameter::SC_DIST_DEFAULT_DIST_FACTOR};
-  /**
-   * @brief cost constraint: "CcDist" default distance factor
-   */
-  double cc_constr_dist_factor{CostConstraintParameter::CC_DIST_DEFAULT_DIST_FACTOR};
+  std::vector<SoftConstrItem> soft_constr_items{};
 
-  // cache
-  /**
-   * @brief load 时间窗推导结果的缓存容量
-   */
-  int load_time_window_cache_capacity{500000};
-
-  Parameter() = default;
+  explicit Parameter(const std::shared_ptr<spdlog::logger>& logger) : logger{logger} {};
 
   ~Parameter();
 
-  void parse_plan_datetime_range(const YAML::Node& param_node);
+  void parse_plan_datetime_range(const YamlNode& param_node);
 
-  void parse_strategy_file_name(const YAML::Node& param_node);
+  void parse_strategy_file_name(const YamlNode& param_node);
 
-  void parse_pick_drop_pattern(const YAML::Node& param_node);
+  void parse_pick_drop_pattern(const YamlNode& param_node);
 
-  void parse_load_unload_policy(const YAML::Node& param_node);
+  void parse_load_unload_policy(const YamlNode& param_node);
 
-  void parse_cargo_order_group_rule(const YAML::Node& param_node, Labelset* order_labelset);
+  void parse_cargo_order_group_rule(const YamlNode& param_node, const Labelset* order_labelset);
 
+  void parse_hard_constraints(const YamlNode& param_node);
+
+  void parse_soft_constraints(const YamlNode& param_node);
   /**
    * @brief 后处理
    * @details 根据场景数据更新参数

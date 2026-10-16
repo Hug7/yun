@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <string>
-
 #include "hc_constraint.h"
 
 /**
@@ -15,7 +13,7 @@
  */
 class HcVehicleCapacity : public HardConstraint {
  public:
-  HcVehicleCapacity() : HardConstraint("HcVehicleCapacity", 0, false, true) {};
+  HcVehicleCapacity() : HardConstraint(HardConstrCode::VehicleCapacity, 0, false, true) {};
 
   /**
    * @brief calculate the score of the hard constraint

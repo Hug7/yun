@@ -5,42 +5,41 @@
 
 #pragma once
 
-#include <string>
-
 #include "pdm_load.h"
 #include "pdm_score.h"
+#include "sc_constraint_code.h"
 
 /**
- * @brief the attributes of soft constraint
+ * @brief 软约束的父类
  */
 class SoftConstraint {
  public:
   /**
-   * @brief unique encoding with soft constraints
+   * @brief 软约束的编码
    */
-  const std::string code;
+  const SoftConstrCode code;
   /**
-   * @brief priority of the constraint
-   * @details priority=0 is lower priority
+   * @brief 约束的执行优先级
+   * @details priority=0时，代表最后执行
    */
   const int priority;
   /**
-   * @brief is the constraint related to the sequence
+   * @brief 是否为受顺序影响的约束
    */
   const bool is_seq;
   /**
-   * @brief is the constraint related to the vehicle
+   * @brief 是否为受车辆影响的约束
    */
   const bool is_vehicle;
 
-  SoftConstraint(const std::string& code, const int priority, const bool is_seq,
+  SoftConstraint(const SoftConstrCode code, const int priority, const bool is_seq,
                  const bool is_vehicle)
       : code(code), priority(priority), is_seq(is_seq), is_vehicle(is_vehicle) {};
 
   virtual ~SoftConstraint() = default;
 
   /**
-   * @brief evaluate the score of the soft constraint
+   * @brief 评价软约束
    */
   virtual SoftConstrScore::UPtr eval(Load* load) = 0;
 };

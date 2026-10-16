@@ -5,13 +5,13 @@
 
 #include "pdm_parameter.h"
 
-#include <filesystem>
 #include <format>
 #include <magic_enum/magic_enum.hpp>
 #include <unordered_set>
 
 #include "bdm_time_window.h"
 #include "c_time_utils.h"
+#include "c_yaml_utils.h"
 
 namespace {
 constexpr char PARAMETER_FILE_NAME[] = "Parameter.yaml";  // 参数文件名
@@ -23,41 +23,13 @@ constexpr char KEY_LOAD_UNLOAD_POLICY[] = "load_unload_policy";
 constexpr char KEY_CARGO_ORDER_GROUP_RULE[] = "cargo_order_group_rule";
 constexpr char KEY_CARGO_ORDER_GROUP_RULE_LABEL_CODE[] = "label_code";
 constexpr char KEY_CARGO_ORDER_GROUP_RULE_LABEL_VALUE_GROUP[] = "label_value_group";
-constexpr char KEY_MAX_COUNTS[] = "max_counts";
+constexpr char KEY_HARD_CONSTRAINTS[] = "hard_constraints";
+constexpr char KEY_SOFT_CONSTRAINTS[] = "soft_constraints";
 
 [[noreturn]] void fail(const std::string& path, const std::string& reason,
                        const std::shared_ptr<spdlog::logger>& logger) {
   logger->error(std::format("{} {}: {}", PARAMETER_FILE_NAME, path, reason));
   throw std::runtime_error(std::format("{} {}: {}", PARAMETER_FILE_NAME, path, reason));
-}
-
-/**
- * @brief 读取yaml参数
- * @param root_dir 根目录
- * @param logger logger
- * @return yaml参数
- */
-YAML::Node load_parameter_yaml(const std::string& root_dir,
-                               const std::shared_ptr<spdlog::logger>& logger) {
-  const std::string file = root_dir + "/" + PARAMETER_FILE_NAME;
-  if (!std::filesystem::exists(file)) {
-    logger->error("File {} does not exist.", PARAMETER_FILE_NAME);
-    throw std::filesystem::filesystem_error(
-        PARAMETER_FILE_NAME, std::error_code(static_cast<int>(std::errc::no_such_file_or_directory),
-                                             std::generic_category()));
-  }
-
-  YAML::Node param_node;
-  try {
-    param_node = YAML::LoadFile(file);
-  } catch (const YAML::Exception& e) {
-    throw std::runtime_error(std::format("{} 解析失败: {}", PARAMETER_FILE_NAME, e.what()));
-  }
-  if (!param_node || !param_node.IsMap()) {
-    fail("", "yaml文件根节点解析为空", logger);
-  }
-
-  return param_node;
 }
 
 }  // namespace
@@ -117,25 +89,25 @@ Parameter::~Parameter() {
   delete this->cargo_order_group_rule;
 }
 
-void Parameter::parse_plan_datetime_range(const YAML::Node& param_node) {
+void Parameter::parse_plan_datetime_range(const YamlNode& param_node) {
   this->plan_datetime_range = new PlanDatetimeRange();
-  if (param_node[KEY_START_TIME]) {
-    this->plan_datetime_range->set_start_datetime(param_node[KEY_START_TIME].as<std::string>());
+  if (param_node.contains_key(KEY_START_TIME)) {
+    this->plan_datetime_range->set_start_datetime(param_node.parse_string(KEY_START_TIME));
   }
-  if (param_node[KEY_END_TIME]) {
-    this->plan_datetime_range->set_end_datetime(param_node[KEY_END_TIME].as<std::string>());
-  }
-}
-
-void Parameter::parse_strategy_file_name(const YAML::Node& param_node) {
-  if (param_node[KEY_STRATEGY_FILE]) {
-    this->strategy_file_name = param_node[KEY_STRATEGY_FILE].as<std::string>();
+  if (param_node.contains_key(KEY_END_TIME)) {
+    this->plan_datetime_range->set_end_datetime(param_node.parse_string(KEY_END_TIME));
   }
 }
 
-void Parameter::parse_pick_drop_pattern(const YAML::Node& param_node) {
-  if (param_node[KEY_PICK_DROP_PATTERN]) {
-    const auto name = param_node[KEY_PICK_DROP_PATTERN].as<std::string>();
+void Parameter::parse_strategy_file_name(const YamlNode& param_node) {
+  if (param_node.contains_key(KEY_STRATEGY_FILE)) {
+    this->strategy_file_name = param_node.parse_string(KEY_STRATEGY_FILE);
+  }
+}
+
+void Parameter::parse_pick_drop_pattern(const YamlNode& param_node) {
+  if (param_node.contains_key(KEY_PICK_DROP_PATTERN)) {
+    const auto name = param_node.parse_string(KEY_PICK_DROP_PATTERN);
     const auto pattern = magic_enum::enum_cast<PickDropPatternType>(name);
     if (!pattern.has_value()) {
       fail(KEY_PICK_DROP_PATTERN, std::format("未知提卸模式: {}", name), this->logger);
@@ -144,9 +116,9 @@ void Parameter::parse_pick_drop_pattern(const YAML::Node& param_node) {
   }
 }
 
-void Parameter::parse_load_unload_policy(const YAML::Node& param_node) {
-  if (param_node[KEY_LOAD_UNLOAD_POLICY]) {
-    const auto name = param_node[KEY_LOAD_UNLOAD_POLICY].as<std::string>();
+void Parameter::parse_load_unload_policy(const YamlNode& param_node) {
+  if (param_node.contains_key(KEY_LOAD_UNLOAD_POLICY)) {
+    const auto name = param_node.parse_string(KEY_LOAD_UNLOAD_POLICY);
     const auto policy = magic_enum::enum_cast<LoadUnloadPolicyType>(name);
     if (!policy.has_value()) {
       fail(KEY_LOAD_UNLOAD_POLICY, std::format("未知装卸策略: {}", name), this->logger);
@@ -155,18 +127,31 @@ void Parameter::parse_load_unload_policy(const YAML::Node& param_node) {
   }
 }
 
-void Parameter::parse_cargo_order_group_rule(const YAML::Node& param_node,
-                                             Labelset* order_labelset) {
+void Parameter::parse_cargo_order_group_rule(const YamlNode& param_node,
+                                             const Labelset* order_labelset) {
   this->cargo_order_group_rule = new CargoOrderGroupRule(order_labelset);
-  if (param_node[KEY_CARGO_ORDER_GROUP_RULE]) {
-    const auto label_code =
-        param_node[KEY_CARGO_ORDER_GROUP_RULE][KEY_CARGO_ORDER_GROUP_RULE_LABEL_CODE]
-            .as<std::string>();
-    const auto label_value_group =
-        param_node[KEY_CARGO_ORDER_GROUP_RULE][KEY_CARGO_ORDER_GROUP_RULE_LABEL_VALUE_GROUP]
-            .as<std::vector<std::vector<std::string>>>();
+  if (param_node.contains_key(KEY_CARGO_ORDER_GROUP_RULE)) {
+    const auto cargo_order_group_rule_yaml_node = param_node.parse_map(KEY_CARGO_ORDER_GROUP_RULE);
+    const auto label_code = cargo_order_group_rule_yaml_node.parse_string(KEY_CARGO_ORDER_GROUP_RULE_LABEL_CODE);
+    const auto label_value_group = cargo_order_group_rule_yaml_node.get_node(KEY_CARGO_ORDER_GROUP_RULE_LABEL_VALUE_GROUP).as<std::vector<std::vector<std::string>>>();
     this->cargo_order_group_rule->set_rule(label_code, label_value_group);
   }
+}
+
+void Parameter::parse_hard_constraints(const YamlNode& param_node) {
+  if (!param_node.contains_key(KEY_HARD_CONSTRAINTS)) {
+    return;
+  }
+  const auto hard_constr_nodes = param_node.parse_list(KEY_HARD_CONSTRAINTS);
+  this->hard_constr_items = parse_hard_constr_items(hard_constr_nodes);
+}
+
+void Parameter::parse_soft_constraints(const YamlNode& param_node) {
+  if (!param_node.contains_key(KEY_SOFT_CONSTRAINTS)) {
+    return;
+  }
+  const auto soft_constr_nodes = param_node.parse_list(KEY_SOFT_CONSTRAINTS);
+  this->soft_constr_items = parse_soft_constr_items(soft_constr_nodes);
 }
 
 void Parameter::post_process(const Scenario* scenario) {
@@ -190,16 +175,19 @@ void Parameter::post_process(const Scenario* scenario) {
 Parameter* load_parameter(const std::string& root_dir, const Scenario* scenario,
                           const std::shared_ptr<spdlog::logger>& logger) {
   // 实例化参数
-  Parameter* parameter = new Parameter();
+  Parameter* parameter = new Parameter(logger);
   // 读取参数yaml文件
-  auto param_node = load_parameter_yaml(root_dir, logger);
+  auto param_node = read_yaml(root_dir + "/" + PARAMETER_FILE_NAME, logger);
   // 解析参数
   parameter->parse_plan_datetime_range(param_node);
   parameter->parse_strategy_file_name(param_node);
   parameter->parse_pick_drop_pattern(param_node);
   parameter->parse_load_unload_policy(param_node);
   parameter->parse_cargo_order_group_rule(param_node, scenario->label_manager->order_labelset);
-
+  // 解析-硬约束项
+  parameter->parse_hard_constraints(param_node);
+  // 解析-软约束项
+  parameter->parse_soft_constraints(param_node);
   // 参数后处理
   parameter->post_process(scenario);
 

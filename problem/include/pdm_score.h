@@ -11,6 +11,8 @@
 #include <vector>
 
 #include "pdm_infeasible.h"
+#include "hc_constraint_code.h"
+#include "sc_constraint_code.h"
 
 /**
  * @brief the score of hard constraint
@@ -22,7 +24,7 @@ class HardConstrScore {
   /**
    * @brief unique encoding with constraints
    */
-  const std::string code;
+  const HardConstrCode code;
   /**
    * @brief is feasible
    */
@@ -50,10 +52,10 @@ class HardConstrScore {
    */
   const InfeasibleReason reason;
 
-  explicit HardConstrScore(std::string code, const bool feasible, const double weight,
+  explicit HardConstrScore(const HardConstrCode code, const bool feasible, const double weight,
                            const double value, const bool seq_type, const bool vehicle_type,
                            InfeasibleReason reason)
-      : code(std::move(code)),
+      : code(code),
         feasible(feasible),
         weight(weight),
         value(value),
@@ -61,8 +63,8 @@ class HardConstrScore {
         vehicle_type(vehicle_type),
         reason(std::move(reason)) {}
 
-  explicit HardConstrScore(std::string code)
-      : code(std::move(code)),
+  explicit HardConstrScore(const HardConstrCode code)
+      : code(code),
         feasible(true),
         weight(1),
         value(0),
@@ -100,7 +102,7 @@ class SoftConstrScore {
   /**
    * @brief unique encoding with constraints
    */
-  const std::string code;
+  const SoftConstrCode code;
   /**
    * @brief weight of the constraint
    * @details default weigh=1
@@ -112,8 +114,8 @@ class SoftConstrScore {
    */
   const double value;
 
-  explicit SoftConstrScore(std::string code, const double weight, const double value)
-      : code(std::move(code)), weight(weight), value(value) {}
+  explicit SoftConstrScore(const SoftConstrCode code, const double weight, const double value)
+      : code(code), weight(weight), value(value) {}
 
   explicit SoftConstrScore(const UPtr& score)
       : code(score->code), weight(score->weight), value(score->value) {}

@@ -5,66 +5,58 @@
 
 #pragma once
 
-#include <string>
-
 #include "hc_constraint.h"
 
 /**
- * @brief hard constraint for max pick node count
+ * @brief 硬约束-最大提货节点数
  */
 class HcMaxPickNodeCount : public HardConstraint {
  public:
+  /**
+   * @brief 最大提货节点数
+   */
   const int max_pick_node_count;
 
   explicit HcMaxPickNodeCount(const int max_pick_node_count)
-      : HardConstraint("MaxPickNodeCount", 0, false, false),
+      : HardConstraint(HardConstrCode::MaxPickNodeCount, 0, false, false),
         max_pick_node_count(max_pick_node_count) {};
 
-  /**
-   * @brief calculate the score of the hard constraint
-   */
   HardConstrScore::UPtr eval(Load* load) override;
 };
 
 /**
- * @brief hard constraint for max drop node count
+ * @brief 硬约束-最大卸货节点数
  */
 class HcMaxDropNodeCount : public HardConstraint {
  public:
+  /**
+   * @brief 最大卸货节点数
+   */
   const int max_drop_node_count;
 
   explicit HcMaxDropNodeCount(const int max_drop_node_count)
-      : HardConstraint("MaxDropNodeCount", 0, false, false),
+      : HardConstraint(HardConstrCode::MaxDropNodeCount, 0, false, false),
         max_drop_node_count(max_drop_node_count) {};
 
-  /**
-   * @brief calculate the score of the hard constraint
-   */
   HardConstrScore::UPtr eval(Load* load) override;
 };
 
 /**
- * @brief hard constraint for available vehicle
+ * @brief 硬约束-可用车型
  */
 class HcAvailableVehicle : public HardConstraint {
  public:
-  HcAvailableVehicle() : HardConstraint("HcAvailableVehicle", 0, false, true) {};
+  HcAvailableVehicle() : HardConstraint(HardConstrCode::AvailableVehicle, 0, false, true) {};
 
-  /**
-   * @brief calculate the score of the hard constraint
-   */
   HardConstrScore::UPtr eval(Load* load) override;
 };
 
 /**
- * @brief hard constraint for time window
+ * @brief 硬约束-时间窗
  */
 class HcTimeWindow : public HardConstraint {
  public:
-  HcTimeWindow() : HardConstraint("HcTimeWindow", 0, true, true) {};
+  HcTimeWindow() : HardConstraint(HardConstrCode::TimeWindow, 0, true, true) {};
 
-  /**
-   * @brief calculate the score of the hard constraint
-   */
   HardConstrScore::UPtr eval(Load* load) override;
 };

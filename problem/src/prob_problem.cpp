@@ -28,8 +28,8 @@ Problem::Problem(const Scenario* scenario, Parameter* parameter)
 
   this->load_context = new LoadContext(this->scenario, this->parameter);
 
-  this->hc_manager = new HardConstraintManager();
-  this->sc_manager = new SoftConstraintManager();
+  this->hc_manager = new HardConstraintManager(scenario, parameter);
+  this->sc_manager = new SoftConstraintManager(parameter);
   this->cc_manager = new CostConstraintManager();
 }
 

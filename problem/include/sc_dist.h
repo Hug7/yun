@@ -5,24 +5,20 @@
 
 #pragma once
 
-#include <string>
-
 #include "sc_constraint.h"
 
 /**
- * @brief the attributes of soft constraint
+ * @brief 软约束-行驶距离
  */
-class ScDist : public SoftConstraint {
+class ScDistance : public SoftConstraint {
  public:
   /**
-   * distance factor
+   * @brief 距离系数
    */
   const double dist_factor;
 
-  explicit ScDist(const double dist_factor)
-      : SoftConstraint("ScDist", 0, true, false), dist_factor(dist_factor) {}
-  /**
-   * @brief evaluate the score of the soft constraint
-   */
+  explicit ScDistance(const double dist_factor)
+      : SoftConstraint(SoftConstrCode::Distance, 0, true, false), dist_factor(dist_factor) {}
+
   SoftConstrScore::UPtr eval(Load* load) override;
 };

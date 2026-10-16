@@ -62,44 +62,6 @@ std::string generate_request_id() {
                      process_nonce(), next_request_seq());
 }
 
-/**
- * @brief 创建问题
- * @param scenario 场景
- * @param parameter 参数
- * @param root_dir 根目录, 约束配置取自 <root_dir>/problem.yaml
- */
-Problem* create_problem(const Scenario* scenario, Parameter* parameter) {
-  const auto problem = new Problem(scenario, parameter);
-
-  // hard constraints: base
-  problem->hc_manager->add_constr(new HcVehicleCapacity());
-  problem->hc_manager->add_constr(new HcAvailableVehicle());
-
-  // add hard constraints by scenario
-  // -- hard constraints: time window
-  problem->hc_manager->add_constr(new HcTimeWindow());
-
-  // -- hard constraints: max drop node count
-  if (parameter->max_pick_node_count > HardConstraintParameter::DEFAULT_MAX_PICK_NODE_COUNT) {
-    problem->hc_manager->add_constr(new HcMaxPickNodeCount(parameter->max_pick_node_count));
-  }
-  // -- hard constraints: max pick node count
-  if (parameter->max_drop_node_count > HardConstraintParameter::DEFAULT_MAX_DROP_NODE_COUNT) {
-    problem->hc_manager->add_constr(new HcMaxDropNodeCount(parameter->max_drop_node_count));
-  }
-  // soft constraints
-  if (parameter->sc_constr_dist_factor > SoftConstraintParameter::SC_DIST_DEFAULT_DIST_FACTOR) {
-    problem->sc_manager->add_constr(new ScDist(parameter->sc_constr_dist_factor));
-  }
-  // cost constraints
-  // -- cost constraints: dist
-  if (parameter->cc_constr_dist_factor > CostConstraintParameter::CC_DIST_DEFAULT_DIST_FACTOR) {
-    problem->cc_manager->add_constr(new CcDist(parameter->cc_constr_dist_factor));
-  }
-
-  return problem;
-}
-
 // ====== implement of Load CcDist ======
 SolverContext::SolverContext(std::string _root_dir, const std::string& log_dir,
                              const std::string& log_level)
@@ -122,7 +84,7 @@ SolverContext::SolverContext(std::string _root_dir, const std::string& log_dir,
   // 可视化管理器
   this->visual_manager = new VisualManager(this->output_dir, this->scenario, this->logger);
   // 创建问题
-  this->problem = create_problem(this->scenario, this->parameter);
+  this->problem = new Problem(this->scenario, this->parameter);
 }
 
 SolverContext::~SolverContext() {

@@ -5,43 +5,41 @@
 
 #pragma once
 
-#include <string>
-#include <utility>
-
+#include "hc_constraint_code.h"
 #include "pdm_load.h"
 #include "pdm_score.h"
 
 /**
- * @brief the attributes of hard constraint
+ * @brief 硬约束父类
  */
 class HardConstraint {
  public:
   /**
-   * @brief unique encoding with hard constraints
+   * @brief 硬约束编码
    */
-  const std::string code;
+  const HardConstrCode code;
   /**
-   * @brief priority of the constraint
-   * @details priority=0 is lower priority
+   * @brief 约束的执行优先级
+   * @details priority=0时，代表最后执行
    */
   const int priority;
   /**
-   * @brief is the constraint related to the sequence
+   * @brief 是否为受顺序影响的约束
    */
   const bool seq_type;
   /**
-   * @brief is the constraint related to the vehicle
+   * @brief 是否为受车辆影响的约束
    */
   const bool vehicle_type;
 
-  HardConstraint(std::string  code, const int priority, const bool seq_type,
+  HardConstraint(const HardConstrCode code, const int priority, const bool seq_type,
                  const bool vehicle_type)
-      : code(std::move(code)), priority(priority), seq_type(seq_type), vehicle_type(vehicle_type) {};
+      : code(code), priority(priority), seq_type(seq_type), vehicle_type(vehicle_type) {};
 
   virtual ~HardConstraint() = default;
 
   /**
-   * @brief calculate the score of the hard constraint
+   * @brief 评价硬约束
    */
   virtual HardConstrScore::UPtr eval(Load* load) = 0;
 };

@@ -5,32 +5,26 @@
 
 #pragma once
 
-#include <string>
-
 #include "hc_constraint.h"
 
 /**
- * @brief hard constraint for load unload policy about FILO
+ * @brief 硬约束-装卸策略FILO
  */
 class HcLoadUnloadPolicyFILO : public HardConstraint {
  public:
-  HcLoadUnloadPolicyFILO() : HardConstraint("HcLoadUnloadPolicyFILO", 0, true, false) {};
+  HcLoadUnloadPolicyFILO()
+      : HardConstraint(HardConstrCode::LoadUnloadPolicyFILO, 0, true, false) {}
 
-  /**
-   * @brief calculate the score of the hard constraint
-   */
   HardConstrScore::UPtr eval(Load* load) override;
 };
 
 /**
- * @brief hard constraint for load unload policy about FIFO
+ * @brief 硬约束-装卸策略FIFO
  */
 class HcLoadUnloadPolicyFIFO : public HardConstraint {
  public:
-  HcLoadUnloadPolicyFIFO() : HardConstraint("HcLoadUnloadPolicyFIFO", 0, true, false) {};
+  HcLoadUnloadPolicyFIFO()
+      : HardConstraint(HardConstrCode::LoadUnloadPolicyFIFO, 0, true, false) {}
 
-  /**
-   * @brief calculate the score of the hard constraint
-   */
   HardConstrScore::UPtr eval(Load* load) override;
 };
