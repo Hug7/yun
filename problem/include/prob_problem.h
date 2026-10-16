@@ -68,9 +68,14 @@ class Problem {
   virtual Load* construct_load_by_order(std::vector<const Order*>& orders,
                                         VehicleResource::UPtr& vehicle_resource) const;
   /**
-   * @brief construct a new Load object for a vehicle
+   * @brief 根据订单列表和车辆构建 Load
+   * @param orders 订单列表
+   * @param vehicle 车辆
+   * @param store_buffer 非 nullptr 时, 本 Load 的时间窗重算只落该丢弃式写缓冲、不污染共享冻结表
+   *        (预检等使用临时 Order 的场景必须传入, 否则临时 Order 释放后键悬空 -> use-after-free)
    */
-  virtual Load* construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle) const;
+  virtual Load* construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle,
+                                       CacheStoreBuffer* store_buffer = nullptr) const;
   /**
    * @brief 将 segment 贪心插入 load
    * @param ori_load origin load

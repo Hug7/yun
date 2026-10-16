@@ -107,6 +107,11 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) c
       OrderFactory::creat_tmp_order(cargo_orders, parameter->plan_datetime_range, scenario);
   auto orders = std::vector<const Order*>({order});
 
+  // 预检用临时 Order 构造 Load 并求值, 该 Order 在本函数末尾释放。若把其时间窗键(指向临时
+  // Order 的指针)写入共享冻结表, Order 释放后键即悬空 -> 后续 lookup 比较时 use-after-free。
+  // 因此挂一个函数局部的丢弃式写缓冲: 重算只落本缓冲、永不归档, 函数返回即释放, 不污染冻结表。
+  CacheStoreBuffer precheck_tw_buffer;
+
   auto infeasible_cargo_order = std::make_unique<InfeasibleCargoOrder>(cargo_orders);
 
   // try all vehicles
@@ -119,7 +124,7 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) c
           InfeasibleReasonCollection::VEHICLE_RESOURCE, vehicle);
       continue;
     }
-    auto cur_load = this->construct_load_by_order(orders, vehicle);
+    const auto cur_load = this->construct_load_by_order(orders, vehicle, &precheck_tw_buffer);
     // check feasibility
     if (cur_load->constr_profile->is_infeasible()) {
       auto& cur_constr_profile = cur_load->constr_profile;
@@ -188,14 +193,17 @@ Load* Problem::construct_load_by_order(std::vector<const Order*>& orders,
   return load;
 }
 
-Load* Problem::construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle) const {
+Load* Problem::construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle,
+                                       CacheStoreBuffer* store_buffer) const {
   Load* load = this->pd_pattern->create_load(this->load_context);
+  // 局部丢弃式写缓冲: 调用方传入非空时, 本 Load 的时间窗重算只落该缓冲、不污染共享冻结表
+  load->store_buffer = store_buffer;
   for (const auto order : orders) {
     this->pd_pattern->insert_last_delivery(load, order);
   }
   load->change_vehicle(vehicle);
   this->eval_load(load);
-
+  load->store_buffer = nullptr;
   return load;
 }
 
