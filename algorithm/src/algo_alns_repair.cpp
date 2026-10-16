@@ -108,9 +108,9 @@ void RepairMatrix::init() {
   this->run_parallel(segments_count * load_count, [&](const int u, CacheStoreBuffer* store_buffer) {
     const int s = u / load_count;
     const int l = u % load_count;
-    std::vector<RepairLoad*>& row = *this->matrix_rows[static_cast<std::size_t>(s)];
-    delete row[static_cast<std::size_t>(l)];
-    row[static_cast<std::size_t>(l)] = this->eval_cell(s, l, store_buffer);
+    std::vector<RepairLoad*>& row = *this->matrix_rows[s];
+    delete row[l];
+    row[l] = this->eval_cell(s, l, store_buffer);
   });
 }
 

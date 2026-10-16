@@ -21,9 +21,13 @@ class AlnsSolutionManager {
    */
   Solution* best_sol;
   /**
-   * @brief 当前最优解
+   * @brief 当前解
    */
   Solution* cur_sol;
+  /**
+   * @brief 临时解
+   */
+  Solution* tmp_sol;
   /**
    * @brief 模拟退火-判断是否接收解
    */
@@ -34,13 +38,17 @@ class AlnsSolutionManager {
   ~AlnsSolutionManager();
   /**
    * @brief 重置 current solution
-   * @details 将 best solution 重新赋值给 current solution 和 temp solution
+   * @details 将 best solution 重新赋值给 current solution
    */
   void reset_cur_sol();
   /**
-   * @brief 更新 solution
-   * @param tmp_sol 临时 solution
+   * @brief 重置 temp solution
+   * @details 将 current solution 重新赋值给 temp solution
+   */
+  void reset_tmp_sol();
+  /**
+   * @brief 使用 tmp_sol 更新 cur_sol 和 best_sol
    * @return solution 的接受状态码
    */
-  [[nodiscard]] AlnsSaAcceptStatusCode update_sol(const Solution* tmp_sol);
+  [[nodiscard]] AlnsSaAcceptStatusCode update_sol();
 };

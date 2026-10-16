@@ -98,7 +98,7 @@ void AlnsOperatorManager::update_operator_weights(
     ++operator_combination_usages[operator_combination->operator_combination_ind];
   }
 
-  for (size_t u = 0; u < this->operator_combination_count; ++u) {
+  for (int u = 0; u < this->operator_combination_count; ++u) {
     if (operator_combination_usages[u] > 0) {
       this->operator_combination_weights[u] =
           (1 - this->parameter->operator_learning_factor) * this->operator_combination_weights[u];

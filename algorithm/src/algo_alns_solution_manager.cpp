@@ -11,12 +11,14 @@ AlnsSolutionManager::AlnsSolutionManager(const Workspace* _workspace,
   this->workspace = _workspace;
   this->best_sol = this->workspace->generate_sol();
   this->cur_sol = this->workspace->deep_copy_sol(this->best_sol);
+  this->tmp_sol = this->workspace->deep_copy_sol(this->best_sol);
   this->sa = new AlnsSimulatedAnnealing(_parameter);
 }
 
 AlnsSolutionManager::~AlnsSolutionManager() {
   delete this->best_sol;
   delete this->cur_sol;
+  delete this->tmp_sol;
   delete this->sa;
 }
 
@@ -25,20 +27,25 @@ void AlnsSolutionManager::reset_cur_sol() {
   this->cur_sol = this->workspace->deep_copy_sol(this->best_sol);
 }
 
-AlnsSaAcceptStatusCode AlnsSolutionManager::update_sol(const Solution* tmp_sol) {
-  const auto status_code = this->sa->cal_accept_status(tmp_sol, this->cur_sol, this->best_sol);
+void AlnsSolutionManager::reset_tmp_sol() {
+  delete this->tmp_sol;
+  this->tmp_sol = this->workspace->deep_copy_sol(this->cur_sol);
+}
+
+AlnsSaAcceptStatusCode AlnsSolutionManager::update_sol() {
+  const auto status_code = this->sa->cal_accept_status(this->tmp_sol, this->cur_sol, this->best_sol);
 
   if (status_code == AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION) {
     delete this->best_sol;
-    this->best_sol = this->workspace->deep_copy_sol(tmp_sol);
+    this->best_sol = this->workspace->deep_copy_sol(this->tmp_sol);
     delete this->cur_sol;
-    this->cur_sol = this->workspace->deep_copy_sol(tmp_sol);
-  } else if (status_code == AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION) {
+    this->cur_sol = this->workspace->deep_copy_sol(this->tmp_sol);
+  } else if (status_code == AlnsSaAcceptStatusCode::DOMINATE_CURRENT_SOLUTION) {
     delete this->cur_sol;
-    this->cur_sol = this->workspace->deep_copy_sol(tmp_sol);
+    this->cur_sol = this->workspace->deep_copy_sol(this->tmp_sol);
   } else if (status_code == AlnsSaAcceptStatusCode::REJECT) {
-    delete tmp_sol;
-    tmp_sol = this->workspace->deep_copy_sol(this->cur_sol);
+    delete this->tmp_sol;
+    this->tmp_sol = this->workspace->deep_copy_sol(this->cur_sol);
   }
 
   return status_code;

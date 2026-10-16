@@ -34,6 +34,8 @@ class Solution {
 
   Solution() = default;
 
+  ~Solution();
+
   [[nodiscard]] double total_cost() const;
 
   void add_load(Load* load);
