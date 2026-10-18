@@ -36,7 +36,7 @@ LocationManager::LocationManager(Labelset* labelset, const DimensionManager* dim
 }
 
 LocationManager::~LocationManager() {
-  for (auto location : this->locations) {
+  for (const auto& location : this->locations) {
     delete location;
   }
   this->locations.clear();

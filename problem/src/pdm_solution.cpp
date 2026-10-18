@@ -17,7 +17,7 @@ Solution::~Solution() {
 double Solution::total_cost() const {
   // 统计目标值(hard score + soft score + cost score)
   double total_obj_val = 0;
-  for (const auto load : this->loads) {
+  for (const auto& load : this->loads) {
     total_obj_val += load->constr_profile->obj_val;
   }
   // 未指派的订单(固定惩罚)

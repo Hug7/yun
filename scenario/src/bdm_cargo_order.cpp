@@ -66,7 +66,7 @@ CargoSubOrder* CargoOrder::get_cargo_sub_order(const std::string& code) {
 
 // ====== implement of CargoOrderManager ======
 CargoOrderManager::~CargoOrderManager() {
-  for (auto order : this->cargo_orders) {
+  for (const auto& order : this->cargo_orders) {
     delete order;
   }
   this->cargo_orders.clear();
