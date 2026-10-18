@@ -211,11 +211,11 @@ Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
                                              VehicleResource::UPtr& vehicle_resource,
                                              CacheStoreBuffer* store_buffer) const {
   // 只拷贝一次: 后续所有试插都在这份副本上进行, 每次试插后回滚
-  Load* load = this->pd_pattern->deep_copy_load(ori_load);
+  std::unique_ptr<Load> load(this->pd_pattern->deep_copy_load(ori_load));
   // 挂载任务私有写缓冲: 副本内的重复查找(逐槽试插同一个 node 的键)落在这里, 不触碰冻结表
   load->store_buffer = store_buffer;
   const Vehicle* ori_vehicle = load->vehicle;
-  std::vector<InsertSlot> slots = this->pd_pattern->enumerate_insert_slots(load, segment);
+  const std::vector<InsertSlot> slots = this->pd_pattern->enumerate_insert_slots(load.get(), segment);
 
   const Vehicle* best_vehicle = nullptr;
   double best_obj_val = std::numeric_limits<double>::max();
@@ -226,14 +226,14 @@ Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
     // 车型每轮重置: 否则上一轮选出的车型会泄漏到本轮, 结果依赖枚举顺序
     load->reset_route_profile();
     const std::vector<Activity*> inserted =
-        this->pd_pattern->insert_segment_at(load, segment, slots[u]);
+        this->pd_pattern->insert_segment_at(load.get(), segment, slots[u]);
     if (inserted.empty()) {
       continue;
     }
-    this->eval_load(load);
+    this->eval_load(load.get());
     // 如果是车辆导致的不可行，只挑选最优车型, 不占用车辆资源
     if (load->is_infeasible()) {
-      this->tmp_select_best_vehicle(load, vehicle_resource);
+      this->tmp_select_best_vehicle(load.get(), vehicle_resource);
     }
     // 同分时优先保留原车型
     if (load->is_feasible()) {
@@ -250,20 +250,19 @@ Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
   }
 
   if (best_vehicle == nullptr) {
-    delete load;
     return nullptr;
   }
   // 最优结构已在回滚中销毁: 用记录的槽位和车型重做一次插入
   load->reset_route_profile();
   load->change_vehicle(best_vehicle);
-  if (this->pd_pattern->insert_segment_at(load, segment, slots[best_slot_ind]).empty()) {
+  if (this->pd_pattern->insert_segment_at(load.get(), segment, slots[best_slot_ind]).empty()) {
     throw std::runtime_error("invalid insertion scheme in function `greedy_insert_segment_to_load`");
   }
-  this->eval_load(load);
+  this->eval_load(load.get());
 
   if (load->is_infeasible()) {
     throw std::runtime_error("插入segment后出现无解 in function `greedy_insert_segment_to_load`");
   }
 
-  return load;
+  return load.release();
 }
