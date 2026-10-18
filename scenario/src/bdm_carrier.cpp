@@ -38,12 +38,12 @@ CarrierManager::~CarrierManager() {
 }
 
 Carrier* CarrierManager::create_carrier(const std::string& code, const std::string& name) {
-  if (this->carrier_map.count(code)) {
-    throw new std::runtime_error("Carrier with code " + code + " already exists.");
+  if (this->carrier_map.contains(code)) {
+    throw std::runtime_error("Carrier with code " + code + " already exists.");
   }
-  Carrier* carrier = new Carrier(code, name, this->carrier_generate_index->next(),
-                                 this->labelset->empty_labelset_value(),
-                                 this->labelset->empty_labelset_value_bitset());
+  auto* carrier = new Carrier(code, name, this->carrier_generate_index->next(),
+                              this->labelset->empty_labelset_value(),
+                              this->labelset->empty_labelset_value_bitset());
 
   this->carriers.push_back(carrier);
   this->carrier_map[code] = carrier;
@@ -64,10 +64,10 @@ Vehicle* CarrierManager::create_vehicle(const std::string& carrier_code,
                                         const Location* orig_loc, const Location* dest_loc) {
   Carrier* carrier = this->get_carrier(carrier_code);
   if (carrier == nullptr) {
-    throw new std::runtime_error("Carrier with code " + carrier_code + " does not exist.");
+    throw std::runtime_error("Carrier with code " + carrier_code + " does not exist.");
   }
-  Vehicle* vehicle = new Vehicle(carrier, this->vehicle_generate_index->next(), vehicle_model,
-                                 count, orig_loc, dest_loc);
+  auto* vehicle = new Vehicle(carrier, this->vehicle_generate_index->next(), vehicle_model, count,
+                              orig_loc, dest_loc);
   this->vehicles.push_back(vehicle);
   carrier->vehicles.push_back(vehicle);
   carrier->vehicle_map[vehicle_model->code] = vehicle;
