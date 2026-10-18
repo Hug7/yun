@@ -5,9 +5,10 @@
 
 #include "algo_alns_repair.h"
 
+#include <spdlog/spdlog.h>
+
 #include <queue>
 #include <ranges>
-#include <spdlog/spdlog.h>
 #include <vector>
 
 #include "c_rang_utils.h"
@@ -60,16 +61,17 @@ void RepairMatrix::run_parallel(const int task_count,
   }
   LoadContext* load_context = this->context->problem->load_context;
   // 归档内置在并行入口中: run 返回前所有写缓冲都已并入冻结表
-  this->parallel_executor->run(task_count, load_context, [&](const int u, CacheStoreBuffer* store_buffer) {
-    try {
-      task(u, store_buffer);
-    } catch (const std::exception& e) {
-      // 异常一律收敛在任务体内, 不穿越并行边界: 单个 cell 算不出来不应中断整个 repair
-      spdlog::warn("repair task {} 失败, 按不可行处理: {}", u, e.what());
-    } catch (...) {
-      spdlog::warn("repair task {} 抛出未知异常, 按不可行处理", u);
-    }
-  });
+  this->parallel_executor->run(
+      task_count, load_context, [&](const int u, CacheStoreBuffer* store_buffer) {
+        try {
+          task(u, store_buffer);
+        } catch (const std::exception& e) {
+          // 异常一律收敛在任务体内, 不穿越并行边界: 单个 cell 算不出来不应中断整个 repair
+          spdlog::warn("repair task {} 失败, 按不可行处理: {}", u, e.what());
+        } catch (...) {
+          spdlog::warn("repair task {} 抛出未知异常, 按不可行处理", u);
+        }
+      });
 }
 
 RepairLoad* RepairMatrix::eval_cell(const int segment_ind, const int load_ind,
@@ -77,14 +79,15 @@ RepairLoad* RepairMatrix::eval_cell(const int segment_ind, const int load_ind,
   Load* load = nullptr;
   try {
     load = this->context->problem->greedy_insert_segment_to_load(
-        this->sol->loads[load_ind], this->segments[segment_ind], this->sol->vehicle_resource, store_buffer);
+        this->sol->loads[load_ind], this->segments[segment_ind], this->sol->vehicle_resource,
+        store_buffer);
   } catch (const std::exception& e) {
     // 该 cell 不可行: 收敛成占位对象, 不让异常冒穿并行边界
     spdlog::warn("repair cell (segment={}, load={}) 插入失败: {}", segment_ind, load_ind, e.what());
     load = nullptr;
   }
   if (load != nullptr) {
-    //写缓冲的生命周期只到任务结束, load 可能长期存活: 先解绑, 避免留下悬垂指针
+    // 写缓冲的生命周期只到任务结束, load 可能长期存活: 先解绑, 避免留下悬垂指针
     load->store_buffer = nullptr;
   }
   return new RepairLoad(segment_ind, load_ind, this->sol->loads[load_ind], load);
@@ -115,7 +118,8 @@ void RepairMatrix::init() {
 }
 
 void RepairMatrix::add_cell(RepairLoad* repair_load) {
-  std::vector<RepairLoad*>& row = *this->matrix_rows[static_cast<std::size_t>(repair_load->segment_ind)];
+  std::vector<RepairLoad*>& row =
+      *this->matrix_rows[static_cast<std::size_t>(repair_load->segment_ind)];
   const auto ind = static_cast<std::size_t>(repair_load->load_ind);
   delete row[ind];
   row[ind] = repair_load;
@@ -240,10 +244,9 @@ void AlnsRepairOperator::call(Solution* sol, SegmentBuilder* segment_builder) {
   // 生成 segments
   auto segments = segment_builder->call(sol);
   // 构造 load 和 segment 的成本矩阵
-  auto repair_matrix = new RepairMatrix(this->parallel_executor, this->context, sol, std::move(segments));
+  const auto repair_matrix = std::make_unique<RepairMatrix>(this->parallel_executor, this->context,
+                                                            sol, std::move(segments));
   repair_matrix->init();
   // 执行 repair 操作
-  this->execute(repair_matrix);
-  // 释放 repair_matrix
-  delete repair_matrix;
+  this->execute(repair_matrix.get());
 }
