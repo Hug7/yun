@@ -130,22 +130,6 @@ Order::~Order() {
   delete this->labelset_value;
 }
 
-std::vector<TimeWindow*> Order::copy_pick_time_windows() const {
-  std::vector<TimeWindow*> copy_tws(this->pick_time_windows_len);
-  for (int u = 0; u < this->pick_time_windows_len; ++u) {
-    copy_tws[u] = new TimeWindow(this->pick_time_windows[u]);
-  }
-  return copy_tws;
-}
-
-std::vector<TimeWindow*> Order::copy_drop_time_windows() const {
-  std::vector<TimeWindow*> copy_tws(this->drop_time_windows_len);
-  for (int u = 0; u < this->drop_time_windows_len; ++u) {
-    copy_tws[u] = new TimeWindow(this->drop_time_windows[u]);
-  }
-  return copy_tws;
-}
-
 // ====== implement of OrderFactory ======
 Order* OrderFactory::creat_order(std::vector<CargoOrder*>& cargo_orders, int ind,
                                  const PlanDatetimeRange* plan_datetime_range,

@@ -83,10 +83,6 @@ class Order {
         Bitset::UPtr available_vehicle_bitset);
 
   ~Order();
-
-  [[nodiscard]] std::vector<TimeWindow*> copy_pick_time_windows() const;
-
-  [[nodiscard]] std::vector<TimeWindow*> copy_drop_time_windows() const;
 };
 
 namespace OrderFactory {
