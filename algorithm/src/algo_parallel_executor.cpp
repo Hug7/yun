@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <atomic>
 #include <exception>
+#include <memory>
 #include <thread>
 #include <vector>
 
@@ -55,14 +56,14 @@ struct ChunkTask {
  */
 struct RootTask {
   auto operator()(auto, const TaskBody* body, std::atomic<int>* cursor, const int task_count,
-                  std::vector<CacheStoreBuffer*>& store_buffers, const int chunk_count) const
-      -> lf::task<> {
+                  std::vector<std::unique_ptr<CacheStoreBuffer>>& store_buffers,
+                  const int chunk_count) const -> lf::task<> {
     for (int c = 0; c < chunk_count - 1; ++c) {
       co_await lf::fork(ChunkTask{})(body, cursor, task_count,
-                                     store_buffers[static_cast<std::size_t>(c)]);
+                                     store_buffers[static_cast<std::size_t>(c)].get());
     }
     co_await lf::call(ChunkTask{})(body, cursor, task_count,
-                                   store_buffers[static_cast<std::size_t>(chunk_count - 1)]);
+                                   store_buffers[static_cast<std::size_t>(chunk_count - 1)].get());
     co_await lf::join;
   }
 };
@@ -88,8 +89,9 @@ struct ParallelGuard {
 
 // ====== implement of ParallelExecutor ======
 ParallelExecutor::ParallelExecutor(const int worker_count)
-    : pool(std::make_unique<lf::lazy_pool>(worker_count > 0 ? static_cast<std::size_t>(worker_count)
-                                                            : std::thread::hardware_concurrency() - 1)),
+    : pool(std::make_unique<lf::lazy_pool>(worker_count > 0
+                                               ? static_cast<std::size_t>(worker_count)
+                                               : std::thread::hardware_concurrency() - 1)),
       worker_count_(worker_count) {}
 
 ParallelExecutor::~ParallelExecutor() = default;
@@ -102,10 +104,10 @@ void ParallelExecutor::run(const int task_count, LoadContext* load_context,
   // 分片数取 min(任务数, worker 数 + 提交方): 每片一个写缓冲,
   // 片内以原子计数器动态领取
   const int chunk_count = std::min(task_count, std::max(this->worker_count_, 1) + 1);
-  std::vector<CacheStoreBuffer*> store_buffers;
+  std::vector<std::unique_ptr<CacheStoreBuffer>> store_buffers;
   store_buffers.reserve(chunk_count);
   for (int c = 0; c < chunk_count; ++c) {
-    store_buffers.push_back(new CacheStoreBuffer());
+    store_buffers.push_back(std::make_unique<CacheStoreBuffer>());
   }
 
   std::atomic<int> cursor{0};
@@ -114,11 +116,10 @@ void ParallelExecutor::run(const int task_count, LoadContext* load_context,
     lf::sync_wait(*this->pool, RootTask{}, &task, &cursor, task_count, store_buffers, chunk_count);
   }
   // 屏障之后单线程归档: 此刻已无任何并发读者
-  for (const auto& store_buffer : store_buffers) {
+  // 即使上方 sync_wait / archive 抛异常也不会泄漏 (ParallelGuard 仍保证 off_parallel)
+  for (auto& store_buffer : store_buffers) {
     if (!store_buffer->empty()) {
-      load_context->cache->archive(store_buffer);
+      load_context->cache->archive(store_buffer.get());
     }
-    delete store_buffer;
   }
-  store_buffers.clear();
 }
