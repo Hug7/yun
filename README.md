@@ -125,17 +125,19 @@ delete solver;
 
 创建 `Solver` 时实际完成的是 `SolverContext` 构造，顺序如下：
 
-1. 生成 `request_id`，格式为 `%Y%m%d%H%M%S_{进程标识}_{序号}`。
-2. 拼接本次请求的输出目录：`root_dir/output/{request_id}`。
-3. 创建请求级 logger，同时输出到控制台、`log_dir/{request_id}.log` 和 `output_dir/{request_id}.log`。
-4. 通过 `StandardCsvReader` 读取场景。
-5. 创建并后处理 `Parameter`。
-6. 创建 `VisualManager`，负责当前请求的 JSON 结果导出。
+1. 生成 `request_id`，格式为 `%Y%m%d%H%M%S_{进程标识}_{序号}`;
+2. 拼接本次请求的输出目录：`root_dir/output/{request_id}`;
+3. 创建请求级 logger，同时输出到控制台、`log_dir/{request_id}.log` 和 `output_dir/{request_id}.log`;
+4. 通过 `StandardCsvReader` 读取场景;
+5. 读取 `Parameter`;
+6. 创建 `VisualManager`，负责当前请求的 JSON 结果导出;
 7. 创建 `Problem`，建立取送货模式、装卸策略、装载上下文和三重约束管理器。
 
-输入数据表结构: [scenario_schema_reference](docs/scenario_schema_reference.md)
+`scenario` 输入数据表结构: [scenario_schema_reference.md](docs/scenario_schema_reference.md)
 
-输出数据表结构: [visual_schema_reference](docs/visual_schema_reference.md)
+`parameter`输入数据表结构: [parameter_reference.md](docs/parameter_reference.md)
+
+输出数据表结构: [visual_schema_reference.md](docs/visual_schema_reference.md)
 
 ### 3. 主求解链路
 
@@ -153,7 +155,7 @@ delete solver;
     - `alns()`：执行 alns 算法优化路由。
 6. **导出最终结果**：Lua 脚本正常结束后，读取 Workspace 的 `loads_view()` 和 `unassigned_orders_view()`，转换为可视化对象并写入 JSON。
 
-使用手册见: [dsl_user_guide](docs/dsl_user_guide.md)
+使用手册见: [dsl_user_guide.md](docs/dsl_user_guide.md)
 
 ### 4. 输出与退出
 
