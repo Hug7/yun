@@ -130,7 +130,7 @@ class AlnsOperatorManager {
  * @param parallel_executor 线程池, 由调用方持有, repair算子借用其并行构造修复矩阵
  * @return
  */
-AlnsOperatorManager* create_alns_operator(const sol::table& cfg,
-                                          const AlnsParameter* alns_parameter,
-                                          const Workspace* workspace,
-                                          ParallelExecutor* parallel_executor);
+std::unique_ptr<AlnsOperatorManager> create_alns_operator(const sol::table& cfg,
+                                                          const AlnsParameter* alns_parameter,
+                                                          const Workspace* workspace,
+                                                          ParallelExecutor* parallel_executor);

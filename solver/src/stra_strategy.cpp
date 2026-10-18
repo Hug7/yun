@@ -79,15 +79,14 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
     const auto parallel_executor = this->get_parallel_executor(alns_parameter->worker_count);
     // 解析alns算子
     const auto operator_manager =
-        create_alns_operator(cfg, alns_parameter, workspace, parallel_executor);
+        create_alns_operator(cfg, alns_parameter.get(), workspace, parallel_executor);
     // 构建alns model
-    const AlnsModel* alns_model = new AlnsModel(workspace, alns_parameter, operator_manager);
+    const auto alns_model =
+        std::make_unique<AlnsModel>(workspace, alns_parameter.get(), operator_manager.get());
     // 求解
     Solution* res_sol = alns_model->solve();
     // 将结果 res_sol 替换
     workspace->move_solution(res_sol);
-    // 释放 alns_model
-    delete alns_model;
   });
 }
 

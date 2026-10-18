@@ -183,7 +183,8 @@ void create_alns_repair_operator(AlnsOperatorManager* alns_operator_manager, con
                                  const AlnsParameter* alns_parameter, const Workspace* workspace,
                                  ParallelExecutor* parallel_executor) {
   if (cfg[AlnsParameterLuaField::REPAIR_OPERATOR_PARAMS].valid()) {
-    const sol::table repair_params = cfg[AlnsParameterLuaField::REPAIR_OPERATOR_PARAMS].get<sol::table>();
+    const sol::table repair_params =
+        cfg[AlnsParameterLuaField::REPAIR_OPERATOR_PARAMS].get<sol::table>();
     repair_params.for_each([&](const sol::object& key, const sol::object& value) {
       // key = 1, 2, 3... (数组下标)
       // value = 每个元素 table
@@ -219,15 +220,16 @@ void create_alns_repair_operator(AlnsOperatorManager* alns_operator_manager, con
 }
 }  // namespace
 
-AlnsOperatorManager* create_alns_operator(const sol::table& cfg,
-                                          const AlnsParameter* alns_parameter,
-                                          const Workspace* workspace,
-                                          ParallelExecutor* parallel_executor) {
-  const auto alns_operator_manager = new AlnsOperatorManager(alns_parameter);
+std::unique_ptr<AlnsOperatorManager> create_alns_operator(const sol::table& cfg,
+                                                          const AlnsParameter* alns_parameter,
+                                                          const Workspace* workspace,
+                                                          ParallelExecutor* parallel_executor) {
+  auto alns_operator_manager = std::make_unique<AlnsOperatorManager>(alns_parameter);
   // 创建ruin算子
-  create_alns_ruin_operator(alns_operator_manager, cfg, alns_parameter, workspace);
+  create_alns_ruin_operator(alns_operator_manager.get(), cfg, alns_parameter, workspace);
   // 创建repair算子
-  create_alns_repair_operator(alns_operator_manager, cfg, alns_parameter, workspace, parallel_executor);
+  create_alns_repair_operator(alns_operator_manager.get(), cfg, alns_parameter, workspace,
+                              parallel_executor);
   // 初始化权重
   alns_operator_manager->operator_combination_count =
       alns_operator_manager->ruin_operator_count * alns_operator_manager->repair_operator_count;

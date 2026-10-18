@@ -5,14 +5,16 @@
 
 #pragma once
 
-#include <sol/sol.hpp>
 #include <spdlog/spdlog.h>
+
+#include <memory>
+#include <sol/sol.hpp>
 
 /**
  * @brief ALNS 算法的参数在lua中的字段集合
  */
 class AlnsParameterLuaField {
-  public:
+ public:
   static constexpr const char* WORKER_COUNT = "worker_count";
   static constexpr const char* MAX_ITER = "max_iter";
   static constexpr const char* MAX_SUB_ITER = "max_sub_iter";
@@ -91,5 +93,5 @@ class AlnsParameter {
  * @param logger logger
  * @return
  */
-AlnsParameter* parse_alns_parameter(const sol::table& cfg, const std::shared_ptr<spdlog::logger>& logger);
-
+std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
+                                                    const std::shared_ptr<spdlog::logger>& logger);

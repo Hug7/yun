@@ -15,8 +15,6 @@ AlnsModel::AlnsModel(const Workspace* _workspace, const AlnsParameter* _paramete
       segment_builder(new SegmentBuilder()) {}
 
 AlnsModel::~AlnsModel() {
-  delete this->parameter;
-  delete this->operator_manager;
   delete this->sol_manager;
   delete this->segment_builder;
 }
@@ -34,7 +32,8 @@ Solution* AlnsModel::solve() const {
         this->operator_manager->roulette_wheel_operator(this->parameter->max_sub_iter);
     for (int sub_iter = 0; sub_iter < this->parameter->max_sub_iter; ++sub_iter) {
       // 执行 ruin 算子
-      this->operator_manager->ruin_operator(operator_combinations[sub_iter])->call(this->sol_manager->tmp_sol);
+      this->operator_manager->ruin_operator(operator_combinations[sub_iter])
+          ->call(this->sol_manager->tmp_sol);
       // 执行 repair 算子
       this->operator_manager->repair_operator(operator_combinations[sub_iter])
           ->call(this->sol_manager->tmp_sol, this->segment_builder);
