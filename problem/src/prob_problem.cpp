@@ -103,9 +103,9 @@ void Problem::tmp_select_best_vehicle(Load* load, VehicleResource::UPtr& vehicle
 InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) const {
   // construct order
   auto cargo_orders = std::vector<CargoOrder*>({cargo_order});
-  const Order* order =
-      OrderFactory::creat_tmp_order(cargo_orders, parameter->plan_datetime_range, scenario);
-  auto orders = std::vector<const Order*>({order});
+  const std::unique_ptr<Order> order(
+      OrderFactory::creat_tmp_order(cargo_orders, parameter->plan_datetime_range, scenario));
+  auto orders = std::vector<const Order*>({order.get()});
 
   // 预检用临时 Order 构造 Load 并求值, 该 Order 在本函数末尾释放。若把其时间窗键(指向临时
   // Order 的指针)写入共享冻结表, Order 释放后键即悬空 -> 后续 lookup 比较时 use-after-free。
@@ -124,7 +124,8 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) c
           InfeasibleReasonCollection::VEHICLE_RESOURCE, vehicle);
       continue;
     }
-    const auto cur_load = this->construct_load_by_order(orders, vehicle, &precheck_tw_buffer);
+    std::unique_ptr<Load> cur_load(
+        this->construct_load_by_order(orders, vehicle, &precheck_tw_buffer));
     // check feasibility
     if (cur_load->constr_profile->is_infeasible()) {
       auto& cur_constr_profile = cur_load->constr_profile;
@@ -139,14 +140,11 @@ InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) c
     } else {
       has_feasible_flag = true;
     }
-    delete cur_load;
+    cur_load.reset();
     if (has_feasible_flag) {
       break;
     }
   }
-  // release order
-  delete order;
-
   if (has_feasible_flag) {
     // 有可行解，则返回空指针
     return nullptr;
