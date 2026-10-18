@@ -36,10 +36,9 @@ void Solver::solve() {
   delete this->order_pool;
   this->order_pool = nullptr;
   // precheck, 发现不可解的订单则提前退出
-  const auto solver_precheck = new SolverPrecheck(this->context);
-  const bool can_continue_flag = solver_precheck->call();
-  delete solver_precheck;
-  if (!can_continue_flag) {
+  const auto solver_precheck = std::make_unique<SolverPrecheck>(this->context);
+  if (!solver_precheck->call()) {
+    this->context->logger->warn("precheck 因为存在订单未分配所以提前退出！");
     return;
   }
   // 构造订单池
