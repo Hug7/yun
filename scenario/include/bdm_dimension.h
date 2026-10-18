@@ -77,18 +77,17 @@ class DimensionManager {
    * @param precision 维度精度
    * @return 维度对象指针，若维度已存在则返回nullptr
    */
-  Dimension* create_dimension(const std::string& code, const std::string& name,
-                              const int precision);
+  Dimension* create_dimension(const std::string& code, const std::string& name, int precision);
 
   /**
    * @brief 获取维度对象指针
    * @param code 维度编码
    * @return 维度对象指针，若不存在则返回nullptr
    */
-  Dimension* get_dimension(std::string code) const;
+  [[nodiscard]] Dimension* get_dimension(const std::string& code) const;
 
   /**
    * @brief 获取所有维度的空数组
    */
-  std::vector<long> empty_dim_values() const;
+  [[nodiscard]] std::vector<long> empty_dim_values() const;
 };
