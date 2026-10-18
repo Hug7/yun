@@ -89,17 +89,17 @@ std::vector<TimeWindow*> Node::intersection_time_windows() const {
   if (this->first == nullptr) {
     return {};
   }
-  std::vector<std::vector<TimeWindow*>> ori_tws_arr;
+  std::vector<const std::vector<TimeWindow*>*> ori_tws_arr;
   if (this->activity_type == ActivityType::PICK) {
     auto tail_activity = this->last;
     while (tail_activity) {
-      ori_tws_arr.push_back(tail_activity->order->pick_time_windows);
+      ori_tws_arr.push_back(&tail_activity->order->pick_time_windows);
       tail_activity = tail_activity->prev;
     }
   } else if (this->activity_type == ActivityType::DROP) {
     auto tail_activity = this->last;
     while (tail_activity) {
-      ori_tws_arr.push_back(tail_activity->order->drop_time_windows);
+      ori_tws_arr.push_back(&tail_activity->order->drop_time_windows);
       tail_activity = tail_activity->prev;
     }
   }
@@ -180,7 +180,7 @@ Node* NodeOps::tail(const Node::UPtr& head) {
 
 Node::UPtr NodeOps::splice_out(Node::UPtr& from_ptr, Node* to) {
   auto subchain = std::move(from_ptr);
-  Node* pred = subchain->prev;          // 记住前驱
+  Node* pred = subchain->prev;  // 记住前驱
 
   from_ptr = std::move(to->next);  // 后半段接回前驱
 

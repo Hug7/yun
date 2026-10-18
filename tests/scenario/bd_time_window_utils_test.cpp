@@ -54,7 +54,7 @@ TEST(TimeWindowUntilsIntersection, ReturnsNullWhenDisjoint) {
 // ===== TimeWindowUntilsIntersectionTwsArr =====
 
 TEST(TimeWindowUntilsIntersectionTwsArr, EmptyArrayReturnsEmpty) {
-  std::vector<std::vector<TimeWindow*>> tws_arr;
+  std::vector<const std::vector<TimeWindow*>*> tws_arr;
 
   std::vector<TimeWindow*> result = TimeWindowUntils::intersection_tws_arr(tws_arr);
   EXPECT_TRUE(result.empty());
@@ -62,7 +62,7 @@ TEST(TimeWindowUntilsIntersectionTwsArr, EmptyArrayReturnsEmpty) {
 
 TEST(TimeWindowUntilsIntersectionTwsArr, SingleGroupReturnsItsWindows) {
   std::vector<TimeWindow*> tws = {new TimeWindow(100, 200), new TimeWindow(300, 400)};
-  std::vector<std::vector<TimeWindow*>> tws_arr = {tws};
+  std::vector<const std::vector<TimeWindow*>*> tws_arr = {&tws};
 
   std::vector<TimeWindow*> result = TimeWindowUntils::intersection_tws_arr(tws_arr);
   ASSERT_EQ(result.size(), 2);
@@ -80,7 +80,7 @@ TEST(TimeWindowUntilsIntersectionTwsArr, SingleGroupReturnsItsWindows) {
 TEST(TimeWindowUntilsIntersectionTwsArr, IntersectsOverlappingSingleWindowPerGroup) {
   std::vector<TimeWindow*> tws_a = {new TimeWindow(0, 100)};
   std::vector<TimeWindow*> tws_b = {new TimeWindow(10, 20)};
-  std::vector<std::vector<TimeWindow*>> tws_arr = {tws_a, tws_b};
+  std::vector<const std::vector<TimeWindow*>*> tws_arr = {&tws_a, &tws_b};
 
   std::vector<TimeWindow*> result = TimeWindowUntils::intersection_tws_arr(tws_arr);
   ASSERT_EQ(result.size(), 1);
@@ -94,7 +94,7 @@ TEST(TimeWindowUntilsIntersectionTwsArr, IntersectsOverlappingSingleWindowPerGro
 TEST(TimeWindowUntilsIntersectionTwsArr, ReturnsEmptyWhenNoOverlap) {
   std::vector<TimeWindow*> tws_a = {new TimeWindow(0, 10)};
   std::vector<TimeWindow*> tws_b = {new TimeWindow(20, 30)};
-  std::vector<std::vector<TimeWindow*>> tws_arr = {tws_a, tws_b};
+  std::vector<const std::vector<TimeWindow*>*> tws_arr = {&tws_a, &tws_b};
 
   std::vector<TimeWindow*> result = TimeWindowUntils::intersection_tws_arr(tws_arr);
   EXPECT_TRUE(result.empty());
@@ -107,7 +107,7 @@ TEST(TimeWindowUntilsIntersectionTwsArr, IntersectsMultipleWindowsAcrossThreeGro
   std::vector<TimeWindow*> tws_a = {new TimeWindow(0, 5), new TimeWindow(7, 10)};
   std::vector<TimeWindow*> tws_b = {new TimeWindow(0, 10)};
   std::vector<TimeWindow*> tws_c = {new TimeWindow(0, 6), new TimeWindow(7, 10)};
-  std::vector<std::vector<TimeWindow*>> tws_arr = {tws_a, tws_b, tws_c};
+  std::vector<const std::vector<TimeWindow*>*> tws_arr = {&tws_a, &tws_b, &tws_c};
 
   std::vector<TimeWindow*> result = TimeWindowUntils::intersection_tws_arr(tws_arr);
   ASSERT_EQ(result.size(), 2);
@@ -132,7 +132,7 @@ TEST(TimeWindowUntilsIntersectionTwsArr, IntersectsLaterWindowsInEachGroup) {
   std::vector<TimeWindow*> tws_a = {new TimeWindow(0, 10), new TimeWindow(20, 30)};
   std::vector<TimeWindow*> tws_b = {new TimeWindow(5, 25)};
   std::vector<TimeWindow*> tws_c = {new TimeWindow(8, 22)};
-  std::vector<std::vector<TimeWindow*>> tws_arr = {tws_a, tws_b, tws_c};
+  std::vector<const std::vector<TimeWindow*>*> tws_arr = {&tws_a, &tws_b, &tws_c};
 
   std::vector<TimeWindow*> result = TimeWindowUntils::intersection_tws_arr(tws_arr);
   ASSERT_EQ(result.size(), 2);
@@ -156,7 +156,7 @@ TEST(TimeWindowUntilsIntersectionTwsArr, IntersectsLaterWindowsInEachGroup) {
 TEST(TimeWindowUntilsIntersectionTwsArr, EmptyInnerGroupReturnsEmpty) {
   std::vector<TimeWindow*> tws_a;
   std::vector<TimeWindow*> tws_b = {new TimeWindow(0, 10)};
-  std::vector<std::vector<TimeWindow*>> tws_arr = {tws_a, tws_b};
+  std::vector<const std::vector<TimeWindow*>*> tws_arr = {&tws_a, &tws_b};
 
   std::vector<TimeWindow*> result = TimeWindowUntils::intersection_tws_arr(tws_arr);
   EXPECT_TRUE(result.empty());
