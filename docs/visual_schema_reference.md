@@ -4,7 +4,7 @@
 
 ## 通用约定
 
-- 每个文件的内容都是一个 JSON 数组，数组元素分别为车次、车次站点、订单明细或不可解订单记录。
+- 每个文件的内容都是一个 JSON 数组，数组元素分别为车次、车次站点、订单明细或不可解订单记录。（例外：`PlanSummary.json` 的内容是一个单一的 JSON 对象，不是数组。）
 - 字符串类型为 `string`，整数类型为 `int` 或 `long`，浮点类型为 `double`。
 - 时间字符串格式为 `%Y-%m-%d %H:%M:%S`，时间戳为 Unix 时间戳，单位是秒。
 - 所有字段均由序列化器固定输出。集合没有元素时输出 `[]`，字符串没有值时输出 `""`，数值没有值时输出 `0`。
@@ -18,6 +18,7 @@
 | `LoadLocations.json` | `LoadLocation[]` | 车次站点对象 | 车次线路中每个站点的作业、订单、标签和计划时间 |
 | `UnassignedCargoOrders.json` | `CargoOrder[]` | 订单明细对象 | 未被指派到任何车次的订单明细 |
 | `InfeasibleCargoOrders.json` | `InfeasibleCargoOrder[]` | 不可解订单对象 | 订单不可解原因，以及按承运商和车型区分的原因 |
+| `PlanSummary.json` | `PlanSummary` | 规划结果汇总对象 | 全局维度的车次数、货单数、行驶、成本、求解耗时，以及按「承运商 + 车型」分组的汇总 |
 
 ## 复用对象
 
@@ -182,3 +183,53 @@
 | CarrierCode | string | 是 | 承运商编码 |
 | VehicleModelCode | string | 是 | 车型编码 |
 | InfeasibleReasons | InfeasibleReasonObject[] | 是 | 该承运商和车型组合下的不可解原因；没有时为空数组 |
+
+---
+
+## 5. `PlanSummary.json`
+
+根元素为 `PlanSummary` 非数组对象。汇总整份规划结果的全局指标，以及按「承运商 + 车型」分组的指标。
+
+| 字段 | 数据类型 | 必填 | 说明 |
+|---|---|---|---|
+| UnassignedCargoOrderCount | int | 是 | 未指派的`cargo order`数 |
+| TotalCargoOrderCount | int | 是 | 总货单数 = 已指派`cargo order`数 + 未指派`cargo order`数 |
+| TotalLoadCount | int | 是 | 总车次数 |
+| TotalTravelDistance | long | 是 | 全部车次的总行驶距离，单位：米 |
+| TotalTravelTime | long | 是 | 全部车次的总行驶时长，单位：秒 |
+| TotalCost | double | 是 | 总成本 |
+| TotalPenalty | double | 是 | 总惩罚值 |
+| TotalObjective | double | 是 | 总目标值 = 总成本 + 总惩罚值 |
+| StartDateTime | string | 是 | 开始求解时间节点，格式 `%Y%m%d%H%M%S` |
+| EndDateTime | string | 是 | 结束求解时间节点，格式 `%Y%m%d%H%M%S` |
+| RunningTimeSecond | long | 是 | 总求解时长，单位：秒 |
+| CarrierVehicleSummaries | CarrierVehicleSummary[] | 是 | 按 "承运商 + 车型" 分组的汇总；没有分组时为空数组 |
+| FuncTimings | FuncTiming[] | 是 | 各策略函数的耗时明细；没有时为空数组 |
+
+### CarrierVehicleSummary（承运商车型汇总对象）
+
+`PlanSummary.json` 中 `CarrierVehicleSummaries` 字段的元素。
+其中，`CarrierCode`和`VehicleModelCode`构成唯一主健。
+
+| 字段 | 数据类型 | 必填 | 说明 |
+|---|---|---|---|
+| CarrierCode | string | 是 | 承运商编码 |
+| VehicleModelCode | string | 是 | 车型编码 |
+| CargoOrderCount | int | 是 | 该分组的总 `cargo_order` 数 |
+| LoadCount | int | 是 | 该该分组的总车次数 |
+| TotalTravelDistance | long | 是 | 该分组的总行驶距离，单位：米 |
+| TotalTravelTime | long | 是 | 该分组的总行驶时长，单位：秒 |
+| TotalCost | double | 是 | 该分组的总成本 |
+| TotalPenalty | double | 是 | 该分组的总惩罚值 |
+| TotalObjective | double | 是 | 该分组的总目标值 |
+
+### FuncTiming（策略函数耗时对象）
+
+`PlanSummary.json` 中 `FuncTimings` 字段的元素。
+
+| 字段 | 数据类型 | 必填 | 说明 |
+|---|---|---|---|
+| FuncCode | string | 是 | 策略函数编码 |
+| StartDateTime | string | 是 | 开始时间，格式 `%Y%m%d%H%M%S` |
+| EndDateTime | string | 是 | 结束时间，格式 `%Y%m%d%H%M%S` |
+| ElapsedSecond | long | 是 | 函数耗时 = `EndDateTime − StartDateTime`，单位：秒 |

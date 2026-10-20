@@ -94,7 +94,9 @@ class Load {
 
   void change_vehicle(const Vehicle* _vehicle);
 
-  [[nodiscard]] long get_total_dist() const;
+  [[nodiscard]] long get_total_travel_dist() const;
+
+  [[nodiscard]] long get_total_travel_time() const;
 
   [[nodiscard]] double get_obj_val() const;
 

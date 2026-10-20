@@ -47,9 +47,14 @@ void Solver::solve() {
   this->workspace = new Workspace(this->context, order_pool);
   // 注册策略
   const auto strategy_manager = std::make_unique<StrategyManager>(this->workspace);
+  // 开始solve函数计时
+  auto solve_func_timing = std::make_unique<FuncTiming>("solve");
   // 执行策略
   strategy_manager->exec_script();
+  // 记录solve函数计时
+  this->workspace->add_func_timing(std::move(solve_func_timing));
   // 结果转换并导出
-  this->context->visual_manager->localization_plan_result(workspace->loads_view(),
-                                                          workspace->unassigned_orders_view());
+  this->context->visual_manager->localization_plan_result(this->workspace->loads_view(),
+                                                          this->workspace->unassigned_orders_view(),
+                                                          this->workspace->func_timings);
 }

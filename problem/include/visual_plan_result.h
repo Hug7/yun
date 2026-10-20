@@ -9,6 +9,9 @@
 #include <utility>
 #include <vector>
 
+class Load;
+class Order;
+
 struct VisualInfeasibleReason {
   std::string reason_code;
 
@@ -200,6 +203,135 @@ struct VisualUnassignedCargoOrder {
   VisualUnassignedCargoOrder() = default;
 };
 
+struct VisualFuncTiming {
+  /**
+   * @brief 函数编码
+   */
+  std::string func_code;
+  /**
+   * @brief 开始时间
+   * @details 格式 %Y%m%d%H%M%S
+   */
+  std::string start_date_time;
+  /**
+   * @brief 结束时间
+   * @details 格式 %Y%m%d%H%M%S
+   */
+  std::string end_date_time;
+  /**
+   * @brief 函数耗时
+   * @details = end_date_time - start_date_time，单位(s)
+   */
+  long elapsed_second{0};
+
+  VisualFuncTiming() = default;
+};
+
+
+struct VisualCarrierVehicleSummary {
+  /**
+   * @brief 承运商编码
+   */
+  std::string carrier_code;
+  /**
+   * @brief 车型编码
+   */
+  std::string vehicle_model_code;
+  /**
+   * @brief cargo order 数量
+   */
+  int cargo_order_count{0};
+  /**
+   * @brief load 数量
+   */
+  int load_count{0};
+  /**
+   * @brief 总行驶距离(m)
+   */
+  long total_travel_distance{0};
+  /**
+   * @brief 总行驶耗时(s)
+   */
+  long total_travel_time{0};
+  /**
+   * @brief 总成本(= LoadConstrProfile::total_cost)
+   */
+  double total_cost{0.0};
+  /**
+   * @brief 总惩罚值(仅 soft = LoadConstrProfile::total_soft_penalty)
+   */
+  double total_penalty{0.0};
+  /**
+   * @brief 总目标值(= LoadConstrProfile::obj_val = hard + soft + cost)
+   */
+  double total_objective{0.0};
+
+  VisualCarrierVehicleSummary() = default;
+};
+
+/**
+ * @brief 规划结果汇总
+ */
+struct VisualPlanSummary {
+  /**
+   * @brief 未分配的 cargo order 数
+   */
+  int unassigned_cargo_order_count{0};
+  /**
+   * @brief 总 cargo order 数
+   */
+  int total_cargo_order_count{0};
+  /**
+   * @brief 总 load 数
+   */
+  int total_load_count{0};
+  /**
+   * @brief 总行驶距离(m)
+   */
+  long total_travel_distance{0};
+  /**
+   * @brief 总行驶耗时(s)
+   */
+  long total_travel_time{0};
+  /**
+   * @brief 总成本(= Σ LoadConstrProfile::total_cost)
+   */
+  double total_cost{0.0};
+  /**
+   * @brief 总惩罚值(仅 soft = Σ total_soft_penalty)
+   */
+  double total_penalty{0.0};
+  /**
+   * @brief 总目标值(= Σ obj_val = 总成本 + 总惩罚值)
+   */
+  double total_objective{0.0};
+  /**
+   * @brief 承运商+车型 维度分组汇总
+   */
+  std::vector<VisualCarrierVehicleSummary> carrier_vehicle_summaries;
+  /**
+   * @brief 开始求解时间节点
+   * @details 格式 %Y%m%d%H%M%S
+   */
+  std::string start_date_time;
+  /**
+   * @brief 结束求解时间节点
+   * @details 格式 %Y%m%d%H%M%S
+   */
+  std::string end_date_time;
+  /**
+   * @brief 总求解时长
+   * @details = end_date_time - start_date_time，单位(s)
+   */
+  long running_time_second{0};
+  /**
+   * @brief 策略函数耗时列表
+   */
+  std::vector<VisualFuncTiming> func_timings;
+
+  VisualPlanSummary() = default;
+};
+
 namespace VisualJson {
 /**
  * @brief 将车次集合序列化为json文本
@@ -225,4 +357,10 @@ std::string dumps(const std::vector<VisualCargoOrder>& visual_cargo_orders);
  * @return json文本, 字段同 PrecheckInfeasibleCargoOrderSchema::headers
  */
 std::string dumps(const std::vector<VisualInfeasibleCargoOrder>& visual_infeasible_cargo_orders);
+/**
+ * @brief 将规划结果全局汇总序列化为json文本
+ * @param summary 规划结果全局汇总
+ * @return json文本
+ */
+std::string dumps(const VisualPlanSummary& summary);
 }  // namespace VisualJson

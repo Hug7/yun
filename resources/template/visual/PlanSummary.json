@@ -1,0 +1,51 @@
+{
+  "UnassignedCargoOrderCount": 0,
+  "TotalCargoOrderCount": 91,
+  "TotalLoadCount": 13,
+  "TotalTravelDistance": 8817827,
+  "TotalTravelTime": 424935,
+  "TotalCost": 0,
+  "TotalPenalty": 4408913.5,
+  "TotalObjective": 4408913.5,
+  "StartDateTime": "2026-10-20 23:18:03",
+  "EndDateTime": "2026-10-20 23:18:10",
+  "RunningTimeSecond": 7,
+  "CarrierVehicleSummaries": [
+    {
+      "CarrierCode": "A",
+      "VehicleModelCode": "A_7M2",
+      "CargoOrderCount": 36,
+      "LoadCount": 3,
+      "TotalTravelDistance": 2002192,
+      "TotalTravelTime": 105418,
+      "TotalCost": 0,
+      "TotalPenalty": 1001096,
+      "TotalObjective": 1001096
+    },
+    {
+      "CarrierCode": "A",
+      "VehicleModelCode": "A_4M2",
+      "CargoOrderCount": 55,
+      "LoadCount": 10,
+      "TotalTravelDistance": 6815635,
+      "TotalTravelTime": 319517,
+      "TotalCost": 0,
+      "TotalPenalty": 3407817.5,
+      "TotalObjective": 3407817.5
+    }
+  ],
+  "FuncTimings": [
+    {
+      "FuncCode": "construct_knn",
+      "StartDateTime": "2026-10-20 23:18:03",
+      "EndDateTime": "2026-10-20 23:18:03",
+      "ElapsedSecond": 0
+    },
+    {
+      "FuncCode": "alns",
+      "StartDateTime": "2026-10-20 23:18:03",
+      "EndDateTime": "2026-10-20 23:18:10",
+      "ElapsedSecond": 7
+    }
+  ]
+}

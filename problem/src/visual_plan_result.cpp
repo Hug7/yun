@@ -7,8 +7,16 @@
 
 #include <cmath>
 #include <format>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include "bdm_carrier.h"
+#include "bdm_vehicle.h"
+#include "bdm_vehicle_model.h"
+#include "pdm_load.h"
+#include "pdm_order.h"
 
 namespace {
 /**
@@ -301,6 +309,73 @@ std::string infeasible_cargo_order_to_json(
   };
   return obj_to_json(fields, indent);
 }
+
+/**
+ * @brief 单个策略方法耗时转为json对象
+ */
+std::string strategy_timing_to_json(const VisualFuncTiming& timing,
+                                    const std::string& indent) {
+  const std::vector<std::string> fields = {
+      std::format("\"FuncCode\": {}", str(timing.func_code)),
+      std::format("\"StartDateTime\": {}", str(timing.start_date_time)),
+      std::format("\"EndDateTime\": {}", str(timing.end_date_time)),
+      std::format("\"ElapsedSecond\": {}", timing.elapsed_second),
+  };
+  return obj_to_json(fields, indent);
+}
+
+/**
+ * @brief 单个承运商+车型汇总转为json对象
+ */
+std::string carrier_vehicle_summary_to_json(const VisualCarrierVehicleSummary& summary,
+                                            const std::string& indent) {
+  const std::vector<std::string> fields = {
+      std::format("\"CarrierCode\": {}", str(summary.carrier_code)),
+      std::format("\"VehicleModelCode\": {}", str(summary.vehicle_model_code)),
+      std::format("\"CargoOrderCount\": {}", summary.cargo_order_count),
+      std::format("\"LoadCount\": {}", summary.load_count),
+      std::format("\"TotalTravelDistance\": {}", summary.total_travel_distance),
+      std::format("\"TotalTravelTime\": {}", summary.total_travel_time),
+      std::format("\"TotalCost\": {}", num(summary.total_cost)),
+      std::format("\"TotalPenalty\": {}", num(summary.total_penalty)),
+      std::format("\"TotalObjective\": {}", num(summary.total_objective)),
+  };
+  return obj_to_json(fields, indent);
+}
+
+/**
+ * @brief 规划结果全局汇总转为json对象
+ */
+std::string plan_summary_to_json(const VisualPlanSummary& summary, const std::string& indent) {
+  const std::string pad = indent + "  ";
+  std::vector<std::string> timings;
+  timings.reserve(summary.func_timings.size());
+for (const auto& t : summary.func_timings) {
+    timings.emplace_back(strategy_timing_to_json(t, pad + "  "));
+  }
+  std::vector<std::string> carrier_vehicles;
+  carrier_vehicles.reserve(summary.carrier_vehicle_summaries.size());
+  for (const auto& c : summary.carrier_vehicle_summaries) {
+    carrier_vehicles.emplace_back(carrier_vehicle_summary_to_json(c, pad + "  "));
+  }
+  const std::vector<std::string> fields = {
+      std::format("\"UnassignedCargoOrderCount\": {}", summary.unassigned_cargo_order_count),
+      std::format("\"TotalCargoOrderCount\": {}", summary.total_cargo_order_count),
+      std::format("\"TotalLoadCount\": {}", summary.total_load_count),
+      std::format("\"TotalTravelDistance\": {}", summary.total_travel_distance),
+      std::format("\"TotalTravelTime\": {}", summary.total_travel_time),
+      std::format("\"TotalCost\": {}", num(summary.total_cost)),
+      std::format("\"TotalPenalty\": {}", num(summary.total_penalty)),
+      std::format("\"TotalObjective\": {}", num(summary.total_objective)),
+      std::format("\"StartDateTime\": {}", str(summary.start_date_time)),
+      std::format("\"EndDateTime\": {}", str(summary.end_date_time)),
+      std::format("\"RunningTimeSecond\": {}", summary.running_time_second),
+      std::format("\"CarrierVehicleSummaries\": {}", arr_to_json(carrier_vehicles, pad)),
+      std::format("\"FuncTimings\": {}", arr_to_json(timings, pad)),
+  };
+  return obj_to_json(fields, indent);
+}
+
 }  // namespace
 
 std::string VisualJson::dumps(const std::vector<VisualLoad>& visual_loads) {
@@ -349,4 +424,8 @@ std::string VisualJson::dumps(
               (i + 1 < visual_infeasible_cargo_orders.size() ? ",\n" : "\n");
   }
   return result + "]\n";
+}
+
+std::string VisualJson::dumps(const VisualPlanSummary& summary) {
+  return plan_summary_to_json(summary, "") + "\n";
 }

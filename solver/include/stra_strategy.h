@@ -5,11 +5,18 @@
 
 #pragma once
 
-#include <sol/sol.hpp>
 #include <memory>
+#include <sol/sol.hpp>
 
-#include "pdm_workspace.h"
 #include "algo_parallel_executor.h"
+#include "pdm_workspace.h"
+
+namespace StrategyKey {
+constexpr char LOG[] = "log";
+constexpr char SNAPSHOT[] = "snapshot";
+constexpr char CONSTRUCT_KNN[] = "construct_knn";
+constexpr char ALNS[] = "alns";
+}  // namespace StrategyKey
 
 /**
  * @brief 策略管理器

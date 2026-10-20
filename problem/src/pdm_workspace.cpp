@@ -142,3 +142,10 @@ std::vector<const Order*> Workspace::unassigned_orders_view() {
 
   return shadow_clone_unassigned_orders;
 }
+
+void Workspace::add_func_timing(FuncTiming::UPtr func_timing) {
+  if (func_timing->is_not_complete()) {
+    func_timing->end_timing();
+  }
+  this->func_timings.push_back(std::move(func_timing));
+}

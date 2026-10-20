@@ -8,5 +8,5 @@
 // ====== implement of Load CcDist ======
 CostConstrScore::UPtr CcDist::eval(Load* load) {
   return std::make_unique<CostConstrScore>(
-      this->code, 1, this->dist_factor * load->get_total_dist(), this->seq_type, this->vehicle_type);
+      this->code, 1, this->dist_factor * load->get_total_travel_dist(), this->seq_type, this->vehicle_type);
 }

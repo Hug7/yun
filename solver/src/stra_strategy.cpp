@@ -12,6 +12,7 @@
 #include "algo_alns_model.h"
 #include "algo_alns_operator.h"
 #include "algo_alns_parameter.h"
+#include "pdm_func_timing.h"
 #include "stra_construct.h"
 #include "visual_manager.h"
 
@@ -20,7 +21,7 @@ void StrategyManager::register_common_func(Workspace* workspace) {
   const SolverContext* context = workspace->context;
   // 注册-日志
   this->lua.set_function(
-      "log",
+      StrategyKey::LOG,
       sol::overload(
 
           [logger = context->logger](const std::string& msg) { logger->info("[lua] {}", msg); },
@@ -37,9 +38,9 @@ void StrategyManager::register_common_func(Workspace* workspace) {
             }
           }));
   // 注册-结果可视化
-  this->lua.set_function("snapshot", [workspace](const std::string& target_dir) {
+  this->lua.set_function(StrategyKey::SNAPSHOT, [workspace](const std::string& target_dir) {
     workspace->context->visual_manager->localization_plan_result(
-        workspace->loads_view(), workspace->unassigned_orders_view(), target_dir);
+        workspace->loads_view(), workspace->unassigned_orders_view(), workspace->func_timings, target_dir);
   });
 }
 
@@ -51,13 +52,17 @@ void StrategyManager::register_construct_heuristic_func(Workspace* workspace) {
                                        constructors, "neighbor_count",
                                        &KnnParameter::neighbor_count);
   // --knn方法
-  this->lua.set_function("construct_knn", [workspace](const sol::object& knn_parameter) {
+  this->lua.set_function(StrategyKey::CONSTRUCT_KNN, [workspace](const sol::object& knn_parameter) {
+    // 统计knn函数计时
+    auto knn_func_timing = std::make_unique<FuncTiming>(StrategyKey::CONSTRUCT_KNN);
     if (!knn_parameter.valid()) {
       // 入参为KnnParameter，不传参或传nil时用结构体里的默认值
       ConstructHeuristic::k_nearest_neighbor(workspace, KnnParameter());
     } else {
       ConstructHeuristic::k_nearest_neighbor(workspace, knn_parameter.as<KnnParameter>());
     }
+    // 归档knn函数计时
+    workspace->add_func_timing(std::move(knn_func_timing));
   });
 }
 
@@ -72,7 +77,9 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
    * 可缺省，算子内部用默认值
    * }
    */
-  this->lua.set_function("alns", [workspace, this](const sol::table& cfg) {
+  this->lua.set_function(StrategyKey::ALNS, [workspace, this](const sol::table& cfg) {
+    // 统计alns函数计时
+    auto alns_func_timing = std::make_unique<FuncTiming>(StrategyKey::ALNS);
     // 解析alns参数
     const auto alns_parameter = parse_alns_parameter(cfg, workspace->context->logger);
     // 获取执行器
@@ -87,6 +94,8 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
     Solution* res_sol = alns_model->solve();
     // 将结果 res_sol 替换
     workspace->move_solution(res_sol);
+    // 归档alns函数计时
+    workspace->add_func_timing(std::move(alns_func_timing));
   });
 }
 

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "pdm_context.h"
+#include "pdm_func_timing.h"
 #include "pdm_load.h"
 #include "pdm_order_pool.h"
 #include "pdm_resource.h"
@@ -30,7 +31,8 @@ class LoadOrderBuffer {
    */
   std::unordered_map<int, const Order*> unassigned_orders;
 
-  LoadOrderBuffer(std::vector<Load*> _loads, std::unordered_map<int, const Order*> _unassigned_orders)
+  LoadOrderBuffer(std::vector<Load*> _loads,
+                  std::unordered_map<int, const Order*> _unassigned_orders)
       : loads(std::move(_loads)), unassigned_orders(std::move(_unassigned_orders)) {}
 };
 
@@ -59,6 +61,10 @@ class Workspace {
    * @brief 车次和订单的存储栈
    */
   std::stack<LoadOrderBuffer::UPtr> load_order_stack;
+  /**
+   * @brief 函数计时列表
+   */
+  FuncTiming::VecUPtr func_timings;
 
   explicit Workspace(const SolverContext* _context, const OrderPool* order_pool);
 
@@ -69,7 +75,8 @@ class Workspace {
    * @param _loads 车次集合
    * @param _unassigned_orders 未指派的订单集合
    */
-  void push(const std::vector<Load*>& _loads, const std::unordered_map<int, const Order*>& _unassigned_orders);
+  void push(const std::vector<Load*>& _loads,
+            const std::unordered_map<int, const Order*>& _unassigned_orders);
   /**
    * @brief 弹出
    */
@@ -100,4 +107,9 @@ class Workspace {
    * @return 所有未指派 order 的视图
    */
   std::vector<const Order*> unassigned_orders_view();
+  /**
+   * @brief 记录函数计时
+   * @param func_timing 函数计时
+   */
+  void add_func_timing(FuncTiming::UPtr func_timing);
 };

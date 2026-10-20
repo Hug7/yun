@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "pdm_func_timing.h"
 #include "pdm_infeasible_order.h"
 #include "pdm_load.h"
 #include "pdm_order.h"
@@ -86,22 +87,33 @@ class VisualManager {
    */
   void unassigned_order_to_json(const std::vector<const Order*>& unassigned_orders,
                                 const std::string& target_dir_path) const;
+  /**
+   * @brief 将规划结果汇总转换为json
+   * @param visual_plan_summary 规划结果汇总
+   * @param target_dir_path 目标目录路径
+   */
+  void visual_plan_summary_to_json(const VisualPlanSummary& visual_plan_summary,
+                                   const std::string& target_dir_path) const;
 
   /**
    * @brief 将规划结果本地化
    * @param loads 车次列表
    * @param unassigned_orders 未指派订单
+   * @param func_timings 函数计数列表
    * @param target_dir 目标目录
    */
   void localization_plan_result(const std::vector<Load*>& loads,
                                 const std::vector<const Order*>& unassigned_orders,
+                                const FuncTiming::VecUPtr& func_timings,
                                 const std::string& target_dir) const;
 
   /**
    * @brief 将规划结果本地化
    * @param loads 车次列表
    * @param unassigned_orders 未指派订单
+   * @param func_timings 函数计数列表
    */
   void localization_plan_result(const std::vector<Load*>& loads,
-                                const std::vector<const Order*>& unassigned_orders) const;
+                                const std::vector<const Order*>& unassigned_orders,
+                                const FuncTiming::VecUPtr& func_timings) const;
 };

@@ -71,3 +71,18 @@ void VisualManager::unassigned_order_to_json(const std::vector<const Order*>& un
     throw std::runtime_error(std::format("写入文件 {} 失败!", file_path));
   }
 }
+
+void VisualManager::visual_plan_summary_to_json(const VisualPlanSummary& visual_plan_summary,
+                                                const std::string& target_dir_path) const {
+  const std::string file_path = target_dir_path + "/" + PLAN_SUMMARY_FILE_NAME;
+  std::ofstream file(file_path);
+  if (!file.is_open()) {
+    this->logger->error(std::format("创建文件 {} 失败!", file_path));
+    throw std::runtime_error(std::format("创建文件 {} 失败!", file_path));
+  }
+  file << VisualJson::dumps(visual_plan_summary);
+  file.close();
+  if (!file) {
+    throw std::runtime_error(std::format("写入文件 {} 失败!", file_path));
+  }
+}

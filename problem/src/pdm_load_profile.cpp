@@ -19,7 +19,7 @@ LoadRouteProfile::LoadRouteProfile(const Scenario* scenario) {
   this->available_vehicle_bitset = scenario->carrier_manager->empty_vehicle_bitset();
   this->pick_node_count = 0;
   this->drop_node_count = 0;
-  this->total_dist = 0;
+  this->total_travel_dist = 0;
 }
 
 LoadRouteProfile::LoadRouteProfile(const LoadRouteProfile::UPtr& other) {
@@ -34,7 +34,7 @@ LoadRouteProfile::LoadRouteProfile(const LoadRouteProfile::UPtr& other) {
   this->available_vehicle_bitset = std::make_unique<Bitset>(other->available_vehicle_bitset);
   this->pick_node_count = other->pick_node_count;
   this->drop_node_count = other->drop_node_count;
-  this->total_dist = other->total_dist;
+  this->total_travel_dist = other->total_travel_dist;
 }
 
 bool LoadRouteProfile::get_set_dirty_mark(LoadRouteProfileField field) {

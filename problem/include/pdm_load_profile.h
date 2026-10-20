@@ -23,7 +23,8 @@ enum class LoadRouteProfileField {
   PICK_NODE_COUNT,
   DROP_NODE_COUNT,
   NODE_DIST_TIME, // 站点间的距离和耗时
-  TOTAL_DIST,
+  TOTAL_TRAVEL_DIST,
+  TOTAL_TRAVEL_TIME,
   TIME_WINDOW,
   FIELDS_COUNT  // sentinel does not participate in dirty mark
 };
@@ -63,7 +64,9 @@ class LoadRouteProfile {
 
   int drop_node_count;
 
-  long total_dist;
+  long total_travel_dist;
+
+  long total_travel_time;
 
   explicit LoadRouteProfile(const Scenario* scenario);
 

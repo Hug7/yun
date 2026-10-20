@@ -5,6 +5,8 @@
 
 #pragma once
 
+static constexpr char PLAN_SUMMARY_FILE_NAME[] = "PlanSummary.json";
+
 static constexpr char LOADS_FILE_NAME[] = "Loads.json";
 
 static constexpr char LOAD_LOCATIONS_FILE_NAME[] = "LoadLocations.json";

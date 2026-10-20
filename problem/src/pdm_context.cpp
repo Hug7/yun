@@ -11,10 +11,6 @@
 
 #include "c_chrono_util.h"
 #include "c_log.h"
-#include "cc_dist.h"
-#include "hc_location.h"
-#include "hc_vehicle.h"
-#include "sc_dist.h"
 #include "scr_standard_csv_reader.h"
 
 /**
@@ -73,7 +69,8 @@ SolverContext::SolverContext(std::string _root_dir, const std::string& log_dir,
   this->logger = LogManager::create(this->request_id, log_dir, this->output_dir, log_level);
   // 读取场景
   try {
-    this->scenario = std::make_unique<StandardCsvReader>(this->root_dir, this->logger)->loading_scenario();
+    this->scenario =
+        std::make_unique<StandardCsvReader>(this->root_dir, this->logger)->loading_scenario();
   } catch (const std::exception& e) {
     // common 层的工具函数拿不到 logger，失败原因在这里补记，保证三个输出里都有
     this->logger->error("读取场景失败: {}", e.what());

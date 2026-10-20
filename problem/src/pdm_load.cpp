@@ -91,7 +91,7 @@ void Load::change_vehicle(const Vehicle* _vehicle) {
   if (network_change_flag) {
     this->route_profile->reset_dirty_mark(LoadRouteProfileField::TIME_WINDOW);
     this->route_profile->reset_dirty_mark(LoadRouteProfileField::NODE_DIST_TIME);
-    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TOTAL_DIST);
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_DIST);
   } else if (change_start_node_flag) {
     this->route_profile->reset_dirty_mark(LoadRouteProfileField::TIME_WINDOW);
     this->update_start_node_dist_time();
@@ -101,18 +101,32 @@ void Load::change_vehicle(const Vehicle* _vehicle) {
   }
 }
 
-long Load::get_total_dist() const {
-  if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::TOTAL_DIST)) {
-    return this->route_profile->total_dist;
+long Load::get_total_travel_dist() const {
+  if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_DIST)) {
+    return this->route_profile->total_travel_dist;
   }
-  long total_dist = 0;
+  long total_travel_dist = 0;
   Node* tail_node = this->last_node;
   while (tail_node->hase_prev()) {
-    total_dist += tail_node->travel_dist;
+    total_travel_dist += tail_node->travel_dist;
     tail_node = tail_node->prev;
   }
-  this->route_profile->total_dist = total_dist;
-  return total_dist;
+  this->route_profile->total_travel_dist = total_travel_dist;
+  return total_travel_dist;
+}
+
+long Load::get_total_travel_time() const {
+  if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_TIME)) {
+    return this->route_profile->total_travel_time;
+  }
+  long total_travel_time = 0;
+  Node* tail_node = this->last_node;
+  while (tail_node->hase_prev()) {
+    total_travel_time += tail_node->travel_time;
+    tail_node = tail_node->prev;
+  }
+  this->route_profile->total_travel_time = total_travel_time;
+  return total_travel_time;
 }
 
 double Load::get_obj_val() const { return this->constr_profile->obj_val; }

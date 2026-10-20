@@ -53,8 +53,8 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
     }
     this->drop_time_windows = tmp_drop_time_windows;
   }
-  this->pick_time_windows_len = this->pick_time_windows.size();
-  this->drop_time_windows_len = this->drop_time_windows.size();
+  this->pick_time_windows_len = static_cast<int>(this->pick_time_windows.size());
+  this->drop_time_windows_len = static_cast<int>(this->drop_time_windows.size());
   // intersection pick and drop time windows for location calendar
   Calendar* pick_calendar = this->pick_loc->work_plan->pick_calendar;
   if (pick_calendar != nullptr) {
@@ -66,7 +66,7 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
       delete tw;
     }
     this->pick_time_windows = TimeWindowUntils::merge_time_windows(res_pick_time_windows);
-    this->pick_time_windows_len = this->pick_time_windows.size();
+    this->pick_time_windows_len = static_cast<int>(this->pick_time_windows.size());
   }
   Calendar* drop_calendar = this->drop_loc->work_plan->drop_calendar;
   if (drop_calendar != nullptr) {
@@ -78,7 +78,7 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
       delete tw;
     }
     this->drop_time_windows = TimeWindowUntils::merge_time_windows(res_drop_time_windows);
-    this->drop_time_windows_len = this->drop_time_windows.size();
+    this->drop_time_windows_len = static_cast<int>(this->drop_time_windows.size());
   }
 
   // accumulate sub cargo order
@@ -119,11 +119,11 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
 
 Order::~Order() {
   this->cargo_orders.clear();
-  for (auto& tw : this->pick_time_windows) {
+  for (const auto& tw : this->pick_time_windows) {
     delete tw;
   }
   this->pick_time_windows.clear();
-  for (auto& tw : this->drop_time_windows) {
+  for (const auto& tw : this->drop_time_windows) {
     delete tw;
   }
   this->drop_time_windows.clear();

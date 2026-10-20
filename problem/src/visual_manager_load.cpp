@@ -149,7 +149,7 @@ VisualLoad build_visual_load(const Scenario* scenario, Load* load, const size_t 
   // 车辆装载属性、峰值负载、装载率
   fill_dimensions(scenario->dim_manager, visual_load, load);
   // 行驶距离、软约束惩罚、成本、目标值
-  visual_load.total_driving_distance_meter = load->get_total_dist();
+  visual_load.total_driving_distance_meter = load->get_total_travel_dist();
   visual_load.soft_penalty_value = load->constr_profile->total_soft_penalty;
   visual_load.cost_value = load->constr_profile->total_cost;
   visual_load.object_value = load->constr_profile->obj_val;
