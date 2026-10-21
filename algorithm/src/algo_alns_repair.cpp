@@ -13,6 +13,42 @@
 
 #include "c_rang_utils.h"
 
+namespace {
+using RepairLoadQueue =
+    std::priority_queue<RepairLoad*, std::vector<RepairLoad*>, RepairLoadCompare>;
+
+/**
+ * @brief 维护 top-k 可行元素的最大堆
+ * @param queue_len 堆中元素数量
+ * @param k 保留的候选数量
+ */
+void try_push_top_k(RepairLoadQueue& queue, int& queue_len, const int k, RepairLoad* repair_load) {
+  if (k <= 0 || repair_load == nullptr || !repair_load->is_feasible) {
+    return;
+  }
+  if (queue_len < k) {
+    queue.push(repair_load);
+    ++queue_len;
+  } else if (RepairLoadCompare()(repair_load, queue.top())) {
+    queue.pop();
+    queue.push(repair_load);
+  }
+}
+
+/**
+ * @brief 弹出堆中全部元素, 得到按 delta 降序排列的结果
+ */
+std::vector<RepairLoad*> drain_top_k(RepairLoadQueue& queue) {
+  std::vector<RepairLoad*> repair_loads;
+  repair_loads.reserve(queue.size());
+  while (!queue.empty()) {
+    repair_loads.emplace_back(queue.top());
+    queue.pop();
+  }
+  return repair_loads;
+}
+}  // namespace
+
 // ====== implement of RepairLoad ======
 RepairLoad::RepairLoad(const int _segment_ind, const int _load_ind, const Load* _raw_load,
                        Load* _load)
@@ -163,37 +199,33 @@ int RepairMatrix::unfold_matrix_cell_count() {
 }
 
 std::vector<RepairLoad*> RepairMatrix::unfold_matrix_top_k(const int k) {
-  std::vector<RepairLoad*> repair_loads;
-  repair_loads.reserve(k);
-  std::priority_queue<RepairLoad*, std::vector<RepairLoad*>, RepairLoadCompare> repair_load_pq(
-      RepairLoadCompare{}, std::move(repair_loads));
+  RepairLoadQueue repair_load_pq;
   int repair_load_pq_len = 0;
 
   for (const auto& row : this->matrix | std::views::values) {
     for (const auto& repair_load : row) {
-      if (repair_load != nullptr && repair_load->is_feasible) {
-        if (repair_load_pq_len < k) {
-          repair_load_pq.push(repair_load);
-          ++repair_load_pq_len;
-        } else {
-          if (RepairLoadCompare()(repair_load, repair_load_pq.top())) {
-            repair_load_pq.pop();
-            repair_load_pq.push(repair_load);
-          }
-        }
+      try_push_top_k(repair_load_pq, repair_load_pq_len, k, repair_load);
+    }
+  }
+
+  return drain_top_k(repair_load_pq);
+}
+
+std::vector<RepairLoad*> RepairMatrix::unfold_segment_top_k(const int segment_ind,
+                                                            const int k) const {
+  RepairLoadQueue repair_load_pq;
+  int repair_load_pq_len = 0;
+
+  if (segment_ind >= 0 && segment_ind < static_cast<int>(this->matrix_rows.size())) {
+    const std::vector<RepairLoad*>* row = this->matrix_rows[segment_ind];
+    if (row != nullptr) {
+      for (const auto& repair_load : *row) {
+        try_push_top_k(repair_load_pq, repair_load_pq_len, k, repair_load);
       }
     }
   }
 
-  const int pq_full_size = static_cast<int>(repair_load_pq.size());
-  std::vector<RepairLoad*> res_repair_loads;
-  res_repair_loads.reserve(pq_full_size);
-  for (int u = 0; u < pq_full_size; ++u) {
-    res_repair_loads.emplace_back(repair_load_pq.top());
-    repair_load_pq.pop();
-  }
-
-  return res_repair_loads;
+  return drain_top_k(repair_load_pq);
 }
 
 void RepairMatrix::update_load(const int load_ind) const {

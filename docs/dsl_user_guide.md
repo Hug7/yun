@@ -172,6 +172,20 @@ ruin_operator_params = {
 | `random_seed` | int | `37` | 随机选择候选方案的随机种子。 |
 | `top_rate` | double | `0.2` | 从修复矩阵中按代价排序取前 `top_rate` 比例的候选方案，再随机选一个落实；区间 `[0, 1]`。 |
 
+**RepairRegretK（repair）** — Regret-K 后悔式修复。
+
+| `params` 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `regret_k` | int | `2` | 后悔值阶数 K，必须 `>= 2`。 |
+
+每轮对每个未指派 segment 取最多 K 个最优插入方案，按以下三级优先级选择：
+
+1. 只有 1 个可行方案：最高优先级；同层内按最优 `delta` 最小者优先。
+2. 有 2 ~ K-1 个可行方案：先按实际候选计算基础 regret `Σ(c_i - c_1)`，再加稀缺奖励 `(K-n) × (c_n - c_1 + 1)`。
+3. 有至少 K 个可行方案：计算标准 Regret-K `Σ_{i=2..K}(c_i - c_1)`。
+
+其中 `n` 为该 segment 的可行方案数，`c_1 ≤ ... ≤ c_n` 为按 `delta` 升序排列的候选方案。同层内选择 regret 最大的 segment，并落实其最优插入方案；当所有未指派 segment 都没有可行方案时，新建车次兜底。
+
 #### 错误处理
 
 - `ruin_operator_params` / `repair_operator_params` 中元素缺少`code`字段、或`code`不是已注册算子时，抛异常并中断脚本加载。

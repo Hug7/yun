@@ -23,11 +23,14 @@
  */
 enum class AlnsRepairOperatorCode {
   RepairGreedy,
+  RepairRegretK,
 };
 
 constexpr AlnsRepairOperatorCode parse_alns_repair_operator_code(const std::string& code) {
   if (code == "RepairGreedy") {
     return AlnsRepairOperatorCode::RepairGreedy;
+  } else if (code == "RepairRegretK") {
+    return AlnsRepairOperatorCode::RepairRegretK;
   } else {
     throw std::invalid_argument("Invalid AlnsRepairOperatorCode = " + code);
   }
@@ -132,6 +135,12 @@ class RepairMatrix {
   int unfold_matrix_cell_count();
 
   std::vector<RepairLoad*> unfold_matrix_top_k(int k);
+
+  /**
+   * @brief 取指定 segment 行的 top-k 可行元素
+   * @return 按 delta 降序排列(back() 为最优); 不可行或候选不足时返回实际数量
+   */
+  std::vector<RepairLoad*> unfold_segment_top_k(int segment_ind, int k) const;
 
   void update_load(int load_ind) const;
 

@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "algo_alns_repair_greedy.h"
+#include "algo_alns_repair_regret_k.h"
 #include "algo_alns_ruin_random_removal_load.h"
 #include "algo_alns_ruin_random_removal_order.h"
 
@@ -215,12 +216,15 @@ void create_alns_repair_operator(AlnsOperatorManager* alns_operator_manager, con
       if (alns_repair_operator_code == AlnsRepairOperatorCode::RepairGreedy) {
         alns_operator_manager->add_repair_operator(
             new AlnsRepairGreedy(workspace->context, parallel_executor, params));
+      } else if (alns_repair_operator_code == AlnsRepairOperatorCode::RepairRegretK) {
+        alns_operator_manager->add_repair_operator(
+            new AlnsRepairRegretK(workspace->context, parallel_executor, params));
       } else {
         throw std::invalid_argument("alns repair operator code: " + code + " is not undefined!");
       }
     });
   }
-  // TODO ruin算子为空，使用默认算子
+  // TODO repair算子为空，使用默认算子
 }
 }  // namespace
 

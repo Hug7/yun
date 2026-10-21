@@ -66,6 +66,7 @@ class AlnsOperatorManager {
    */
   inline static std::unordered_set<AlnsRepairOperatorCode> default_repair_operator_codes{
       AlnsRepairOperatorCode::RepairGreedy,
+      AlnsRepairOperatorCode::RepairRegretK,
   };
   /**
    * @brief alns 的算法参数
