@@ -72,6 +72,29 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
         static_cast<int>(cfg[AlnsParameterLuaField::DEFAULT_RANDOM_SEED]);
   }
 
+  // metropolis 使用相对温度: P = exp(-delta / (tau * f0)), tau 无量纲
+  // 因此要求 0 < tau_end <= tau_0, 且 tau_0 不应大于 1
+  if (alns_parameter->initial_temperature <= 0) {
+    throw std::invalid_argument("AlnsParameter: `initial_temperature` (tau_0) must be > 0");
+  }
+  if (alns_parameter->min_temperature <= 0) {
+    throw std::invalid_argument("AlnsParameter: `min_temperature` (tau_end) must be > 0");
+  }
+  if (alns_parameter->min_temperature > alns_parameter->initial_temperature) {
+    throw std::invalid_argument(
+        "AlnsParameter: `min_temperature` (tau_end) must not exceed `initial_temperature` (tau_0)");
+  }
+  if (alns_parameter->initial_temperature > 1.0) {
+    logger->warn(
+        std::format("AlnsParameter: initial_temperature={} looks like an absolute temperature. It "
+                    "is now a dimensionless relative temperature tau_0, expected in [1e-3, 1e-1]",
+                    alns_parameter->initial_temperature));
+  }
+  if (alns_parameter->annealing_factor > 0 && alns_parameter->annealing_factor >= 1.0) {
+    throw std::invalid_argument(
+        "AlnsParameter: `annealing_factor` must be in (0, 1), or <= 0 to derive it automatically");
+  }
+
   // TODO check 参数
 
   return alns_parameter;

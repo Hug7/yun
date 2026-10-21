@@ -31,7 +31,7 @@ class AlnsSolutionManager {
   /**
    * @brief 模拟退火-判断是否接收解
    */
-  const AlnsSimulatedAnnealing* sa;
+  AlnsSimulatedAnnealing* sa;
 
   explicit AlnsSolutionManager(const Workspace* _workspace, const AlnsParameter* _parameter);
 

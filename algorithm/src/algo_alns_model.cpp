@@ -43,10 +43,15 @@ Solution* AlnsModel::solve() const {
       operator_combinations[sub_iter]->cal_operator_score(status_code);
     }
     // TODO 执行 local search
+    // 更新 sa 的温度
+    this->sol_manager->sa->update_temperature();
     // 更新算子权重
     this->operator_manager->update_operator_weights(operator_combinations);
     // 打印日志
-    logger->info(std::format("iter={}", iter));
+    logger->info(std::format("iter={}, best_cost={}, cur_cost={}, tmp_cost={}", iter,
+                             this->sol_manager->best_sol->total_cost(),
+                             this->sol_manager->cur_sol->total_cost(),
+                             this->sol_manager->tmp_sol->total_cost()));
   }
 
   // 克隆 best solution 作为输出解, 保证 sol_manager 可以正常回收

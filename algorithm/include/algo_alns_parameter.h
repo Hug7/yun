@@ -66,17 +66,23 @@ class AlnsParameter {
    */
   double operator_initial_weight{100.};
   /**
-   * @brief 初始温度
+   * @brief 初始相对温度 tau_0
+   * @details 无量纲。接受概率为 exp(-delta / (tau * f0))，f0 是初始解的总目标值，
+   *          因此该值不随算例目标值的量级变化，无需按算例重新标定
    */
-  double initial_temperature{10000.0};
+  double initial_temperature{2.0e-2};
   /**
-   * @brief 最小温度
+   * @brief 最小相对温度 tau_end
+   * @details 无量纲。取到该值后温度不再下降，退化为近似贪心
    */
-  double min_temperature{0.97};
+  double min_temperature{2.0e-5};
   /**
-   * @brief 退火系数
+   * @brief 冷却系数 alpha
+   * @details 每轮外层迭代温度乘以 alpha。设置为 <= 0 时，由
+   *          alpha = (tau_end / tau_0) ^ (1 / max_iter) 自动推导，
+   *          保证最后一轮恰好降到 tau_end
    */
-  double annealing_factor{0.97};
+  double annealing_factor{0.0};
   /**
    * @brief 默认的随机种子
    */

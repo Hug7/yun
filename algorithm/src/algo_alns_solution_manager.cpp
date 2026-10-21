@@ -12,7 +12,7 @@ AlnsSolutionManager::AlnsSolutionManager(const Workspace* _workspace,
   this->best_sol = this->workspace->generate_sol();
   this->cur_sol = this->workspace->deep_copy_sol(this->best_sol);
   this->tmp_sol = this->workspace->deep_copy_sol(this->best_sol);
-  this->sa = new AlnsSimulatedAnnealing(_parameter);
+  this->sa = new AlnsSimulatedAnnealing(_parameter, this->best_sol, _workspace->context->logger);
 }
 
 AlnsSolutionManager::~AlnsSolutionManager() {
@@ -33,7 +33,8 @@ void AlnsSolutionManager::reset_tmp_sol() {
 }
 
 AlnsSaAcceptStatusCode AlnsSolutionManager::update_sol() {
-  const auto status_code = this->sa->cal_accept_status(this->tmp_sol, this->cur_sol, this->best_sol);
+  const auto status_code =
+      this->sa->cal_accept_status(this->tmp_sol, this->cur_sol, this->best_sol);
 
   if (status_code == AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION) {
     delete this->best_sol;

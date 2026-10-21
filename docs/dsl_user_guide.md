@@ -125,9 +125,9 @@ alns({
 | `max_running_time_sec` | int | `600` | 最大运行时长（秒），到时终止搜索。 |
 | `operator_learning_factor` | double | `0.35` | 算子权重自适应学习因子。必须满足 `0 < x < 1`，否则抛异常。 |
 | `operator_initial_weight` | double | `100.0` | 算子组合初始权重。必须 `>= 1`，否则抛异常。 |
-| `initial_temperature` | double | `10000.0` | 模拟退火初始温度。 |
-| `min_temperature` | double | `0.97` | 模拟退火最小温度。 |
-| `annealing_factor` | double | `0.97` | 退火系数（每轮温度乘以该系数）。 |
+| `initial_temperature` | double | `2.0e-2` | 初始**相对**温度 τ₀（无量纲）。接受概率为 `exp(-Δf / (τ·f0))`，`f0` 是初始解的总目标值，故该值不随算例目标值量级变化；建议 `1e-3 ~ 1e-1`，大于 `1` 会告警。 |
+| `min_temperature` | double | `2.0e-5` | 最小相对温度 τ_end（无量纲），温度取到该值后不再下降。 |
+| `annealing_factor` | double | `0.0` | 冷却系数 α，需满足 `0 < α < 1`；置为 `<= 0` 时由 `α = (τ_end / τ₀) ^ (1 / max_iter)` 自动推导，保证最后一轮恰好降到 τ_end。 |
 | `default_random_seed` | int | `37` | 默认随机种子。 |
 | `ruin_operator_params` | table | 无 | ruin 算子配置数组，详见下文。 |
 | `repair_operator_params` | table | 无 | repair 算子配置数组，详见下文。 |
