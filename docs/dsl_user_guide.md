@@ -58,7 +58,7 @@ construct_knn(parameter)
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `neighbor_count` | integer | `8` | 每个订单构造近邻关系时保留的最佳复合`rank`数量。应传入正整数；当前实现未对其取值范围做额外校验。 |
+| `neighbor_count` | int | `8` | 每个订单构造近邻关系时保留的最佳复合`rank`数量。应传入正整数；当前实现未对其取值范围做额外校验。 |
 
 #### knn-graph
 
@@ -103,8 +103,8 @@ alns({
   max_unimproved_iter = 200,
   tasks = 4,
   ruin_operator_params = {
-    { code = "RuinRandomLoad", params = { select_load_min_rate = 0.1, select_load_max_rate = 0.3 } },
-    { code = "RuinRandomLoad", params = { select_load_min_rate = 0.4, select_load_max_rate = 0.6 } },
+    { code = "RuinRandomRemovalLoad", params = { select_load_min_rate = 0.1, select_load_max_rate = 0.3 } },
+    { code = "RuinRandomRemovalLoad", params = { select_load_min_rate = 0.4, select_load_max_rate = 0.6 } },
   },
   repair_operator_params = {
     { code = "RepairGreedy", params = { top_rate = 0.2 } },
@@ -118,17 +118,17 @@ alns({
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `worker_count` | integer | `-1` | 开启执行器的并行数。每次`alns`调用都会新建并销毁并行执行器。 |
-| `max_iter` | integer | `200` | 最大迭代次数（外层 ALNS 主循环）。 |
-| `max_sub_iter` | integer | `10` | 最大子迭代次数。 |
-| `max_unimproved_iter` | integer | `100` | 连续无改进次数达到该值时提前终止搜索。 |
-| `max_running_time_sec` | integer | `600` | 最大运行时长（秒），到时终止搜索。 |
-| `operator_learning_factor` | number | `0.35` | 算子权重自适应学习因子。必须满足 `0 < x < 1`，否则抛异常。 |
-| `operator_initial_weight` | number | `100.0` | 算子组合初始权重。必须 `>= 1`，否则抛异常。 |
-| `initial_temperature` | number | `10000.0` | 模拟退火初始温度。 |
-| `min_temperature` | number | `0.97` | 模拟退火最小温度。 |
-| `annealing_factor` | number | `0.97` | 退火系数（每轮温度乘以该系数）。 |
-| `default_random_seed` | integer | `37` | 默认随机种子。 |
+| `worker_count` | int | `-1` | 开启执行器的并行数。每次`alns`调用都会新建并销毁并行执行器。 |
+| `max_iter` | int | `200` | 最大迭代次数（外层 ALNS 主循环）。 |
+| `max_sub_iter` | int | `10` | 最大子迭代次数。 |
+| `max_unimproved_iter` | int | `100` | 连续无改进次数达到该值时提前终止搜索。 |
+| `max_running_time_sec` | int | `600` | 最大运行时长（秒），到时终止搜索。 |
+| `operator_learning_factor` | double | `0.35` | 算子权重自适应学习因子。必须满足 `0 < x < 1`，否则抛异常。 |
+| `operator_initial_weight` | double | `100.0` | 算子组合初始权重。必须 `>= 1`，否则抛异常。 |
+| `initial_temperature` | double | `10000.0` | 模拟退火初始温度。 |
+| `min_temperature` | double | `0.97` | 模拟退火最小温度。 |
+| `annealing_factor` | double | `0.97` | 退火系数（每轮温度乘以该系数）。 |
+| `default_random_seed` | int | `37` | 默认随机种子。 |
 | `ruin_operator_params` | table | 无 | ruin 算子配置数组，详见下文。 |
 | `repair_operator_params` | table | 无 | repair 算子配置数组，详见下文。 |
 
@@ -142,29 +142,35 @@ alns({
 
 ```lua
 ruin_operator_params = {
-  { code = "RuinRandomLoad", params = { select_load_min_rate = 0.1, select_load_max_rate = 0.3 } },
-  { code = "RuinRandomLoad" },  -- params 缺省，使用算子默认值
+  { code = "RuinRandomRemovalLoad", params = { select_load_min_rate = 0.1, select_load_max_rate = 0.3 } },
+  { code = "RuinRandomRemovalLoad" },  -- params 缺省，使用算子默认值
 }
 ```
 
 #### 支持的算子
 
-**RuinRandomLoad（ruin）** — 随机移除整条车次。
+**RuinRandomRemovalLoad（ruin）** — 随机移除整车。
 
 | `params` 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `select_load_min_rate` | number | `0.1` | 被移除车次数占当前车次数的最小比例，区间 `[0, 1]`。 |
-| `select_load_max_rate` | number | `0.4` | 被移除车次数的最大比例，区间 `[0, 1]`；必须 `>= select_load_min_rate`。 |
-| `select_load_random_seed` | integer | `37` | 选择车次的随机种子。 |
+| `select_load_min_rate` | double | `0.1` | 被移除车次数占当前车次数的最小比例，区间 `[0, 1]`。 |
+| `select_load_max_rate` | double | `0.4` | 被移除车次数的最大比例，区间 `[0, 1]`；必须 `>= select_load_min_rate`。 |
+| `select_load_random_seed` | int | `37` | 选择车次的随机种子。 |
 
-> 注：当前`RuinRandomLoad`只挑整条车次、不填充 activities，因此修复算子总是从被移除订单重新构造（走"整 load 删除"分支）。
+**RuinRandomRemovalOrder（ruin）** — 随机移除订单。
+
+| `params` 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `select_order_min_rate` | double | `0.1` | 被移除订单数占当前已分配订单数的最小比例，区间 `[0, 1]`。 |
+| `select_order_max_rate` | double | `0.4` | 被移除订单数的最大比例，区间 `[0, 1]`；必须 `>= select_order_min_rate`。 |
+| `select_order_random_seed` | int | `37` | 选择订单的随机种子。 |
 
 **RepairGreedy（repair）** — 贪心修复。
 
 | `params` 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `random_seed` | integer | `37` | 随机选择候选方案的随机种子。 |
-| `top_rate` | number | `0.2` | 从修复矩阵中按代价排序取前 `top_rate` 比例的候选方案，再随机选一个落实；区间 `[0, 1]`。 |
+| `random_seed` | int | `37` | 随机选择候选方案的随机种子。 |
+| `top_rate` | double | `0.2` | 从修复矩阵中按代价排序取前 `top_rate` 比例的候选方案，再随机选一个落实；区间 `[0, 1]`。 |
 
 #### 错误处理
 

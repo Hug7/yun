@@ -11,9 +11,9 @@
 #include "c_random_utils.h"
 
 /**
- * @brief alns ruin算子`RuinRandomLoad`的参数在lua中的字段集合
+ * @brief alns ruin算子`RuinRandomRemovalLoad`的参数在lua中的字段集合
  */
-class AlnsRuinRandomLoadLuaField {
+class AlnsRuinRandomRemovalLoadLuaField {
 public:
   static constexpr const char* SELECT_LOAD_RANDOM_SEED = "select_load_random_seed";
   static constexpr const char* SELECT_LOAD_MIN_RATE = "select_load_min_rate";
@@ -23,7 +23,7 @@ public:
 /**
  * @brief alns ruin算子随机移除load
  */
-class AlnsRuinRandomLoad : public AlnsRuinOperator {
+class AlnsRuinRandomRemovalLoad : public AlnsRuinOperator {
  public:
   /**
    * @brief 随机种子
@@ -42,7 +42,7 @@ class AlnsRuinRandomLoad : public AlnsRuinOperator {
    */
   double select_load_max_rate{0.4};
 
-  explicit AlnsRuinRandomLoad(const SolverContext* _context, const sol::table& cfg);
+  explicit AlnsRuinRandomRemovalLoad(const SolverContext* _context, const sol::table& cfg);
 
   std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) override;
 

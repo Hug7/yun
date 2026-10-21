@@ -41,7 +41,7 @@ function solve()
     log("hello world")
     snapshot("A")
     construct_knn()
-    alns({tasks=40, max_iter = 50, ruin_operator_params = {{code = "RuinRandomLoad"}}, repair_operator_params = {{code = "RepairGreedy"}}})
+    alns({tasks=40, max_iter = 50, ruin_operator_params = {{code = "RuinRandomRemovalLoad"}}, repair_operator_params = {{code = "RepairGreedy"}}})
     snapshot("B")
 end
 ```
@@ -132,6 +132,10 @@ delete solver;
 5. 读取 `Parameter`;
 6. 创建 `VisualManager`，负责当前请求的 JSON 结果导出;
 7. 创建 `Problem`，建立取送货模式、装卸策略、装载上下文和三重约束管理器。
+
+**第一次接触本项目, 建议先读**: [design_tour.md](docs/design_tour.md) —— 按"创意想法"组织的设计导览,
+覆盖建模、数据结构、评价、搜索、并行与工程边界六组核心 idea；已熟悉代码后可转读
+[code_highlights.md](docs/code_highlights.md) 查看具体 C++ 实现手法。
 
 `scenario` 输入数据表结构: [scenario_schema_reference.md](docs/scenario_schema_reference.md)
 

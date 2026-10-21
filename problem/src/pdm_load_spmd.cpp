@@ -39,6 +39,19 @@ std::vector<const Order*> LoadSPMD::get_orders() {
   return res;
 }
 
+std::vector<Activity*> LoadSPMD::get_pick_activities() {
+  if (this->first_node->next->activity_type != ActivityType::PICK) {
+    return {};
+  }
+  std::vector<Activity*> pick_activities;
+  auto* tail_activity = this->first_node->next->last;
+  while (tail_activity != nullptr) {
+    pick_activities.push_back(tail_activity);
+    tail_activity = tail_activity->prev;
+  }
+  return pick_activities;
+}
+
 int LoadSPMD::get_order_count() const {
   if (this->first_node->next->activity_type != ActivityType::PICK) {
     return 0;

@@ -71,9 +71,9 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
   /**
    * Lua 侧配置示例：
    * ruin_operator_params = {
-   *   { code = "RuinRandomLoad", params = { min_rate = 0.1, max_rate = 0.3 } },
-   *   { code = "RuinRandomLoad", params = { min_rate = 0.4, max_rate = 0.6 } },
-   * -- 同算子不同参数 { code = "RuinRandomLoad" }  -- params
+   *   { code = "RuinRandomRemovalLoad", params = { min_rate = 0.1, max_rate = 0.3 } },
+   *   { code = "RuinRandomRemovalLoad", params = { min_rate = 0.4, max_rate = 0.6 } },
+   * -- 同算子不同参数 { code = "RuinRandomRemovalLoad" }  -- params
    * 可缺省，算子内部用默认值
    * }
    */

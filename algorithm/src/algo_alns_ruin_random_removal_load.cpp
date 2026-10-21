@@ -3,22 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "algo_alns_ruin_random.h"
+#include "algo_alns_ruin_random_removal_load.h"
 
-// ====== implement of AlnsRuinRandomLoad ======
-AlnsRuinRandomLoad::AlnsRuinRandomLoad(const SolverContext* _context, const sol::table& cfg)
-    : AlnsRuinOperator(AlnsRuinOperatorCode::RuinRandomLoad, _context) {
-  if (cfg[AlnsRuinRandomLoadLuaField::SELECT_LOAD_MIN_RATE].valid()) {
+// ====== implement of AlnsRuinRandomRemovalLoad ======
+AlnsRuinRandomRemovalLoad::AlnsRuinRandomRemovalLoad(const SolverContext* _context, const sol::table& cfg)
+    : AlnsRuinOperator(AlnsRuinOperatorCode::RuinRandomRemovalLoad, _context) {
+  if (cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MIN_RATE].valid()) {
     this->select_load_min_rate =
-        static_cast<double>(cfg[AlnsRuinRandomLoadLuaField::SELECT_LOAD_MIN_RATE]);
+        static_cast<double>(cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MIN_RATE]);
   }
-  if (cfg[AlnsRuinRandomLoadLuaField::SELECT_LOAD_MAX_RATE].valid()) {
+  if (cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MAX_RATE].valid()) {
     this->select_load_max_rate =
-        static_cast<double>(cfg[AlnsRuinRandomLoadLuaField::SELECT_LOAD_MAX_RATE]);
+        static_cast<double>(cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MAX_RATE]);
   }
-  if (cfg[AlnsRuinRandomLoadLuaField::SELECT_LOAD_RANDOM_SEED].valid()) {
+  if (cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_RANDOM_SEED].valid()) {
     this->select_load_random_seed =
-        static_cast<int>(cfg[AlnsRuinRandomLoadLuaField::SELECT_LOAD_RANDOM_SEED]);
+        static_cast<int>(cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_RANDOM_SEED]);
   }
   this->select_load_random = std::make_unique<RandomUtils>(this->select_load_random_seed);
 
@@ -41,7 +41,7 @@ AlnsRuinRandomLoad::AlnsRuinRandomLoad(const SolverContext* _context, const sol:
   }
 }
 
-std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomLoad::execute(Solution* sol) {
+std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalLoad::execute(Solution* sol) {
   // 当前解空间
   const int load_count = static_cast<int>(sol->loads.size());
   // ruin的load数量

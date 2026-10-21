@@ -8,7 +8,8 @@
 #include <algorithm>
 
 #include "algo_alns_repair_greedy.h"
-#include "algo_alns_ruin_random.h"
+#include "algo_alns_ruin_random_removal_load.h"
+#include "algo_alns_ruin_random_removal_order.h"
 
 // ====== implement of AlnsOperatorCombination ======
 void AlnsOperatorCombination::cal_operator_score(const AlnsSaAcceptStatusCode& status_code) {
@@ -160,9 +161,12 @@ void create_alns_ruin_operator(AlnsOperatorManager* alns_operator_manager, const
       // 转换ruin算子编码
       const AlnsRuinOperatorCode alns_ruin_operator_code = convert_alns_ruin_operator_code(code);
       // 注册ruin算子
-      if (alns_ruin_operator_code == AlnsRuinOperatorCode::RuinRandomLoad) {
+      if (alns_ruin_operator_code == AlnsRuinOperatorCode::RuinRandomRemovalLoad) {
         alns_operator_manager->add_ruin_operator(
-            new AlnsRuinRandomLoad(workspace->context, params));
+            new AlnsRuinRandomRemovalLoad(workspace->context, params));
+      } else if (alns_ruin_operator_code == AlnsRuinOperatorCode::RuinRandomRemovalOrder) {
+        alns_operator_manager->add_ruin_operator(
+            new AlnsRuinRandomRemovalOrder(workspace->context, params));
       } else {
         throw std::invalid_argument("alns ruin operator code: " + code + " is not undefined!");
       }

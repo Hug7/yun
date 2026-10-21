@@ -143,6 +143,8 @@ class Load {
 
   virtual std::vector<const Order*> get_orders() = 0;
 
+  virtual std::vector<Activity*> get_pick_activities() = 0;
+
   [[nodiscard]] virtual int get_order_count() const = 0;
 
   [[nodiscard]] virtual int get_activity_count() const = 0;
@@ -201,6 +203,8 @@ class LoadSPMD : public Load {
   LabelsetValueBitset* get_order_labelset_value_bitset() override;
 
   std::vector<const Order*> get_orders() override;
+
+  std::vector<Activity*> get_pick_activities() override;
 
   [[nodiscard]] int get_order_count() const override;
 

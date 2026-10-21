@@ -17,12 +17,15 @@
  * @brief alns ruin算子编码
  */
 enum class AlnsRuinOperatorCode {
-  RuinRandomLoad,
+  RuinRandomRemovalLoad,
+  RuinRandomRemovalOrder,
 };
 
 constexpr AlnsRuinOperatorCode convert_alns_ruin_operator_code(const std::string& code) {
-  if (code == "RuinRandomLoad") {
-    return AlnsRuinOperatorCode::RuinRandomLoad;
+  if (code == "RuinRandomRemovalLoad") {
+    return AlnsRuinOperatorCode::RuinRandomRemovalLoad;
+  } else if (code == "RuinRandomRemovalOrder") {
+    return AlnsRuinOperatorCode::RuinRandomRemovalOrder;
   } else {
     throw std::invalid_argument("Invalid AlnsRuinOperatorCode = " + code);
   }

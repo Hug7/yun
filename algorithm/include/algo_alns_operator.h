@@ -58,7 +58,8 @@ class AlnsOperatorManager {
    * @brief 默认的ruin算子编码集合
    */
   inline static std::unordered_set<AlnsRuinOperatorCode> default_ruin_operator_codes{
-      AlnsRuinOperatorCode::RuinRandomLoad,
+      AlnsRuinOperatorCode::RuinRandomRemovalLoad,
+      AlnsRuinOperatorCode::RuinRandomRemovalOrder,
   };
   /**
    * @brief 默认的repair算子编码集合
