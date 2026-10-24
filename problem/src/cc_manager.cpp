@@ -5,7 +5,15 @@
 
 #include "cc_manager.h"
 
+#include "cc_charge.h"
+
 // ====== implement of Load CostConstraintManager ======
+CostConstraintManager::CostConstraintManager(const Scenario* scenario) {
+  if (scenario->charge_manager != nullptr && scenario->charge_manager->enabled) {
+    this->add_constr(new CcCharge(scenario->charge_manager));
+  }
+}
+
 CostConstraintManager::~CostConstraintManager() {
   for (const auto& constr : this->constrs) {
     delete constr;

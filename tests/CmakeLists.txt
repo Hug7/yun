@@ -31,6 +31,13 @@ add_executable(visual_manager_test problem/visual_manager_test.cpp)
 target_link_libraries(visual_manager_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME visual_manager_test COMMAND visual_manager_test)
 
+add_executable(charge_manager_test scenario/charge_manager_test.cpp)
+target_link_libraries(charge_manager_test PRIVATE yun_scenario GTest::gtest_main)
+target_compile_definitions(charge_manager_test PRIVATE
+    YUN_CHARGE_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data/charge_case"
+    YUN_CHARGE_OVERLAP_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data/charge_case_overlap")
+add_test(NAME charge_manager_test COMMAND charge_manager_test)
+
 add_executable(csv_write_demo common/csv_write_demo.cpp)
 target_link_libraries(csv_write_demo PRIVATE yun_common)
 

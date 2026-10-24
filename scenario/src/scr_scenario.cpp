@@ -6,8 +6,8 @@
 #include <filesystem>
 
 #include "c_file_utils.h"
-#include "se_scenario.h"
 #include "scr_standard_csv_reader.h"
+#include "se_scenario.h"
 
 Scenario* StandardCsvReader::loading_scenario() {
   this->logger->info("Loading scenario from files path: {}", this->root_dir);
@@ -34,6 +34,9 @@ Scenario* StandardCsvReader::loading_scenario() {
   CarrierManager* carrier_manager = this->loading_carrier(label_manager);
   // 读取车辆
   this->loading_vehicle(carrier_manager, vehicle_model_manager, location_manager);
+  // 读取计费表（依赖车型、承运商、站点与车辆索引）
+  ChargeManager* charge_manager = this->loading_charge(dim_manager, label_manager, carrier_manager,
+                                                       vehicle_model_manager, location_manager);
   // 读取可用车辆
   this->loading_available_vehicle(carrier_manager, location_manager);
   // 读取订单
@@ -51,6 +54,7 @@ Scenario* StandardCsvReader::loading_scenario() {
   scenario->set_dist_matrix_manager(dist_matrix_manager);
   scenario->set_carrier_manager(carrier_manager);
   scenario->set_cargo_order_manager(cargo_order_manager);
+  scenario->set_charge_manager(charge_manager);
 
   return scenario;
 }

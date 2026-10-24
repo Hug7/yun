@@ -22,7 +22,7 @@ enum class LoadRouteProfileField {
   AVAILABLE_VEHICLE_BITSET,
   PICK_NODE_COUNT,
   DROP_NODE_COUNT,
-  NODE_DIST_TIME, // 站点间的距离和耗时
+  NODE_DIST_TIME,  // 站点间的距离和耗时
   TOTAL_TRAVEL_DIST,
   TOTAL_TRAVEL_TIME,
   TIME_WINDOW,
@@ -43,6 +43,11 @@ class LoadRouteProfile {
    * @brief peak loading value of all dimensions for the load
    */
   std::vector<long> peak_load_dims;
+  /**
+   * @brief 车次所有订单的维度总量
+   * @details 与峰值装载不同，这里按车次上所有订单的维度值求和，用于计费
+   */
+  std::vector<long> total_load_dims;
   /**
    * @brief bitset of labelset value for the pick location
    */

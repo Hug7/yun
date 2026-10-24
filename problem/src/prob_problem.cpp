@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "cc_charge.h"
 #include "pdm_order.h"
 #include "prob_policy.h"
 
@@ -30,7 +31,7 @@ Problem::Problem(const Scenario* scenario, Parameter* parameter)
 
   this->hc_manager = new HardConstraintManager(scenario, parameter);
   this->sc_manager = new SoftConstraintManager(parameter);
-  this->cc_manager = new CostConstraintManager();
+  this->cc_manager = new CostConstraintManager(scenario);
 }
 
 Problem::~Problem() {
@@ -213,7 +214,8 @@ Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
   // 挂载任务私有写缓冲: 副本内的重复查找(逐槽试插同一个 node 的键)落在这里, 不触碰冻结表
   load->store_buffer = store_buffer;
   const Vehicle* ori_vehicle = load->vehicle;
-  const std::vector<InsertSlot> slots = this->pd_pattern->enumerate_insert_slots(load.get(), segment);
+  const std::vector<InsertSlot> slots =
+      this->pd_pattern->enumerate_insert_slots(load.get(), segment);
 
   const Vehicle* best_vehicle = nullptr;
   double best_obj_val = std::numeric_limits<double>::max();
@@ -254,7 +256,8 @@ Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
   load->reset_route_profile();
   load->change_vehicle(best_vehicle);
   if (this->pd_pattern->insert_segment_at(load.get(), segment, slots[best_slot_ind]).empty()) {
-    throw std::runtime_error("invalid insertion scheme in function `greedy_insert_segment_to_load`");
+    throw std::runtime_error(
+        "invalid insertion scheme in function `greedy_insert_segment_to_load`");
   }
   this->eval_load(load.get());
 

@@ -5,7 +5,7 @@
 
 #include "sc_dist.h"
 
-// ====== implement of Load CcDist ======
+// ====== implement of ScDistance ======
 SoftConstrScore::UPtr ScDistance::eval(Load* load) {
   return std::make_unique<SoftConstrScore>(
       this->code, 1, this->dist_factor * static_cast<double>(load->get_total_travel_dist()));

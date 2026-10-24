@@ -280,3 +280,15 @@ TimeWindowPlan::VecUPtr Load::infer_time_window_plans() const {
 
   return time_window_plans;
 }
+
+void Load::fill_locations(std::vector<const Location*>& locations) const {
+  const auto* node = this->first_node->next.get();
+  const auto* pre_node = this->first_node.get();
+  while (node != this->last_node) {
+    if (!(pre_node->loc == node->loc && pre_node->activity_type == node->activity_type)) {
+      locations.push_back(node->loc);
+    }
+    pre_node = node;
+    node = node->next.get();
+  }
+}

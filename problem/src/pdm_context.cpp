@@ -58,7 +58,7 @@ std::string generate_request_id() {
                      process_nonce(), next_request_seq());
 }
 
-// ====== implement of Load CcDist ======
+// ====== implement of SolverContext ======
 SolverContext::SolverContext(std::string _root_dir, const std::string& log_dir,
                              const std::string& log_level)
     : root_dir(std::move(_root_dir)), request_id(generate_request_id()) {

@@ -84,6 +84,20 @@ class StandardCsvReader {
   void loading_vehicle(CarrierManager* carrier_manager, VehicleModelManager* vehicle_model_manager,
                        LocationManager* location_manager) const;
   /**
+   * @brief 读取计费表
+   * @param dimension_manager 维度管理器
+   * @param label_manager 标签管理器
+   * @param carrier_manager 承运商管理器
+   * @param vehicle_model_manager 车型管理器
+   * @param location_manager 站点管理器
+   * @return ChargeManager* 计费管理器（未配置计费表时返回未启用对象）
+   */
+  [[nodiscard]] ChargeManager* loading_charge(DimensionManager* dimension_manager,
+                                              LabelManager* label_manager,
+                                              CarrierManager* carrier_manager,
+                                              VehicleModelManager* vehicle_model_manager,
+                                              LocationManager* location_manager) const;
+  /**
    * @brief 读取车辆可用车辆
    * @param carrier_manager 承运商管理器
    * @param location_manager 站点管理器

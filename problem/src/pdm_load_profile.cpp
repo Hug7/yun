@@ -10,6 +10,7 @@ LoadRouteProfile::LoadRouteProfile(const Scenario* scenario) {
   this->dirty_marks =
       std::make_unique<Bitset>(static_cast<size_t>(LoadRouteProfileField::FIELDS_COUNT));
   this->peak_load_dims = scenario->dim_manager->empty_dim_values();
+  this->total_load_dims = scenario->dim_manager->empty_dim_values();
   this->pick_loc_labelset_value_bitset =
       scenario->label_manager->location_labelset->empty_labelset_value_bitset();
   this->drop_loc_labelset_value_bitset =
@@ -20,11 +21,13 @@ LoadRouteProfile::LoadRouteProfile(const Scenario* scenario) {
   this->pick_node_count = 0;
   this->drop_node_count = 0;
   this->total_travel_dist = 0;
+  this->total_travel_time = 0;
 }
 
 LoadRouteProfile::LoadRouteProfile(const LoadRouteProfile::UPtr& other) {
   this->dirty_marks = std::make_unique<Bitset>(other->dirty_marks);
   this->peak_load_dims = other->peak_load_dims;
+  this->total_load_dims = other->total_load_dims;
   this->pick_loc_labelset_value_bitset =
       std::make_unique<LabelsetValueBitset>(other->pick_loc_labelset_value_bitset);
   this->drop_loc_labelset_value_bitset =
@@ -35,6 +38,7 @@ LoadRouteProfile::LoadRouteProfile(const LoadRouteProfile::UPtr& other) {
   this->pick_node_count = other->pick_node_count;
   this->drop_node_count = other->drop_node_count;
   this->total_travel_dist = other->total_travel_dist;
+  this->total_travel_time = other->total_travel_time;
 }
 
 bool LoadRouteProfile::get_set_dirty_mark(LoadRouteProfileField field) {
@@ -71,16 +75,16 @@ LoadConstrProfile::LoadConstrProfile(const UPtr& other) {
   this->obj_val = other->obj_val;
   this->infeasible = other->infeasible;
   // copy hard constraint scores
-  for (const auto & score : other->hard_constr_scores) {
+  for (const auto& score : other->hard_constr_scores) {
     this->hard_constr_scores.push_back(std::make_unique<HardConstrScore>(score));
   }
   // copy soft constraint scores
-  for (const auto & score : other->soft_constr_scores) {
+  for (const auto& score : other->soft_constr_scores) {
     this->soft_constr_scores.push_back(std::make_unique<SoftConstrScore>(score));
   }
   // copy cost constraint scores
-  for (const auto & score : other->cost_constr_scores) {
-   this->cost_constr_scores.push_back(std::make_unique<CostConstrScore>(score));
+  for (const auto& score : other->cost_constr_scores) {
+    this->cost_constr_scores.push_back(std::make_unique<CostConstrScore>(score));
   }
 }
 

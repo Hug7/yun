@@ -17,9 +17,9 @@ class CostConstraintManager {
  public:
   std::vector<CostConstraint*> constrs;
 
-  int len;
+  int len{0};
 
-  CostConstraintManager() : constrs(), len(0) {};
+  explicit CostConstraintManager(const Scenario* scenario);
 
   ~CostConstraintManager();
 

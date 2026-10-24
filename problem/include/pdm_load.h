@@ -38,7 +38,6 @@ class LoadContext {
   LoadContext(const Scenario* scenario, const Parameter* parameter);
 
   ~LoadContext();
-
 };
 
 /**
@@ -129,7 +128,11 @@ class Load {
 
   [[nodiscard]] TimeWindowPlan::VecUPtr infer_time_window_plans() const;
 
-  virtual const std::vector<long>& get_peak_load_dims() = 0;
+  void fill_locations(std::vector<const Location*>& locations) const;
+
+  [[nodiscard]] virtual const std::vector<long>& get_peak_load_dims() const = 0;
+
+  [[nodiscard]] virtual const std::vector<long>& get_total_load_dims() const = 0;
 
   virtual int get_pick_node_count() = 0;
 
@@ -142,6 +145,8 @@ class Load {
   virtual LabelsetValueBitset* get_order_labelset_value_bitset() = 0;
 
   virtual std::vector<const Order*> get_orders() = 0;
+
+  virtual void fill_orders(std::vector<const Order*>& orders) = 0;
 
   virtual std::vector<Activity*> get_pick_activities() = 0;
 
@@ -194,7 +199,9 @@ class LoadSPMD : public Load {
 
   int get_drop_node_count() override;
 
-  const std::vector<long>& get_peak_load_dims() override;
+  [[nodiscard]] const std::vector<long>& get_peak_load_dims() const override;
+
+  [[nodiscard]] const std::vector<long>& get_total_load_dims() const override;
 
   LabelsetValueBitset* get_pick_loc_labelset_value_bitset() override;
 
@@ -203,6 +210,8 @@ class LoadSPMD : public Load {
   LabelsetValueBitset* get_order_labelset_value_bitset() override;
 
   std::vector<const Order*> get_orders() override;
+
+  void fill_orders(std::vector<const Order*>& orders) override;
 
   std::vector<Activity*> get_pick_activities() override;
 

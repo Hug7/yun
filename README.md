@@ -32,16 +32,39 @@
 
 因此，`Scenario` 回答“有哪些事实”，`Problem` 回答“在这些事实上，按什么规则得到合格且更优的方案”。
 
+`Problem` 支持一定的可配置化，详情见 [parameter_reference.md](docs/parameter_reference.md)。e.g.
+
+```yaml
+hard_constraints:
+  - code: MaxPickNodeCount
+    params: { max_pick_node_count: 3}
+  - code: MaxDropNodeCount
+    params: { max_drop_node_count: 5}
+soft_constraints:
+  - code: Distance
+    params: {dist_factor: 0.5}
+load_unload_policy: FILO
+```
+
+
 ### DSL
 
-`DSL`(domain specific language) 是项目面向求解策略提供的 `Lua` 编排接口。策略文件固定为 `strategy.lua`，入口为全局函数 `solve()`。e.g.
+`DSL`(domain specific language) 是项目面向求解策略提供的 `Lua` 编排接口。策略文件默认为 `Strategy.lua`，
+入口为全局函数 `solve()` 详情见 [dsl_user_guide.md](docs/dsl_user_guide.md)。e.g.
 
 ```lua
 function solve()
     log("hello world")
-    snapshot("A")
     construct_knn()
-    alns({tasks=40, max_iter = 50, ruin_operator_params = {{code = "RuinRandomRemovalLoad"}}, repair_operator_params = {{code = "RepairGreedy"}}})
+    snapshot("A")
+    alns({ worker_count = 4, max_iter = 500,
+           ruin_operator_params = { { code = "RuinRandomRemovalLoad" }, { code = "RuinRandomRemovalOrder" } },
+           repair_operator_params = {
+               { code = "RepairGreedy" },
+               { code = "RepairGreedy", params = { top_rate = 0.0001 } },
+               { code = "RepairRegretK" },
+               { code = "RepairRegretK", params = { regret_k = 3 } },
+           } })
     snapshot("B")
 end
 ```
@@ -133,9 +156,7 @@ delete solver;
 6. 创建 `VisualManager`，负责当前请求的 JSON 结果导出;
 7. 创建 `Problem`，建立取送货模式、装卸策略、装载上下文和三重约束管理器。
 
-**第一次接触本项目, 建议先读**: [design_tour.md](docs/design_tour.md) —— 按"创意想法"组织的设计导览,
-覆盖建模、数据结构、评价、搜索、并行与工程边界六组核心 idea；已熟悉代码后可转读
-[code_highlights.md](docs/code_highlights.md) 查看具体 C++ 实现手法。
+**参考文件如下：**
 
 `scenario` 输入数据表结构: [scenario_schema_reference.md](docs/scenario_schema_reference.md)
 
@@ -167,6 +188,7 @@ delete solver;
 
 | 位置 | 文件 | 内容 |
 |---|---|---|
+| `root_dir/output/{request_id}/` | `PlanSummary.json` | 规划结果汇总 |
 | `root_dir/output/{request_id}/` | `Loads.json` | 车次维度的车辆、装载、路线、成本和计划时间 |
 | `root_dir/output/{request_id}/` | `LoadLocations.json` | 车次站点顺序及站点级作业信息 |
 | `root_dir/output/{request_id}/` | `UnassignedCargoOrders.json` | 未指派订单明细 |
@@ -185,4 +207,4 @@ delete solver;
 
 * [待优化功能-清单](docs/issues/%E5%BE%85%E4%BC%98%E5%8C%96%E5%8A%9F%E8%83%BD-%E6%B8%85%E5%8D%95.md)
 
-* [待实现功能-清单](docs/issues/%E5%BE%85%E5%AE%9E%E7%8E%B0%E5%8A%9F%E8%83%BD-%E6%B8%85%E5%8D%95.md)[待优化功能-清单.md](docs/issues/%E5%BE%85%E4%BC%98%E5%8C%96%E5%8A%9F%E8%83%BD-%E6%B8%85%E5%8D%95.md)
+* [待实现功能-清单](docs/issues/%E5%BE%85%E5%AE%9E%E7%8E%B0%E5%8A%9F%E8%83%BD-%E6%B8%85%E5%8D%95.md)

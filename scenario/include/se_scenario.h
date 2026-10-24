@@ -7,6 +7,7 @@
 
 #include "bdm_cargo_order.h"
 #include "bdm_carrier.h"
+#include "bdm_charge.h"
 #include "bdm_dimension.h"
 #include "bdm_dist_matrix.h"
 #include "bdm_label.h"
@@ -47,6 +48,10 @@ class Scenario {
    * @brief 货物订单管理器
    */
   CargoOrderManager* cargo_order_manager;
+  /**
+   * @brief 计费管理器
+   */
+  ChargeManager* charge_manager{nullptr};
 
   Scenario() = default;
 
@@ -65,4 +70,6 @@ class Scenario {
   void set_dist_matrix_manager(DistMatrixManager* dist_matrix_manager);
 
   void set_cargo_order_manager(CargoOrderManager* cargo_order_manager);
+
+  void set_charge_manager(ChargeManager* charge_manager);
 };

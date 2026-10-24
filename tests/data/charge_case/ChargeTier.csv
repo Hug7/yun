@@ -1,0 +1,4 @@
+RuleCode,TierSeq,LowerBound,UpperBound
+R1,1,0,100
+R1,2,100,
+R2,1,0,

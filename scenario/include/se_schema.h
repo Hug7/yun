@@ -22,6 +22,81 @@ class ParameterSchema {
   };
 };
 
+class ChargeCodeSchema {
+ public:
+  static constexpr char file_name[] = "ChargeCode.csv";
+
+  enum Col {
+    CODE,
+    NAME,
+  };
+
+  static constexpr std::array headers{
+      "Code",
+      "Name",
+  };
+};
+
+class ChargeRuleSchema {
+ public:
+  static constexpr char file_name[] = "ChargeRule.csv";
+
+  enum Col {
+    RULE_CODE,
+    CHARGE_CODE,
+    CHARGE_SECONDARY_CODE,
+    CARRIER_CODE,
+    VEHICLE_MODEL_CODE,
+    CHARGE_PATH_TYPE,
+    LOCATION_LABEL_CODE,
+    CHARGE_PATH_LABEL_VALUES,
+    TIER_CONDITION_TYPE,
+    TIER_DIMENSION_CODE,
+  };
+
+  static constexpr std::array headers{
+      "RuleCode",          "ChargeCode",        "ChargeSecondaryCode", "CarrierCode",
+      "VehicleModelCode",  "ChargePathType",    "LocationLabelCode",   "ChargePathLabelValues",
+      "TierConditionType", "TierDimensionCode",
+  };
+};
+
+class ChargeTierSchema {
+ public:
+  static constexpr char file_name[] = "ChargeTier.csv";
+
+  enum Col {
+    RULE_CODE,
+    TIER_SEQ,
+    LOWER_BOUND,
+    UPPER_BOUND,
+  };
+
+  static constexpr std::array headers{
+      "RuleCode",
+      "TierSeq",
+      "LowerBound",
+      "UpperBound",
+  };
+};
+
+class ChargeItemSchema {
+ public:
+  static constexpr char file_name[] = "ChargeItem.csv";
+
+  enum Col {
+    RULE_CODE,
+    TIER_SEQ,
+    ITEM_TYPE,
+    PRICE,
+    DIMENSION_CODE,
+  };
+
+  static constexpr std::array headers{
+      "RuleCode", "TierSeq", "ItemType", "Price", "DimensionCode",
+  };
+};
+
 class CargoOrderSchema {
  public:
   static constexpr char file_name[] = "CargoOrder.csv";

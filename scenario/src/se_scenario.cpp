@@ -13,11 +13,10 @@ Scenario::~Scenario() {
   delete this->location_manager;
   delete this->dist_matrix_manager;
   delete this->cargo_order_manager;
+  delete this->charge_manager;
 }
 
-void Scenario::set_dim_manager(DimensionManager* dim_manager) {
-  this->dim_manager = dim_manager;
-}
+void Scenario::set_dim_manager(DimensionManager* dim_manager) { this->dim_manager = dim_manager; }
 
 void Scenario::set_label_manager(LabelManager* label_manager) {
   this->label_manager = label_manager;
@@ -41,4 +40,8 @@ void Scenario::set_dist_matrix_manager(DistMatrixManager* dist_matrix_manager) {
 
 void Scenario::set_cargo_order_manager(CargoOrderManager* cargo_order_manager) {
   this->cargo_order_manager = cargo_order_manager;
+}
+
+void Scenario::set_charge_manager(ChargeManager* charge_manager) {
+  this->charge_manager = charge_manager;
 }

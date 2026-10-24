@@ -49,7 +49,7 @@ inline const InfeasibleReason UNDEFINED{"1001", "ALL", "未知无解原因",
                                         "undefined infeasible reason"};
 
 inline const InfeasibleReason VEHICLE_RESOURCE{"1002", "ALL", "车辆资源不足",
-                                              "the vehicle resources are insufficient"};
+                                               "the vehicle resources are insufficient"};
 
 inline const InfeasibleReason MAX_PICK_NODE_COUNT{
     "1003", "MaxPickNodeCount", "超过车次的最大提货节点数", "out of max pick node count in load"};
@@ -77,5 +77,8 @@ inline const InfeasibleReason FIFO_LOAD_UNLOAD_POLICY{
 
 inline const InfeasibleReason TIME_WINDOW{"1010", "HcTimeWindow", "不满足时间窗约束",
                                           "not meet the time window constraint"};
+
+inline const InfeasibleReason NO_CHARGE_RATE{"1011", "CcCharge", "未匹配到计费费率",
+                                             "no charge rate matched"};
 
 }  // namespace InfeasibleReasonCollection

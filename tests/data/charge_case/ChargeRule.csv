@@ -1,0 +1,3 @@
+RuleCode,ChargeCode,ChargeSecondaryCode,CarrierCode,VehicleModelCode,ChargePathType,LocationLabelCode,ChargePathLabelValues,TierConditionType,TierDimensionCode
+R1,TC1,BASE,C1,M1,OD_PAIR,zone,SH-SZ,DISTANCE,
+R2,TC1,FUEL,,,,,,DISTANCE,

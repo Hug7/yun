@@ -10,8 +10,9 @@
 #include <utility>
 #include <vector>
 
-#include "pdm_infeasible.h"
+#include "cc_constraint_code.h"
 #include "hc_constraint_code.h"
+#include "pdm_infeasible.h"
 #include "sc_constraint_code.h"
 
 /**
@@ -133,7 +134,7 @@ class CostConstrScore {
   /**
    * @brief unique encoding with constraints
    */
-  const std::string code;
+  const CostConstrCode code;
   /**
    * @brief is feasible
    */
@@ -161,9 +162,9 @@ class CostConstrScore {
    */
   const InfeasibleReason reason;
 
-  CostConstrScore(std::string code, const bool feasible, const double weight, const double value,
+  CostConstrScore(const CostConstrCode code, const bool feasible, const double weight, const double value,
                   const bool seq_type, const bool vehicle_type, InfeasibleReason reason)
-      : code(std::move(code)),
+      : code(code),
         feasible(feasible),
         weight(weight),
         value(value),
@@ -171,9 +172,9 @@ class CostConstrScore {
         vehicle_type(vehicle_type),
         reason(std::move(reason)) {}
 
-  CostConstrScore(std::string code, const double weight, const double value, const bool seq_type,
+  CostConstrScore(const CostConstrCode code, const double weight, const double value, const bool seq_type,
                   const bool vehicle_type)
-      : code(std::move(code)),
+      : code(code),
         feasible(true),
         weight(weight),
         value(value),

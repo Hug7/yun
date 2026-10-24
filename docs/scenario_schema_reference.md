@@ -1,6 +1,9 @@
 # 数据表字段及依赖关系文档
 
-> **约定**: 数据类型和取值范围由后续补充，本文档仅提供表结构、字段说明、主键、外键依赖关系。
+> **约定 1**: 数据类型和取值范围由后续补充，本文档仅提供表结构、字段说明、主键、外键依赖关系。
+>
+> **约定 2**: 计费表不属于基础场景的必填输入：场景目录不存在 `ChargeRule.csv` 时计费关闭，车次成本为 0。
+完整的匹配语义、阶梯、计费项公式、汇总口径与性能设计见 `docs/charge.md`。
 
 ---
 
@@ -31,6 +34,10 @@
 | 订单 | CargoSubOrder | CargoSubOrder.csv | 子订单 |
 | 订单 | CargoSubOrderDimensionValue | CargoSubOrderDimensionValue.csv | 子订单维度值 |
 | 订单 | CargoSubOrderLabelValue | CargoSubOrderLabelValue.csv | 子订单标签值 |
+| 计费（可选） | ChargeCode | ChargeCode.csv | 计费编码 / 合同条款 |
+| 计费（可选） | ChargeRule | ChargeRule.csv | 计费查询键与阶梯条件 |
+| 计费（可选） | ChargeTier | ChargeTier.csv | 计费阶梯 |
+| 计费（可选） | ChargeItem | ChargeItem.csv | 计费项 |
 
 ---
 
@@ -56,6 +63,8 @@
 | VehicleModelDimensionValue | DimensionCode | 1 : N |
 | CargoSubOrderDimensionValue | DimensionCode | 1 : N |
 | WorkEffect | DimensionCode | 1 : N |
+| ChargeRule | TierDimensionCode | 1 : N |
+| ChargeItem | DimensionCode | 1 : N |
 
 ---
 
@@ -81,6 +90,7 @@
 | VehicleModelLabelValue | LabelCode | 1 : N |
 | CarrierLabelValue | LabelCode | 1 : N |
 | CargoSubOrderLabelValue | LabelCode | 1 : N |
+| ChargeRule | LocationLabelCode | 1 : N |
 
 ---
 
@@ -108,6 +118,7 @@
 | VehicleModelLabelValue | (LabelCode, LabelValue) | 1 : N |
 | CarrierLabelValue | (LabelCode, LabelValue) | 1 : N |
 | CargoSubOrderLabelValue | (LabelCode, LabelValue) | 1 : N |
+| ChargeRule | ChargePathLabelValues（每个值） | 1 : N |
 
 ---
 
@@ -335,6 +346,7 @@
 | VehicleModelLabelValue | VehicleModelCode | 1 : N |
 | Vehicle | VehicleModelCode | 1 : N |
 | LocationAvailableVehicle | VehicleModelCode | 1 : N |
+| ChargeRule | VehicleModelCode | 1 : N |
 
 ---
 
@@ -404,6 +416,7 @@
 | CarrierLabelValue | CarrierCode | 1 : N |
 | Vehicle | CarrierCode | 1 : N |
 | LocationAvailableVehicle | CarrierCode | 1 : N |
+| ChargeRule | CarrierCode | 1 : N |
 
 ---
 
@@ -616,4 +629,133 @@
 
 ---
 
+### 24. ChargeCode（计费编码）
 
+- **CSV 文件**: `ChargeCode.csv`
+- **主键**: `Code`
+
+| # | 字段名 | 数据类型 | 必填 | 说明 | 可选值 / 取值范围 |
+|---|---|---|---|---|---|
+| 1 | Code | string | 是 | 计费编码，唯一标识，对应一个合同条款 | |
+| 2 | Name | string | 否 | 计费编码名称 | |
+
+**外键依赖**: 无
+
+**被依赖**:
+
+| 依赖方表 | 依赖方字段 | 关系 |
+|---|---|---|
+| ChargeRule | ChargeCode | 1 : N |
+
+---
+
+### 25. ChargeRule（计费规则）
+
+- **CSV 文件**: `ChargeRule.csv`
+- **主键**: `RuleCode`
+
+| # | 字段名 | 数据类型 | 必填 | 说明 | 可选值 / 取值范围 |
+|---|---|---|---|---|---|
+| 1 | RuleCode | string | 是 | 规则编码，唯一标识 | |
+| 2 | ChargeCode | string | 是 | 计费编码 | 必须存在于 ChargeCode.Code |
+| 3 | ChargeSecondaryCode | string | 是 | 次级编码，同一计费编码下的计价分组 | |
+| 4 | CarrierCode | string | 否 | 承运商编码；空表示任意承运商 | 非空时必须存在于 Carrier.Code |
+| 5 | VehicleModelCode | string | 否 | 车型编码；空表示任意车型 | 非空时必须存在于 VehicleModel.Code |
+| 6 | ChargePathType | string | 否 | 线路匹配类型 | {空, OD_PAIR, ORDERED_ROUTE}；空表示不限制线路 |
+| 7 | LocationLabelCode | string | 条件 | 线路匹配使用的站点标签；`ChargePathType` 非空时必填 | 必须存在于 Label.Code，且通过 LabelApply 应用到 Location |
+| 8 | ChargePathLabelValues | string | 条件 | 线路标签值序列，用 `-` 分隔；`ChargePathType` 非空时必填 | `OD_PAIR` 恰好 2 个；`ORDERED_ROUTE` 至少 1 个；每个值必须存在于 LabelValue(LabelCode, LabelValue) |
+| 9 | TierConditionType | string | 否 | 阶梯查询条件；空表示无查询条件 | {空, DISTANCE, PICK_NODE_COUNT, DROP_NODE_COUNT, DIMENSION} |
+| 10 | TierDimensionCode | string | 条件 | 阶梯条件使用的维度；`TierConditionType=DIMENSION` 时必填 | 必须存在于 Dimension.Code；其他条件时必须为空 |
+
+**外键依赖**:
+
+| 本表字段 | 引用表 | 引用字段 |
+|---|---|---|
+| ChargeCode | ChargeCode | Code |
+| CarrierCode | Carrier | Code |
+| VehicleModelCode | VehicleModel | Code |
+| LocationLabelCode | Label | Code |
+| TierDimensionCode | Dimension | Code |
+
+> 路径中的每个标签值必须存在于 `LabelValue(LabelCode, LabelValue)`，其中 `LabelCode` 为 `LocationLabelCode`。
+
+**被依赖**:
+
+| 依赖方表 | 依赖方字段 | 关系 |
+|---|---|---|
+| ChargeTier | RuleCode | 1 : N |
+| ChargeItem | RuleCode | 1 : N |
+
+> 约束：
+> - 不同 `RuleCode` 之间的完整查询键不能重复。
+> - 同一 `(ChargeCode, ChargeSecondaryCode)` 下的 OD 规则必须使用同一个 `LocationLabelCode`。
+> - `ChargePathType` 为空时，`LocationLabelCode`、`ChargePathLabelValues` 必须为空。
+> - `TierConditionType` 不是 `DIMENSION` 时，`TierDimensionCode` 必须为空。
+
+---
+
+### 26. ChargeTier（计费阶梯）
+
+- **CSV 文件**: `ChargeTier.csv`
+- **主键**: (`RuleCode`, `TierSeq`)
+
+| # | 字段名 | 数据类型 | 必填 | 说明 | 可选值 / 取值范围 |
+|---|---|---|---|---|---|
+| 1 | RuleCode | string | 是 | 计费规则编码 | 必须存在于 ChargeRule.RuleCode |
+| 2 | TierSeq | int | 是 | 规则内阶梯序号 | 正整数，同一 RuleCode 下唯一 |
+| 3 | LowerBound | double | 否 | 阶梯下界（含）；空表示 0 | 必须小于 UpperBound；单位见下 |
+| 4 | UpperBound | double | 否 | 阶梯上界（不含）；空表示 +∞ | 必须大于 LowerBound；单位见下 |
+
+**外键依赖**:
+
+| 本表字段 | 引用表 | 引用字段 |
+|---|---|---|
+| RuleCode | ChargeRule | RuleCode |
+
+**被依赖**:
+
+| 依赖方表 | 依赖方字段 | 关系 |
+|---|---|---|
+| ChargeItem | (RuleCode, TierSeq) | 1 : N |
+
+> 约束与单位：
+> - 同一 `RuleCode` 内阶梯区间不能重叠；允许连续（`prev.UpperBound == next.LowerBound`）和空档。
+> - `TierConditionType` 为空时，该规则只能有一个阶梯，上下界可留空（固定为 `[0, +∞)`）。
+> - `DISTANCE`：上下界单位 km，内部换算为米。
+> - `PICK_NODE_COUNT` / `DROP_NODE_COUNT`：单位“个”，取整数。
+> - `DIMENSION`：单位是该维度的自然单位，读取时按 `Dimension.Precision` 放大为整数。
+
+---
+
+### 27. ChargeItem（计费项）
+
+- **CSV 文件**: `ChargeItem.csv`
+- **主键**: 无（同一阶梯可有多条计费项，按行追加）
+
+| # | 字段名 | 数据类型 | 必填 | 说明 | 可选值 / 取值范围 |
+|---|---|---|---|---|---|
+| 1 | RuleCode | string | 是 | 计费规则编码 | 必须存在于 ChargeRule.RuleCode |
+| 2 | TierSeq | int | 是 | 阶梯序号 | 必须存在于 ChargeTier(RuleCode, TierSeq) |
+| 3 | ItemType | string | 是 | 计费项类型 | {FLAT, DISTANCE, PICK_STOP, DROP_STOP, DIMENSION, DIMENSION_DISTANCE} |
+| 4 | Price | double | 是 | 单价，单位：元/计价单位，最多 4 位小数 | ≥ 0 |
+| 5 | DimensionCode | string | 条件 | 维度编码；`DIMENSION` / `DIMENSION_DISTANCE` 时必填 | 必须存在于 Dimension.Code；其他类型时必须为空 |
+
+**外键依赖**:
+
+| 本表字段 | 引用表 | 引用字段 |
+|---|---|---|
+| RuleCode | ChargeRule | RuleCode |
+| (RuleCode, TierSeq) | ChargeTier | (RuleCode, TierSeq) |
+| DimensionCode | Dimension | Code |
+
+**被依赖**: 无
+
+> 计费项公式：
+> - `FLAT`：`Price`
+> - `DISTANCE`：`Price × 里程(km)`
+> - `PICK_STOP`：`Price × max(0, 提货节点数 - 1)`
+> - `DROP_STOP`：`Price × max(0, 卸货节点数 - 1)`
+> - `DIMENSION`：`Price × 维度总量(自然单位)`
+> - `DIMENSION_DISTANCE`：`Price × 维度总量(自然单位) × 里程(km)`
+
+---
