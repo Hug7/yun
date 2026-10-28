@@ -63,11 +63,11 @@ namespace Delimiter {
 /**
  * @brief delimiter of calendar time range
  */
-constexpr std::string CALENDAR_TIME_RANGE = ";";
+inline const std::string CALENDAR_TIME_RANGE = ";";
 /**
  * @brief delimiter of time window
  */
-constexpr std::string TIME_WINDOW = ";";
+inline const std::string TIME_WINDOW = ";";
 }  // namespace Delimiter
 
 namespace DistMatrixParameter {
@@ -87,7 +87,7 @@ namespace LocationParameter {
 /**
  * @brief default location code
  */
-constexpr std::string DEFAULT_LOCATION_CODE = "default";
+inline const std::string DEFAULT_LOCATION_CODE = "default";
 }  // namespace LocationParameter
 
 namespace WorkPlanParameter {

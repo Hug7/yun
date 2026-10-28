@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     name: Build yun SDK
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 45
     env:
       MACOSX_DEPLOYMENT_TARGET: "14.0"
