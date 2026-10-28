@@ -222,6 +222,26 @@ python3.11 scripts/build_python_extension.py --out ../yunpyopt/src/yunpyopt
 - 用 `CMAKE_SKIP_RPATH=ON` 清理 conan 缓存带来的 `LC_RPATH`；
 - 构建后按路径冒烟导入，并向 `--out` 目录复制（自动清理旧 `.so`）。
 
+#### 预编译 SDK（供 yunpyopt 发布）
+
+`yun` 的 GitHub Release 提供 `yun-sdk-<version>-macos-arm64.tar.gz`，内容：
+
+- `include/`：yun 各组件头文件 + fmt/spdlog/yaml-cpp/magic_enum/libfork 头文件
+- `lib/libyun_sdk.a`：yun_* + spdlog/fmt/yaml-cpp/lua 的单体静态库
+- `src/yun_solver_binding.cpp`、`CMakeLists.txt`
+- `VERSION`
+
+本地构建：
+
+```bash
+python3.11 scripts/build_sdk.py --version 0.1.0 --out-dir dist/sdk --clean
+```
+
+产物在 `dist/sdk/`（tarball + `SHA256SUMS`）。`.github/workflows/sdk-release.yml`
+在 tag `v*` 或手动 `workflow_dispatch` 时构建并上传到 GitHub Release。
+`yunpyopt` 通过 `yun-sdk-version.txt` 固定版本，并用 `scripts/fetch_sdk.py`
+下载/校验，构建时不再需要 yun 源码或 conan。
+
 说明：
 
 - CMake target 名为 `yun_python_binding`，导入名为 `yunpyopt._core`。将来 Java 绑定使用独立的 `yun_java_binding` target，二者都链接 `yun_solver`，互不影响。

@@ -1,0 +1,90 @@
+name: SDK Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "SDK version (must match project(yun VERSION ...))"
+        required: true
+        default: "0.1.0"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build yun SDK
+    runs-on: macos-14
+    timeout-minutes: 45
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "14.0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify version matches CMake
+        env:
+          SDK_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+          version = re.search(r"project\(\s*yun\s+VERSION\s+([0-9.]+)", Path("CMakeLists.txt").read_text()).group(1)
+          expected = os.environ["SDK_VERSION"]
+          assert version == expected, f"SDK version {expected} != CMake {version}"
+          print("version:", version)
+          PY
+
+      - name: Cache Conan
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('conanfile.py') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "conan>=2.33,<3"
+          conan profile detect --force
+
+      - name: Build SDK
+        run: python scripts/build_sdk.py --version "${{ steps.version.outputs.version }}" --out-dir dist --clean
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yun-sdk
+          path: dist/*
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: yun-sdk
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
