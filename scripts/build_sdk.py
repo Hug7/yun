@@ -77,6 +77,14 @@ def _ensure_conan_profile(conan: str) -> None:
     _run([conan, "profile", "detect", "--force"])
 
 
+def _write_conan_host_profile(build_dir: Path) -> Path:
+    """生成 SDK 专用的 host profile（C++20），不修改用户的 default profile。"""
+    build_dir.mkdir(parents=True, exist_ok=True)
+    profile = build_dir / "conan-host-profile"
+    profile.write_text("include(default)\n[settings]\ncompiler.cppstd=20\n")
+    return profile
+
+
 def _binding_compile_command(build_dir: Path) -> list[str]:
     data = json.loads((build_dir / "compile_commands.json").read_text())
     for entry in data:
@@ -272,6 +280,7 @@ def main() -> None:
     )
     print(f"build python: {python} ({major}.{minor}, {platform_tag})", flush=True)
 
+    host_profile = _write_conan_host_profile(build_dir)
     _run(
         [
             cmake,
@@ -283,9 +292,10 @@ def main() -> None:
             "-DYUN_BUILD_PYTHON=ON",
             "-DYUN_BUILD_TESTS=OFF",
             f"-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES={YUN_ROOT / 'conan_provider.cmake'}",
-            "-DCONAN_HOST_PROFILE=default",
+            f"-DCONAN_HOST_PROFILE={host_profile}",
             f"-DPython3_EXECUTABLE={python}",
             "-DCMAKE_SKIP_RPATH=ON",
+            "-DCMAKE_OSX_ARCHITECTURES=arm64",
             f"-DCMAKE_OSX_DEPLOYMENT_TARGET={args.deployment_target}",
         ]
     )
