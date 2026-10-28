@@ -44,3 +44,7 @@ CMakeUserPresets.json
 ######################
 .DS_Store
 .DS_Store?
+# Python helpers #
+######################
+__pycache__/
+*.pyc

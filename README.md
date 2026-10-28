@@ -142,7 +142,7 @@ solver->solve();
 delete solver;
 ```
 
-当前 `root_dir`、`log_dir` 和日志等级都硬编码在 `tests/vrp_main.cpp`。运行目录 `root_dir` 至少需要包含完整的场景 CSV 以及 `strategy.lua`；程序会把本次运行的新目录写到 `root_dir/output/` 下。
+当前 `root_dir`、`log_dir` 和日志等级都硬编码在 `tests/vrp_main.cpp`。运行目录 `root_dir` 至少需要包含完整的场景 CSV 以及 `Strategy.lua`；程序会把本次运行的新目录写到 `root_dir/output/` 下。
 
 ### 2. Solver 初始化
 
@@ -171,7 +171,7 @@ delete solver;
 1. **预检**：逐个检查 `CargoOrder` 是否存在可行车辆。只要检查结果中存在不可解订单，就写出 `InfeasibleCargoOrders.json` 并直接返回，不执行后续订单合并和策略脚本。
 2. **构造订单池**：先按提货点与卸货点组合分组，再按 `Parameter` 中的标签规则细分，最后把每组 `CargoOrder` 合并为模型层 `Order`。
 3. **构造工作区**：把订单池中的所有 `Order` 放入 `unassigned_orders`，并根据承运商与车辆数据创建可占用、可深拷贝的车辆资源；初始 `loads` 为空。
-4. **构造策略管理器**：在 `root_dir/strategy.lua` 存在时创建 Lua 虚拟机，打开基础库，注册 C++ 回调，然后立即加载脚本。
+4. **构造策略管理器**：在 `root_dir/Strategy.lua` 存在时创建 Lua 虚拟机，打开基础库，注册 C++ 回调，然后立即加载脚本。
 5. **执行策略**：调用 Lua 全局函数 `solve()`。C++ 当前向脚本暴露以下能力：
     - `log_info`、`log_debug`、`log_warn`、`log_error`：写入请求日志。
     - `snapshot(target_dir)`：把当前 Workspace 快照写入本次输出目录下的子目录。
@@ -199,7 +199,56 @@ delete solver;
 
 `Solver` 析构时释放 `context`、`order_pool` 和 `workspace`；`SolverContext` 析构时先刷新 logger，再释放 `Scenario`、`Parameter`、`VisualManager` 和 `Problem`。
 
-### 5. Continuing
+### 5. Python 绑定（macOS）
+
+`yun` 通过 pybind11 暴露 `_core` 扩展，供 [yunpyopt](https://github.com/Hug7/yunpyopt) 打包为 wheel。
+
+前置条件：macOS 14.0+（arm64）、Xcode Command Line Tools、CMake ≥ 3.15、Conan 2.33+、Python 3.11。
+
+> C++ 代码使用 `std::format`，需要 macOS 13.3+；wheel 平台标签按 major 取整到 `14_0`，因此发布构建以 14.0 为最低版本。
+
+```bash
+# 在 yun 仓库根目录
+python3.11 scripts/build_python_extension.py --clean
+
+# 可选：直接复制到 yunpyopt 源码树
+python3.11 scripts/build_python_extension.py --out ../yunpyopt/src/yunpyopt
+```
+
+产物位于 `build/python-extension/python/_core.cpython-311-darwin.so`。构建脚本会：
+
+- 校验目标 Python ≥ 3.11；
+- 在缺少 conan default profile 时执行 `conan profile detect --force`；
+- 用 `CMAKE_SKIP_RPATH=ON` 清理 conan 缓存带来的 `LC_RPATH`；
+- 构建后按路径冒烟导入，并向 `--out` 目录复制（自动清理旧 `.so`）。
+
+#### 预编译 SDK（供 yunpyopt 发布）
+
+`yun` 的 GitHub Release 提供 `yun-sdk-<version>-macos-arm64.tar.gz`，内容：
+
+- `include/`：yun 各组件头文件 + fmt/spdlog/yaml-cpp/magic_enum/libfork 头文件
+- `lib/libyun_sdk.a`：yun_* + spdlog/fmt/yaml-cpp/lua 的单体静态库
+- `src/yun_solver_binding.cpp`、`CMakeLists.txt`
+- `VERSION`
+
+本地构建：
+
+```bash
+python3.11 scripts/build_sdk.py --version 0.1.0 --out-dir dist/sdk --clean
+```
+
+产物在 `dist/sdk/`（tarball + `SHA256SUMS`）。`.github/workflows/sdk-release.yml`
+在 tag `v*` 或手动 `workflow_dispatch` 时构建并上传到 GitHub Release。
+`yunpyopt` 通过 `yun-sdk-version.txt` 固定版本，并用 `scripts/fetch_sdk.py`
+下载/校验，构建时不再需要 yun 源码或 conan。
+
+说明：
+
+- CMake target 名为 `yun_python_binding`，导入名为 `yunpyopt._core`。将来 Java 绑定使用独立的 `yun_java_binding` target，二者都链接 `yun_solver`，互不影响。
+- 场景目录需包含场景 CSV 与 `Strategy.lua`；入口为 `Strategy.lua` 的 `solve()`。
+- `BUILD_PY.sh` 已删除，统一使用 `scripts/build_python_extension.py`。
+
+### 6. Continuing
 
 * 测试用例暂未添加
 

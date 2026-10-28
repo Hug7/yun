@@ -60,7 +60,6 @@ if(ENABLE_ASAN)
 endif()
 
 # add subdirectories
-enable_testing()
 add_subdirectory(common)
 add_subdirectory(scenario)
 add_subdirectory(problem)
@@ -70,7 +69,11 @@ option(YUN_BUILD_PYTHON "Build the Python pybind11 binding" OFF)
 if(YUN_BUILD_PYTHON)
     add_subdirectory(python)
 endif()
-add_subdirectory(tests)
+option(YUN_BUILD_TESTS "Build the C++ unit tests" ON)
+if(YUN_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 
 # 总安装配置
