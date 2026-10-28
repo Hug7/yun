@@ -6,17 +6,24 @@ import os
 
 class YunConan(ConanFile):
     name = "yun"
-    version = "1.0.0"
+    version = "0.1.0"
     settings = "os", "compiler", "build_type", "arch"
     generators = "CMakeDeps", "CMakeToolchain"
     options = {"shared": [True, False]}
     default_options = {"shared": False}
     exports_sources = [
         "CMakeLists.txt",
+        "conanfile.py",
+        "conan_provider.cmake",
         "common/*",
-        "core/*",
-        "plan/*"
+        "scenario/*",
+        "problem/*",
+        "algorithm/*",
+        "solver/*",
+        "python/*",
+        "scripts/*",
         "tests/*",
+        "resources/*",
     ]
 
     def build(self):

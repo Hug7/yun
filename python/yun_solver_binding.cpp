@@ -4,9 +4,9 @@
  */
 
 /**
- * @brief Solver 的 pybind11 绑定, 供 yunpy 项目进程内调用
+ * @brief Solver 的 pybind11 绑定, 供 yunpyopt 项目进程内调用
  *
- * 对应 case 目录结构见 yunpy/test_case, Python 侧入口为 yunpy.solver.solve()。
+ * 对应 case 目录结构见 yunpyopt/tests/data, Python 侧入口为 yunpyopt.solver.solve()。
  */
 
 #include <pybind11/pybind11.h>
@@ -61,20 +61,26 @@ PYBIND11_MODULE(_core, m) {
             "\n"
             "Known behaviour: the ALNS stage does NOT write its best solution back to the\n"
             "workspace, so the exported loads are the KNN construction result. The max_iter\n"
-            "setting in strategy.lua therefore does not affect the output.";
+            "setting in Strategy.lua therefore does not affect the output.";
+
+  py::list result_keys;
+  for (const auto& entry : RESULT_ENTRIES) {
+    result_keys.append(entry.first);
+  }
+  m.attr("RESULT_KEYS") = py::tuple(result_keys);
 
   py::class_<Solver>(m, "Solver")
       .def(py::init<std::string, const std::string&, const std::string&>(), py::arg("root_dir"),
            py::arg("log_dir"), py::arg("log_level"),
-           R"doc(构造 solver, 立即从 root_dir 读取全部场景 CSV 并创建输出目录。
+           R"doc(构造 solver, 立即从 root_dir 读取场景 CSV 并创建输出目录。
 
 Args:
-    root_dir: 案例目录, 需包含 22 个场景 CSV 与 strategy.lua, 且必须可写
+    root_dir: 案例目录, 需包含场景 CSV 与 Strategy.lua, 且必须可写
     log_dir: 额外日志目录; 传空串则跳过该输出
     log_level: 日志等级
 
 Raises:
-    RuntimeError: 场景读取失败或 strategy.lua 缺失
+    RuntimeError: 场景读取失败
 )doc",
            py::call_guard<py::gil_scoped_release>())
       .def_property_readonly("output_dir", [](const Solver& solver) { return solver.context->output_dir; },
@@ -90,6 +96,9 @@ Raises:
 Returns:
     dict[str, str | None]: 产物路径, key 为 loads/locations/unassigned/infeasible,
     未产出的 key 为 None。precheck 拦截时 loads 为 None。
+
+Raises:
+    RuntimeError: Strategy.lua 缺失或求解过程抛异常。
 
 Note:
     同一个 Solver 可以重复调用, 每次会重新构建订单池与工作台。
