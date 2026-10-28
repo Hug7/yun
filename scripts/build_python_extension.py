@@ -62,6 +62,14 @@ def _ensure_conan_profile(conan: str) -> None:
     _run([conan, "profile", "detect", "--force"])
 
 
+def _write_conan_host_profile(build_dir: Path) -> Path:
+    """生成 C++20 的 host profile，不修改用户的 default profile。"""
+    build_dir.mkdir(parents=True, exist_ok=True)
+    profile = build_dir / "conan-host-profile"
+    profile.write_text("include(default)\n[settings]\ncompiler.cppstd=20\n")
+    return profile
+
+
 def _build(
     python: Path,
     build_dir: Path,
@@ -83,6 +91,7 @@ def _build(
         print(f"清理构建目录 {build_dir}", flush=True)
         shutil.rmtree(build_dir)
 
+    host_profile = _write_conan_host_profile(build_dir)
     _run(
         [
             "cmake",
@@ -94,9 +103,10 @@ def _build(
             "-DYUN_BUILD_PYTHON=ON",
             "-DYUN_BUILD_TESTS=OFF",
             f"-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES={YUN_ROOT / 'conan_provider.cmake'}",
-            "-DCONAN_HOST_PROFILE=default",
+            f"-DCONAN_HOST_PROFILE={host_profile}",
             f"-DPython3_EXECUTABLE={python}",
             "-DCMAKE_SKIP_RPATH=ON",
+            "-DCMAKE_OSX_ARCHITECTURES=arm64",
             f"-DCMAKE_OSX_DEPLOYMENT_TARGET={deployment_target}",
         ]
     )
