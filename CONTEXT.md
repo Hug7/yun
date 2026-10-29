@@ -1,4 +1,4 @@
-# yun — VRP
+# yun
 
 车辆路径规划（VRP）求解器。输入基础数据（Scenario），构建规划模型（Load / Node / Activity），在约束下求解最优车次分配方案。
 
@@ -58,8 +58,10 @@ Load 的 Node 链的起点或终点。由 Vehicle 的 origin_loc / dest_loc 决�
 **Order**（订单）:
 模型层的取送货任务，是对数据层 CargoOrder 的求解表示。含取/送 Location、时间窗、维度、标签。一个 CargoOrder 可能被拆分成多个 Order 分别分配给不同 Load。
 
+**汇总口径约定**：凡「订单数 / 总订单数 / 各维度订单数」一律指**货单数**（按 `Order::cargo_orders` 展开计数），不是 `Order` 父单元数。
+
 **Constraint Score**（约束评分）:
-三重约束体系——硬约束（HardConstrScore：不可违反，违规则不可行）、软约束（SoftConstrScore：可违反但有惩罚）、成本约束（CostConstrScore：计入目标函数）。每个 Score 携带编码（code）、权重（weight）和值（value），聚合在 Load 的 LoadAttrConstraint 中。
+三重约束体系——硬约束（HardConstrScore：不可违反，违规则不可行）、软约束（SoftConstrScore：可违反但有惩罚）、成本约束（CostConstrScore：存在计费项时必须有费用且计入目标函数）。每个 Score 携带编码（code）、权重（weight）和值（value），聚合在 Load 的 LoadAttrConstraint 中。
 
 ### 求解上下文
 
@@ -68,6 +70,10 @@ Load 的 Node 链的起点或终点。由 Vehicle 的 origin_loc / dest_loc 决�
 _Avoid_: 运行、会话、任务
 
 ### 求解过程
+
+**车次 (Load)**：
+一条完整的配送计划（一车一路线），含车型、节点链与约束画像。`VisualPlanSummary` 中「总车次数 = loads.size()」。
+_Avoid_：车辆（Vehicle，车次的承载工具）。
 
 **Workspace**（工作空间）:
 一次求解过程中可变的工作状态：当前的 Load 集合与尚未指派的 Order 集合，可压栈暂存以支持回退。求解期间被反复改写，本身不是产物。
@@ -80,3 +86,12 @@ _Avoid_: 构造方案、初始方案、构造解
 **Solution**（方案）:
 一次求解的最终产物：Load 集合、车辆资源占用、未指派的 Order，以及由三重 Constraint Score 汇总出的总成本。
 _Avoid_: 结果、答案
+
+### 策略编排
+
+**策略方法 (Strategy Method)**：
+Lua DSL 注册的顶层 C++ 方法（如 `construct_knn` / `alns` / `snapshot`），是求解编排的顶层步骤。
+_Avoid_：ALNS 内部的 ruin/repair 算子（那是更细的粒度）。
+
+**策略方法耗时**：
+不在 `loads`/`unassigned_orders` 中推导，须由 solver 在各策略方法调用前后埋点（chrono）累计，落入 `VisualPlanSummary::strategy_timings` 与 `total_running_time_second`。
