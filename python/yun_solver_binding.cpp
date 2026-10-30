@@ -30,6 +30,7 @@ namespace {
  * @brief 求解产物的 Python 侧 key -> 输出文件名
  */
 constexpr std::pair<const char*, const char*> RESULT_ENTRIES[] = {
+    {"plan_summary", PLAN_SUMMARY_FILE_NAME},
     {"loads", LOADS_FILE_NAME},
     {"locations", LOAD_LOCATIONS_FILE_NAME},
     {"unassigned", UNASSIGNED_CARGO_ORDERS_FILE_NAME},
