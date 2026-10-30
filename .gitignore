@@ -48,3 +48,13 @@ CMakeUserPresets.json
 ######################
 __pycache__/
 *.pyc
+
+# Build / tooling artifacts #
+######################
+cmake-build-*/
+dist/
+wheelhouse/
+tmp/
+log/
+.ruff_cache/
+.ci/
