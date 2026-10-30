@@ -36,7 +36,11 @@ class Solution {
 
   ~Solution();
 
+  [[nodiscard]] double total_obj_val() const;
+
   [[nodiscard]] double total_cost() const;
+
+  [[nodiscard]] double total_penalty() const;
 
   void add_load(Load* load);
 

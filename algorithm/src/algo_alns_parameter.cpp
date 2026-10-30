@@ -34,6 +34,10 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
     alns_parameter->max_unimproved_iter =
         static_cast<int>(cfg[AlnsParameterLuaField::MAX_UNIMPROVED_ITER]);
   }
+  if (cfg[AlnsParameterLuaField::PRINT_LOG_INTERVAL_ITER].valid()) {
+    alns_parameter->print_log_interval_iter =
+        static_cast<int>(cfg[AlnsParameterLuaField::PRINT_LOG_INTERVAL_ITER]);
+  }
   if (cfg[AlnsParameterLuaField::MAX_RUNNING_TIME_SEC].valid()) {
     alns_parameter->max_running_time_sec =
         static_cast<int>(cfg[AlnsParameterLuaField::MAX_RUNNING_TIME_SEC]);

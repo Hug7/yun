@@ -60,7 +60,7 @@ AlnsSimulatedAnnealing::AlnsSimulatedAnnealing(const AlnsParameter* alns_paramet
                                                       alns_parameter->min_temperature,
                                                       alns_parameter->max_iter)),
       accept_random(std::make_unique<RandomUtils>(alns_parameter->default_random_seed)),
-      obj_scale(init_sol != nullptr ? resolve_obj_scale(init_sol->total_cost()) : 1.0),
+      obj_scale(init_sol != nullptr ? resolve_obj_scale(init_sol->total_obj_val()) : 1.0),
       logger(std::move(_logger)),
       relative_temperature(alns_parameter->initial_temperature) {
   if (this->relative_temperature <= 0.0) {
@@ -81,7 +81,7 @@ AlnsSimulatedAnnealing::AlnsSimulatedAnnealing(const AlnsParameter* alns_paramet
       this->logger->debug(
           "AlnsSimulatedAnnealing: f0={:.6f} obj_scale={:.6f} tau0={:.6e} tau_min={:.6e} "
           "annealing_factor={:.6f}",
-          init_sol->total_cost(), this->obj_scale, this->relative_temperature,
+          init_sol->total_obj_val(), this->obj_scale, this->relative_temperature,
           this->min_relative_temperature, this->annealing_factor);
     }
   }
@@ -90,9 +90,9 @@ AlnsSimulatedAnnealing::AlnsSimulatedAnnealing(const AlnsParameter* alns_paramet
 AlnsSaAcceptStatusCode AlnsSimulatedAnnealing::cal_accept_status(const Solution* tmp_sol,
                                                                  const Solution* cur_sol,
                                                                  const Solution* best_sol) const {
-  const double tmp_cost = tmp_sol->total_cost();
-  const double cur_cost = cur_sol->total_cost();
-  if (tmp_cost < best_sol->total_cost()) {
+  const double tmp_cost = tmp_sol->total_obj_val();
+  const double cur_cost = cur_sol->total_obj_val();
+  if (tmp_cost < best_sol->total_obj_val()) {
     return AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION;
   }
   const double delta = tmp_cost - cur_cost;
