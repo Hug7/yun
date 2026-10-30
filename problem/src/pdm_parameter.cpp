@@ -154,23 +154,7 @@ void Parameter::parse_soft_constraints(const YamlNode& param_node) {
   this->soft_constr_items = parse_soft_constr_items(soft_constr_nodes);
 }
 
-void Parameter::post_process(const Scenario* scenario) {
-  // 根据订单时间范围，更新计划时间范围
-  // --找到订单时间范围
-  long min_pick_time = std::numeric_limits<long>::max();
-  long max_drop_time = std::numeric_limits<long>::min();
-  for (const auto& order : scenario->cargo_order_manager->cargo_orders) {
-    min_pick_time = std::min(min_pick_time, order->pick_time_window->early);
-    max_drop_time = std::max(max_drop_time, order->drop_time_window->late);
-  }
-  // --更新计划时间范围
-  if (this->plan_datetime_range->start_time < min_pick_time) {
-    this->plan_datetime_range->start_time = min_pick_time;
-  }
-  if (this->plan_datetime_range->end_time > max_drop_time) {
-    this->plan_datetime_range->end_time = max_drop_time;
-  }
-}
+void Parameter::post_process(const Scenario* scenario) {}
 
 Parameter* load_parameter(const std::string& root_dir, const Scenario* scenario,
                           const std::shared_ptr<spdlog::logger>& logger) {
