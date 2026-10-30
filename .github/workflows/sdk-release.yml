@@ -13,6 +13,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: sdk-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build yun SDK
@@ -77,6 +81,11 @@ jobs:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # 人工审批：需在仓库 Settings → Environments → release 中配置 Required reviewers，
+    # 否则该 environment 只是占位，不会阻止自动发布。
+    environment:
+      name: release
     permissions:
       contents: write
     steps:
