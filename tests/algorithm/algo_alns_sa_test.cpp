@@ -61,10 +61,13 @@ TEST(AlnsSaMath, DecreasesWithDeltaAndIncreasesWithTemperature) {
   EXPECT_GT(p_hot, p_cold);
 }
 
-TEST(AlnsSaMath, DefaultTauAcceptsOnePercentWorseningWithExpMinusOne) {
+TEST(AlnsSaMath, DefaultTauAcceptsOnePercentWorseningWithExpMinusHalf) {
   AlnsParameter param;
+  // tau_0 默认取 2e-2（调试得到的值），1% 恶化时 p = exp(-0.01 / 0.02) = e^-0.5。
+  // 该默认值属于调参结论，变更时需要同步更新这个用例。
+  EXPECT_DOUBLE_EQ(param.initial_temperature, 2.0e-2);
   const double p = metropolis_accept_probability(0.01 * kScale, kScale, param.initial_temperature);
-  EXPECT_NEAR(p, std::exp(-1.0), 1e-12);
+  EXPECT_NEAR(p, std::exp(-0.5), 1e-12);
 }
 
 // ====== 冷却系数反解 ======
