@@ -19,6 +19,7 @@ class AlnsParameterLuaField {
   static constexpr const char* MAX_ITER = "max_iter";
   static constexpr const char* MAX_SUB_ITER = "max_sub_iter";
   static constexpr const char* MAX_UNIMPROVED_ITER = "max_unimproved_iter";
+  static constexpr const char* PRINT_LOG_INTERVAL_ITER = "print_log_interval_iter";
   static constexpr const char* MAX_RUNNING_TIME_SEC = "max_running_time_sec";
   static constexpr const char* OPERATOR_LEARNING_FACTOR = "operator_learning_factor";
   static constexpr const char* OPERATOR_INITIAL_WEIGHT = "operator_initial_weight";
@@ -53,6 +54,10 @@ class AlnsParameter {
    * @brief 最大无改进次数
    */
   int max_unimproved_iter{100};
+  /**
+   * @brief 打印日志的间隔代数
+   */
+  int print_log_interval_iter{10};
   /**
    * @brief 最大运行时长
    */

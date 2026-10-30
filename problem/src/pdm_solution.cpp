@@ -14,7 +14,7 @@ Solution::~Solution() {
   }
 }
 
-double Solution::total_cost() const {
+double Solution::total_obj_val() const {
   // 统计目标值(hard score + soft score + cost score)
   double total_obj_val = 0;
   for (const auto& load : this->loads) {
@@ -28,9 +28,25 @@ double Solution::total_cost() const {
   return total_obj_val;
 }
 
-void Solution::add_load(Load* load) {
-  this->add_load(load, load->get_orders());
+double Solution::total_cost() const {
+  double total_cost = 0;
+  for (const auto& load : this->loads) {
+    total_cost += load->constr_profile->total_cost;
+  }
+
+  return total_cost;
 }
+
+double Solution::total_penalty() const {
+  double total_penalty = 0;
+  for (const auto& load : this->loads) {
+    total_penalty += load->constr_profile->total_soft_penalty;
+  }
+
+  return total_penalty;
+}
+
+void Solution::add_load(Load* load) { this->add_load(load, load->get_orders()); }
 
 void Solution::add_load(Load* load, const std::vector<const Order*>& orders) {
   // todo 临时校验

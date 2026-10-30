@@ -122,6 +122,7 @@ alns({
 | `max_iter` | int | `200` | 最大迭代次数（外层 ALNS 主循环）。 |
 | `max_sub_iter` | int | `10` | 最大子迭代次数。 |
 | `max_unimproved_iter` | int | `100` | 连续无改进次数达到该值时提前终止搜索。 |
+| `print_log_interval_iter` | int | `10` | 打印日志的间隔迭代次数。 |
 | `max_running_time_sec` | int | `600` | 最大运行时长（秒），到时终止搜索。 |
 | `operator_learning_factor` | double | `0.35` | 算子权重自适应学习因子。必须满足 `0 < x < 1`，否则抛异常。 |
 | `operator_initial_weight` | double | `100.0` | 算子组合初始权重。必须 `>= 1`，否则抛异常。 |
