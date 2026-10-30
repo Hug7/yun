@@ -116,6 +116,12 @@ std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
   if (tws_arr.empty()) {
     return {};
   }
+  // 任一分组为空（或指针为空）时交集必然为空；否则下面的取下标会越界
+  for (const auto* tws : tws_arr) {
+    if (tws == nullptr || tws->empty()) {
+      return {};
+    }
+  }
   // 时间窗集合大小
   const std::size_t n = tws_arr.size();
   // 每个向量当前的读取位置
