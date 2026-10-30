@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build & Test (macOS arm64)
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Conan
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "conan>=2.33,<3"
+          conan profile detect --force
+          python - <<'PY'
+          import subprocess
+          import sys
+
+          version = subprocess.check_output(["cmake", "--version"], text=True).split()[2]
+          major, minor = (int(part) for part in version.split(".")[:2])
+          if (major, minor) < (3, 24):
+              sys.exit(f"conan_provider.cmake requires CMake >= 3.24, got {version}")
+          print("cmake", version)
+          PY
+
+      - name: Configure
+        run: |
+          mkdir -p build/ci
+          cat > build/ci/conan-host-profile <<'EOF'
+          include(default)
+          [settings]
+          compiler.cppstd=20
+          EOF
+          cmake -S . -B build/ci \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DYUN_BUILD_TESTS=ON \
+            -DYUN_BUILD_PYTHON=OFF \
+            -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$PWD/conan_provider.cmake" \
+            -DCONAN_HOST_PROFILE="$PWD/build/ci/conan-host-profile"
+
+      - name: Build
+        run: cmake --build build/ci --parallel "$(sysctl -n hw.ncpu)"
+
+      - name: Unit tests
+        run: ctest --test-dir build/ci --output-on-failure --timeout 120 --no-tests=error
+
+      - name: Checkout functional cases
+        uses: actions/checkout@v4
+        with:
+          repository: Hug7/yun-cases
+          ref: v0.1.0
+          path: .ci/yun-cases
+          fetch-depth: 1
+
+      - name: Functional test (C_SUC_001)
+        run: |
+          set -euo pipefail
+          case_root="${RUNNER_TEMP}/yun-case"
+          log_dir="${RUNNER_TEMP}/yun-log"
+          rm -rf "${case_root}" "${log_dir}"
+          mkdir -p "${case_root}" "${log_dir}"
+          unzip -q .ci/yun-cases/feature_tests/C_SUC_001.zip -d "${case_root}"
+          case_dir="${case_root}/C_SUC_001"
+          YUN_CASE_DIR="${case_dir}" YUN_LOG_DIR="${log_dir}" ./build/ci/tests/vrp_exec
+          python - "${case_dir}" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          case_dir = pathlib.Path(sys.argv[1])
+          outputs = sorted(path for path in case_dir.glob("output/*") if path.is_dir())
+          assert outputs, f"no output directory under {case_dir}/output"
+          latest = outputs[-1]
+          required = [
+              "PlanSummary.json",
+              "Loads.json",
+              "LoadLocations.json",
+              "UnassignedCargoOrders.json",
+          ]
+          for name in required:
+              path = latest / name
+              assert path.is_file(), f"missing {path}"
+              json.loads(path.read_text())
+          summary = json.loads((latest / "PlanSummary.json").read_text())
+          assert summary["TotalCargoOrderCount"] > 0, summary
+          assert summary["TotalLoadCount"] > 0, summary
+          assert summary["UnassignedCargoOrderCount"] == 0, summary
+          print(
+              "C_SUC_001 OK:",
+              f"loads={summary['TotalLoadCount']}",
+              f"objective={summary['TotalObjective']}",
+              f"output={latest}",
+          )
+          PY
+
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-logs-${{ github.run_attempt }}
+          path: |
+            build/ci/Testing/Temporary/LastTest.log
+            ${{ runner.temp }}/yun-case/C_SUC_001/output/**/*.log
+          if-no-files-found: ignore
+          retention-days: 7
