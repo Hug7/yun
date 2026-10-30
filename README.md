@@ -245,14 +245,13 @@ python3.11 scripts/build_sdk.py --version 0.1.0 --out-dir dist/sdk --clean
 说明：
 
 - CMake target 名为 `yun_python_binding`，导入名为 `yunpyopt._core`。将来 Java 绑定使用独立的 `yun_java_binding` target，二者都链接 `yun_solver`，互不影响。
-- 场景目录需包含场景 CSV 与 `Strategy.lua`；入口为 `Strategy.lua` 的 `solve()`。
-- `BUILD_PY.sh` 已删除，统一使用 `scripts/build_python_extension.py`。
 
-### 6. Continuing
+### 6. 附件
 
-* 测试用例暂未添加
+* 测试用例和demo见项目: [yun-cases](https://github.com/Hug7/yun-cases)
 
-* [严重缺陷-清单](docs/issues/%E4%B8%A5%E9%87%8D%E7%BC%BA%E9%99%B7-%E6%B8%85%E5%8D%95.md)
+
+### 7. Continuing
 
 * [待优化功能-清单](docs/issues/%E5%BE%85%E4%BC%98%E5%8C%96%E5%8A%9F%E8%83%BD-%E6%B8%85%E5%8D%95.md)
 
