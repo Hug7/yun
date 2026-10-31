@@ -1,8 +1,11 @@
-import os
+"""Conan recipe for dependency resolution only.
+
+``yun`` itself is consumed through the prebuilt SDK published on GitHub
+Releases (see ``scripts/build_sdk.py``); this recipe does not build or
+package the project.
+"""
 
 from conan import ConanFile
-from conan.tools.cmake import CMake
-from conan.tools.files import copy
 
 
 class YunConan(ConanFile):
@@ -10,32 +13,10 @@ class YunConan(ConanFile):
     version = "0.1.0"
     settings = "os", "compiler", "build_type", "arch"
     generators = "CMakeDeps", "CMakeToolchain"
-    options = {"shared": [True, False]}
-    default_options = {"shared": False}
-    exports_sources = [
-        "CMakeLists.txt",
-        "conanfile.py",
-        "conan_provider.cmake",
-        "common/*",
-        "scenario/*",
-        "problem/*",
-        "algorithm/*",
-        "solver/*",
-        "python/*",
-        "scripts/*",
-        "tests/*",
-        "resources/*",
-    ]
-
-    def build(self):
-        cmake = CMake(self)
-        cmake.configure()
-        cmake.build()
 
     def requirements(self):
         self.requires("fmt/12.1.0", transitive_headers=True, transitive_libs=True)
         self.requires("spdlog/1.17.0", transitive_headers=True, transitive_libs=True)
-        # self.requires("date/3.0.3", transitive_headers=True, transitive_libs=True)
         self.requires("yaml-cpp/0.8.0", transitive_headers=True, transitive_libs=True)
         self.requires("gtest/1.18.0", transitive_headers=True, transitive_libs=True)
         self.requires("magic_enum/0.9.8", transitive_headers=True, transitive_libs=True)
@@ -46,69 +27,3 @@ class YunConan(ConanFile):
         self.requires("sol2/3.5.0", transitive_headers=True, transitive_libs=True)
         self.requires("pybind11/2.13.6", transitive_headers=True)
         self.requires("libfork/3.8.0", transitive_headers=True)
-        # self.requires("boost/1.91.0", transitive_headers=True, transitive_libs=True)
-
-    def package(self):
-        # 安装头文件
-        copy(
-            self,
-            "*.h",
-            src=os.path.join(self.source_folder, "common/include"),
-            dst=os.path.join(self.package_folder, "include/common"),
-        )
-
-        # 安装库文件（根据实际构建输出调整）
-        copy(
-            self,
-            "*.lib",
-            self.build_folder,
-            os.path.join(self.package_folder, "lib"),
-            keep_path=False,
-        )
-        copy(
-            self,
-            "*.dll",
-            self.build_folder,
-            os.path.join(self.package_folder, "bin"),
-            keep_path=False,
-        )
-        copy(
-            self,
-            "*.so",
-            self.build_folder,
-            os.path.join(self.package_folder, "lib"),
-            keep_path=False,
-        )
-        copy(
-            self,
-            "*.dylib",
-            self.build_folder,
-            os.path.join(self.package_folder, "lib"),
-            keep_path=False,
-        )
-        copy(
-            self,
-            "*.a",
-            self.build_folder,
-            os.path.join(self.package_folder, "lib"),
-            keep_path=False,
-        )
-
-    def package_info(self):
-        # self.cpp_info.set_property("cmake_target_name", "yun::yun")
-        # 根据实际生成的库文件配置
-        # self.cpp_info.requires = ["fmt::fmt", "spdlog::spdlog", "yaml-cpp::yaml-cpp"]  # 关键：声明依赖关系传递
-        # self.cpp_info.libs = ["yun_domain", ]  # 库名
-        self.cpp_info.includedirs = []
-
-        # # self.cpp_info.components["common"].libs = ["yun_common"]
-        self.cpp_info.components["yun_common"].includedirs = ["include/common"]
-        self.cpp_info.components["yun_common"].requires = [
-            "fmt::fmt",
-            "spdlog::spdlog",
-            "yaml-cpp::yaml-cpp",
-        ]
-
-        # self.cpp_info.components["yun_domain"].libs = ["yun_domain"]
-        # self.cpp_info.components["yun_domain"].includedirs = ["include/domain"]
-        # self.cpp_info.components["yun_domain"].requires = ["yun_common"]
