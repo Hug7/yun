@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build:
     name: Build yun SDK
-    runs-on: macos-15
+    runs-on: macos-14
     timeout-minutes: 45
     env:
       MACOSX_DEPLOYMENT_TARGET: "14.0"
