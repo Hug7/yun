@@ -1,7 +1,8 @@
-from conan import ConanFile
-from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
-from conan.tools.files import copy
 import os
+
+from conan import ConanFile
+from conan.tools.cmake import CMake
+from conan.tools.files import copy
 
 
 class YunConan(ConanFile):
@@ -39,7 +40,9 @@ class YunConan(ConanFile):
         self.requires("gtest/1.18.0", transitive_headers=True, transitive_libs=True)
         self.requires("magic_enum/0.9.8", transitive_headers=True, transitive_libs=True)
         # DSL: lua 虚拟机 + sol2 绑定层(sol2 为 header-only)
-        self.requires("lua/5.4.6", override=True, transitive_headers=True, transitive_libs=True)
+        self.requires(
+            "lua/5.4.6", override=True, transitive_headers=True, transitive_libs=True
+        )
         self.requires("sol2/3.5.0", transitive_headers=True, transitive_libs=True)
         self.requires("pybind11/2.13.6", transitive_headers=True)
         self.requires("libfork/3.8.0", transitive_headers=True)
@@ -47,15 +50,50 @@ class YunConan(ConanFile):
 
     def package(self):
         # 安装头文件
-        copy(self, "*.h", src=os.path.join(self.source_folder, "common/include"), dst=os.path.join(self.package_folder, "include/common"))
-        
+        copy(
+            self,
+            "*.h",
+            src=os.path.join(self.source_folder, "common/include"),
+            dst=os.path.join(self.package_folder, "include/common"),
+        )
+
         # 安装库文件（根据实际构建输出调整）
-        copy(self, "*.lib", self.build_folder, os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.dll", self.build_folder, os.path.join(self.package_folder, "bin"), keep_path=False)
-        copy(self, "*.so", self.build_folder, os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.dylib", self.build_folder, os.path.join(self.package_folder, "lib"), keep_path=False)
-        copy(self, "*.a", self.build_folder, os.path.join(self.package_folder, "lib"), keep_path=False)
-    
+        copy(
+            self,
+            "*.lib",
+            self.build_folder,
+            os.path.join(self.package_folder, "lib"),
+            keep_path=False,
+        )
+        copy(
+            self,
+            "*.dll",
+            self.build_folder,
+            os.path.join(self.package_folder, "bin"),
+            keep_path=False,
+        )
+        copy(
+            self,
+            "*.so",
+            self.build_folder,
+            os.path.join(self.package_folder, "lib"),
+            keep_path=False,
+        )
+        copy(
+            self,
+            "*.dylib",
+            self.build_folder,
+            os.path.join(self.package_folder, "lib"),
+            keep_path=False,
+        )
+        copy(
+            self,
+            "*.a",
+            self.build_folder,
+            os.path.join(self.package_folder, "lib"),
+            keep_path=False,
+        )
+
     def package_info(self):
         # self.cpp_info.set_property("cmake_target_name", "yun::yun")
         # 根据实际生成的库文件配置
@@ -65,7 +103,11 @@ class YunConan(ConanFile):
 
         # # self.cpp_info.components["common"].libs = ["yun_common"]
         self.cpp_info.components["yun_common"].includedirs = ["include/common"]
-        self.cpp_info.components["yun_common"].requires = ["fmt::fmt", "spdlog::spdlog", "yaml-cpp::yaml-cpp"]
+        self.cpp_info.components["yun_common"].requires = [
+            "fmt::fmt",
+            "spdlog::spdlog",
+            "yaml-cpp::yaml-cpp",
+        ]
 
         # self.cpp_info.components["yun_domain"].libs = ["yun_domain"]
         # self.cpp_info.components["yun_domain"].includedirs = ["include/domain"]
