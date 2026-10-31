@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2026 Qi Li
+ * Copyright (c) 2026 Qi Li
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -19,7 +19,7 @@
  * @brief solver上下文
  */
 class SolverContext {
-public:
+ public:
   /**
    * @brief 文件根目录
    */

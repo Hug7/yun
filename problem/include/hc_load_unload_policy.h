@@ -12,8 +12,7 @@
  */
 class HcLoadUnloadPolicyFILO : public HardConstraint {
  public:
-  HcLoadUnloadPolicyFILO()
-      : HardConstraint(HardConstrCode::LoadUnloadPolicyFILO, 0, true, false) {}
+  HcLoadUnloadPolicyFILO() : HardConstraint(HardConstrCode::LoadUnloadPolicyFILO, 0, true, false) {}
 
   HardConstrScore::UPtr eval(Load* load) override;
 };
@@ -23,8 +22,7 @@ class HcLoadUnloadPolicyFILO : public HardConstraint {
  */
 class HcLoadUnloadPolicyFIFO : public HardConstraint {
  public:
-  HcLoadUnloadPolicyFIFO()
-      : HardConstraint(HardConstrCode::LoadUnloadPolicyFIFO, 0, true, false) {}
+  HcLoadUnloadPolicyFIFO() : HardConstraint(HardConstrCode::LoadUnloadPolicyFIFO, 0, true, false) {}
 
   HardConstrScore::UPtr eval(Load* load) override;
 };

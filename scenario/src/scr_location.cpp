@@ -42,7 +42,7 @@ LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager
   }
   location_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               LocationSchema::file_name, location_count);
+                     LocationSchema::file_name, location_count);
 
   // === loading LocationLabelValue.csv ===
   this->logger->info("Loading {} ...", LocationLabelValueSchema::file_name);
@@ -88,7 +88,7 @@ LocationManager* StandardCsvReader::loading_location(LabelManager* label_manager
   }
   location_label_value_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               LocationLabelValueSchema::file_name, location_label_value_count);
+                     LocationLabelValueSchema::file_name, location_label_value_count);
 
   return location_manager;
 }

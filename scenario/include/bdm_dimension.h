@@ -37,7 +37,7 @@ class Dimension {
    */
   const int precision;
 
-  Dimension(std::string  code, std::string  name, const int ind, const int precision)
+  Dimension(std::string code, std::string name, const int ind, const int precision)
       : code(std::move(code)), name(std::move(name)), ind(ind), precision(precision) {};
 
   ~Dimension() = default;

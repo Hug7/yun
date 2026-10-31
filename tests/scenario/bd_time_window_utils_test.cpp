@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "bdm_time_window_utils.h"
-
 #include <gtest/gtest.h>
 
 #include <memory>
@@ -12,6 +10,7 @@
 
 #include "bdm_time_window.h"
 #include "bdm_time_window_plan.h"
+#include "bdm_time_window_utils.h"
 
 namespace {
 

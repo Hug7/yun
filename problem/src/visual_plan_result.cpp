@@ -313,8 +313,7 @@ std::string infeasible_cargo_order_to_json(
 /**
  * @brief 单个策略方法耗时转为json对象
  */
-std::string strategy_timing_to_json(const VisualFuncTiming& timing,
-                                    const std::string& indent) {
+std::string strategy_timing_to_json(const VisualFuncTiming& timing, const std::string& indent) {
   const std::vector<std::string> fields = {
       std::format("\"FuncCode\": {}", str(timing.func_code)),
       std::format("\"StartDateTime\": {}", str(timing.start_date_time)),
@@ -350,7 +349,7 @@ std::string plan_summary_to_json(const VisualPlanSummary& summary, const std::st
   const std::string pad = indent + "  ";
   std::vector<std::string> timings;
   timings.reserve(summary.func_timings.size());
-for (const auto& t : summary.func_timings) {
+  for (const auto& t : summary.func_timings) {
     timings.emplace_back(strategy_timing_to_json(t, pad + "  "));
   }
   std::vector<std::string> carrier_vehicles;

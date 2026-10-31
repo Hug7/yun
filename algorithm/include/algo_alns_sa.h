@@ -7,9 +7,9 @@
 
 #include <spdlog/spdlog.h>
 
+#include "algo_alns_parameter.h"
 #include "c_random_utils.h"
 #include "pdm_solution.h"
-#include "algo_alns_parameter.h"
 
 /**
  * @brief alns 模拟退火 solution 接受的状态码

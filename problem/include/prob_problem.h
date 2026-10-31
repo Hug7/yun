@@ -75,7 +75,7 @@ class Problem {
    *        (预检等使用临时 Order 的场景必须传入, 否则临时 Order 释放后键悬空 -> use-after-free)
    */
   virtual Load* construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle,
-                                       CacheStoreBuffer* store_buffer = nullptr) const;
+                                        CacheStoreBuffer* store_buffer = nullptr) const;
   /**
    * @brief 将 segment 贪心插入 load
    * @param ori_load origin load

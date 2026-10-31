@@ -34,7 +34,7 @@ DimensionManager* StandardCsvReader::loading_dimension() const {
   }
   dim_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               DimensionSchema::file_name, row_count);
+                     DimensionSchema::file_name, row_count);
 
   return dimension_manager;
 }

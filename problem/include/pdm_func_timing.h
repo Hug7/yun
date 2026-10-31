@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -40,7 +40,7 @@ class FuncTiming {
    */
   long end_date_time_sec{0};
 
-  explicit FuncTiming(std::string  func_code) : func_code{std::move(func_code)} {
+  explicit FuncTiming(std::string func_code) : func_code{std::move(func_code)} {
     const auto date_time = chrono_util::now();
     this->start_date_time = chrono_util::format(date_time, "%Y-%m-%d %H:%M:%S");
     this->start_date_time_sec = chrono_util::to_timestamp(date_time);
@@ -52,9 +52,7 @@ class FuncTiming {
     this->end_date_time_sec = chrono_util::to_timestamp(date_time);
   }
 
-  [[nodiscard]] bool is_not_complete() const {
-    return this->end_date_time.empty();
-  }
+  [[nodiscard]] bool is_not_complete() const { return this->end_date_time.empty(); }
 
   [[nodiscard]] long elapsed_second() const {
     return this->end_date_time_sec - this->start_date_time_sec;

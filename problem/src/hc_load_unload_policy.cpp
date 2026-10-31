@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <unordered_map>
-
 #include "hc_load_unload_policy.h"
+
+#include <unordered_map>
 
 // ====== implement of HcLoadUnloadPolicyFILO ======
 HardConstrScore::UPtr HcLoadUnloadPolicyFILO::eval(Load* load) {

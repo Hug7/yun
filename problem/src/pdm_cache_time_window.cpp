@@ -21,8 +21,7 @@ NodeTimeWindowKey::NodeTimeWindowKey(ActivityType activity_type, const Location*
                                      const std::vector<const Order*>& orders)
     : activity_type(activity_type), location(location), orders(orders) {
   this->order_len = static_cast<int>(orders.size());
-  this->hash_code =
-      tw_key_hash_code(activity_type, location->ind, orders.data(), this->order_len);
+  this->hash_code = tw_key_hash_code(activity_type, location->ind, orders.data(), this->order_len);
 }
 
 // ====== implement of NodeTimeWindowStoreBuffer ======
@@ -177,7 +176,8 @@ const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_drop(
   return &new_it->second;
 }
 
-const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_other(const NodeTimeWindowKey& node_tw_key) {
+const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_other(
+    const NodeTimeWindowKey& node_tw_key) {
   if (this->is_parallel()) {
     throw std::logic_error(
         "NodeTimeWindowCache: 并行阶段禁止直写冻结表, 必须先挂载 NodeTimeWindowStoreBuffer");
@@ -255,8 +255,8 @@ const std::vector<TimeWindow*>& NodeTimeWindowCache::lookup(
       return *node_tw_store_buffer->get_or_create_drop(
           node, NodeTimeWindowKey(node->activity_type, node->loc, scratch));
     }
-    return *this->get_or_create_drop(
-        node, NodeTimeWindowKey(node->activity_type, node->loc, scratch));
+    return *this->get_or_create_drop(node,
+                                     NodeTimeWindowKey(node->activity_type, node->loc, scratch));
   } else if (node->is_pick()) {
     // 冻结表只读查找, 命中率约 92%, 命中路径零写入零分配
     std::vector<const Order*>& scratch =
@@ -276,8 +276,8 @@ const std::vector<TimeWindow*>& NodeTimeWindowCache::lookup(
       return *node_tw_store_buffer->get_or_create_pick(
           node, NodeTimeWindowKey(node->activity_type, node->loc, scratch));
     }
-    return *this->get_or_create_pick(
-        node, NodeTimeWindowKey(node->activity_type, node->loc, scratch));
+    return *this->get_or_create_pick(node,
+                                     NodeTimeWindowKey(node->activity_type, node->loc, scratch));
   } else {
     // 构造key
     const NodeTimeWindowKey node_tw_key(node->activity_type, node->loc);
@@ -288,7 +288,8 @@ const std::vector<TimeWindow*>& NodeTimeWindowCache::lookup(
         return it->second;
       }
       // 查缓冲区表的cache，不存在时则直接创建
-      const auto* buffer_tws = node_tw_store_buffer->get_or_create_other(node_tw_key, this->plan_datetime_range);
+      const auto* buffer_tws =
+          node_tw_store_buffer->get_or_create_other(node_tw_key, this->plan_datetime_range);
       return *buffer_tws;
     }
     return *this->get_or_create_other(node_tw_key);

@@ -32,4 +32,4 @@ class PolicyNone : public LoadUnloadPolicy {
 
 namespace LoadUnloadPolicyFactory {
 LoadUnloadPolicy* create_policy(LoadUnloadPolicyType policy_type);
-} // namespace LoadUnloadPolicyFactory
+}  // namespace LoadUnloadPolicyFactory

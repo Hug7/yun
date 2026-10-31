@@ -54,7 +54,8 @@ TimeWindowPlan::VecUPtr TimeWindowPlanFactory::default_time_window_plans() {
   return res;
 }
 
-TimeWindowPlan::VecUPtr TimeWindowPlanFactory::create_time_window_plans(const std::vector<TimeWindow*>& time_windows) {
+TimeWindowPlan::VecUPtr TimeWindowPlanFactory::create_time_window_plans(
+    const std::vector<TimeWindow*>& time_windows) {
   auto res = std::vector<TimeWindowPlan::UPtr>(time_windows.size());
   for (std::size_t u = 0; u < time_windows.size(); u++) {
     res[u] = std::make_unique<TimeWindowPlan>(time_windows[u]);

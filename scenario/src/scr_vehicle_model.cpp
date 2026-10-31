@@ -43,7 +43,7 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
   }
   vehicle_model_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               VehicleModelSchema::file_name, vehicle_model_count);
+                     VehicleModelSchema::file_name, vehicle_model_count);
 
   // === loading VehicleModelDimensionValue.csv ===
   this->logger->info("Loading {} ...", VehicleModelDimensionValueSchema::file_name);
@@ -86,7 +86,7 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
   }
   vehicle_model_dim_val_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               VehicleModelDimensionValueSchema::file_name, vehicle_model_dim_val_count);
+                     VehicleModelDimensionValueSchema::file_name, vehicle_model_dim_val_count);
 
   // === loading VehicleModelDimensionValue.csv ===
   this->logger->info("Loading {} ...", VehicleModelLabelValueSchema::file_name);
@@ -136,7 +136,7 @@ VehicleModelManager* StandardCsvReader::loading_vehicle_model(
   }
   vehicle_model_label_value_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               VehicleModelLabelValueSchema::file_name, vehicle_model_label_value_count);
+                     VehicleModelLabelValueSchema::file_name, vehicle_model_label_value_count);
 
   return vehicle_model_manager;
 }

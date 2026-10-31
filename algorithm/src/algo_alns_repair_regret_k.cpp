@@ -69,7 +69,7 @@ RegretScore evaluate(const std::vector<double>& deltas_asc, const int k) {
 
   return {RegretPriority::Standard, regret};
 }
-}  // namespace RegretK
+}  // namespace
 
 // ====== implement of AlnsRepairRegretK ======
 AlnsRepairRegretK::AlnsRepairRegretK(const SolverContext* _context,
@@ -109,10 +109,11 @@ void AlnsRepairRegretK::execute(RepairMatrix* repair_matrix) {
 
         const RegretScore regret_score = evaluate(deltas_asc, this->regret_k);
         const double best_delta = deltas_asc.front();
-        const bool better = select_repair_load == nullptr || regret_score.priority < select_priority ||
-                            (regret_score.priority == select_priority &&
-                             (regret_score.regret > select_regret ||
-                              (regret_score.regret == select_regret && best_delta < select_best_delta)));
+        const bool better =
+            select_repair_load == nullptr || regret_score.priority < select_priority ||
+            (regret_score.priority == select_priority &&
+             (regret_score.regret > select_regret ||
+              (regret_score.regret == select_regret && best_delta < select_best_delta)));
         if (better) {
           select_priority = regret_score.priority;
           select_regret = regret_score.regret;

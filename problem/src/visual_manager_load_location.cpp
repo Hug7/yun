@@ -132,8 +132,7 @@ void fill_labels(const Scenario* scenario, VisualLoadLocation& visual_load_locat
   // 站点上订单的标签
   std::vector<const Order*> orders;
   node->get_orders(orders);
-  visual_load_location.order_labels =
-      decode_orders_labels(label_manager->order_labelset, orders);
+  visual_load_location.order_labels = decode_orders_labels(label_manager->order_labelset, orders);
 }
 /**
  * @brief 填充行驶信息、等待和作业时长、计划时间
@@ -202,7 +201,7 @@ VisualLoadLocation build_visual_load_location(const Scenario* scenario,
 }  // namespace
 
 std::vector<VisualLoadLocation> VisualManager::loads_to_visual_load_locations(
-      const std::vector<VisualLoad>& visual_loads, const std::vector<Load*>& loads) const {
+    const std::vector<VisualLoad>& visual_loads, const std::vector<Load*>& loads) const {
   // 拼装visual load location
   std::vector<VisualLoadLocation> visual_load_locations;
   for (size_t l = 0; l < loads.size(); ++l) {
@@ -225,8 +224,9 @@ std::vector<VisualLoadLocation> VisualManager::loads_to_visual_load_locations(
   return visual_load_locations;
 }
 
-void VisualManager::visual_load_location_to_json(const std::vector<VisualLoadLocation>& visual_load_locations,
-                                    const std::string& target_dir_path) const {
+void VisualManager::visual_load_location_to_json(
+    const std::vector<VisualLoadLocation>& visual_load_locations,
+    const std::string& target_dir_path) const {
   // 写出json文件
   const std::string file_path = target_dir_path + "/" + LOAD_LOCATIONS_FILE_NAME;
   std::ofstream file(file_path);

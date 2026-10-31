@@ -40,7 +40,8 @@ void StrategyManager::register_common_func(Workspace* workspace) {
   // 注册-结果可视化
   this->lua.set_function(StrategyKey::SNAPSHOT, [workspace](const std::string& target_dir) {
     workspace->context->visual_manager->localization_plan_result(
-        workspace->loads_view(), workspace->unassigned_orders_view(), workspace->func_timings, target_dir);
+        workspace->loads_view(), workspace->unassigned_orders_view(), workspace->func_timings,
+        target_dir);
   });
 }
 

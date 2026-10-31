@@ -12,10 +12,9 @@
 
 // ====== implement of LoadContext ======
 LoadContext::LoadContext(const Scenario* scenario, const Parameter* parameter)
-  : scenario(scenario),
-    plan_datetime_range(parameter->plan_datetime_range),
-    cache(new Cache(parameter)) {
-}
+    : scenario(scenario),
+      plan_datetime_range(parameter->plan_datetime_range),
+      cache(new Cache(parameter)) {}
 
 LoadContext::~LoadContext() {
   delete this->cache;
@@ -140,7 +139,7 @@ Bitset* Load::get_available_vehicle_bitset() const {
   Node* tail_node = this->last_node->prev;
   while (tail_node->hase_prev()) {
     this->route_profile->available_vehicle_bitset->call_intersection(
-      tail_node->loc->available_vehicle->vehicle_bitset);
+        tail_node->loc->available_vehicle->vehicle_bitset);
     tail_node = tail_node->prev;
   }
 
@@ -169,7 +168,8 @@ void Load::update_node_dist_time() const {
   Node* tail_node = this->last_node;
   while (tail_node->hase_prev()) {
     Node* prev_node = tail_node->prev;
-    auto [tmp_dist, tmp_time] = dist_matrix->get_dist_time(prev_node->loc->ind, tail_node->loc->ind);
+    auto [tmp_dist, tmp_time] =
+        dist_matrix->get_dist_time(prev_node->loc->ind, tail_node->loc->ind);
 
     tail_node->travel_dist = tmp_dist;
     tail_node->travel_time = tmp_time;
@@ -201,13 +201,13 @@ void Load::update_time_window() const {
   auto* tw_cache = this->context->cache->node_time_window;
   // 第一个node(车场，可能为虚拟车场)
   Node* pre_node = this->first_node.get();
-  pre_node->ptws =
-      TimeWindowPlanFactory::create_time_window_plans(
-        tw_cache->lookup(this->get_node_tw_store_buffer(), pre_node));
+  pre_node->ptws = TimeWindowPlanFactory::create_time_window_plans(
+      tw_cache->lookup(this->get_node_tw_store_buffer(), pre_node));
   Node* head_node = pre_node->next.get();
   while (head_node != nullptr) {
     // 冻结表 →写缓冲→ 重算并写入写缓冲; 返回的引用在本次推导内有效
-    const std::vector<TimeWindow*>& cur_tws = tw_cache->lookup(this->get_node_tw_store_buffer(), head_node);
+    const std::vector<TimeWindow*>& cur_tws =
+        tw_cache->lookup(this->get_node_tw_store_buffer(), head_node);
     const long work_time = head_node->get_work_time();
     head_node->ptws =
         TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);

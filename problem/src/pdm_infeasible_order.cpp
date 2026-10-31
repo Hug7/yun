@@ -6,17 +6,18 @@
 #include "pdm_infeasible_order.h"
 
 // ====== implement of InfeasibleCargoOrder ======
-void InfeasibleCargoOrder::record_common_infeasible_reasons(const InfeasibleReason &reason) {
+void InfeasibleCargoOrder::record_common_infeasible_reasons(const InfeasibleReason& reason) {
   this->common_infeasible_reasons.try_emplace(reason.code, reason);
 }
 
-void InfeasibleCargoOrder::record_vehicle_infeasible_reasons(const InfeasibleReason &reason, Vehicle* vehicle) {
-    auto it = this->vehicle_infeasible_reasons.find(vehicle);
-    if (it == this->vehicle_infeasible_reasons.end()) {
-      this->vehicle_infeasible_reasons[vehicle].try_emplace(reason.code, reason);
-    } else {
-      it->second.try_emplace(reason.code, reason);
-    }
+void InfeasibleCargoOrder::record_vehicle_infeasible_reasons(const InfeasibleReason& reason,
+                                                             Vehicle* vehicle) {
+  auto it = this->vehicle_infeasible_reasons.find(vehicle);
+  if (it == this->vehicle_infeasible_reasons.end()) {
+    this->vehicle_infeasible_reasons[vehicle].try_emplace(reason.code, reason);
+  } else {
+    it->second.try_emplace(reason.code, reason);
+  }
 }
 
 void InfeasibleCargoOrder::record_hard_score(HardConstrScore::UPtr& hard_score, Vehicle* vehicle) {

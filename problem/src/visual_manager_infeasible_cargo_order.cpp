@@ -45,7 +45,8 @@ std::vector<VisualInfeasibleCargoOrder> build_visual_infeasible_cargo_orders(
         visual_vehicle_infeasible_reason.infeasible_reasons.emplace_back(
             reason.code, reason.constr_code, reason.msg_cn, reason.msg_en);
       }  // end for vehicle_infeasible_reasons->val
-      visual_infeasible_cargo_order.vehicle_infeasible_reasons.emplace_back(visual_vehicle_infeasible_reason);
+      visual_infeasible_cargo_order.vehicle_infeasible_reasons.emplace_back(
+          visual_vehicle_infeasible_reason);
     }  // end for vehicle_infeasible_reasons
 
     visual_infeasible_cargo_orders.push_back(visual_infeasible_cargo_order);

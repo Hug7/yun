@@ -85,7 +85,6 @@ HcMaxDropNodeCount* HardConstrParser::max_drop_node_count(const HardConstrItem& 
 
 HcOrderLabelValueMaxCount* HardConstrParser::order_label_value_max_count(
     const Scenario* scenario, const HardConstrItem& hard_constr_item) {
-
   // hard_constr_item.params.parse_list()
   // const auto node = hard_constr_item.params.require_map(KEY_MAX_COUNTS);
   // std::unordered_map<int, int> counts;
@@ -93,12 +92,12 @@ HcOrderLabelValueMaxCount* HardConstrParser::order_label_value_max_count(
   //   const auto label_code = entry.first.as<std::string>();
   //   const int label_ind = scenario->label_manager->order_labelset->get_label_ind(label_code);
   //   if (label_ind < 0) {
-  //     fail(std::format("{}.{}.{}", params.path(), KEY_MAX_COUNTS, label_code), "未知 label code");
+  //     fail(std::format("{}.{}.{}", params.path(), KEY_MAX_COUNTS, label_code), "未知 label
+  //     code");
   //   }
   //   counts[label_ind] = entry.second.as<int>();
   // }
   // return counts;
-
 
   std::unordered_map<int, int> distinct_label_value_max_counts;
   return new HcOrderLabelValueMaxCount(distinct_label_value_max_counts);

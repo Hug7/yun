@@ -78,7 +78,7 @@ void LabelsetValueBitset::merge(const LabelsetValueBitset::UPtr& labelset_value_
 }
 
 void LabelsetValueBitset::clear_bitsets() {
-  for (const auto &cur_bitset : this->bitsets) {
+  for (const auto& cur_bitset : this->bitsets) {
     cur_bitset->clear_all();
   }
 }
