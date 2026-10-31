@@ -136,10 +136,12 @@ Order* OrderFactory::creat_order(std::vector<CargoOrder*>& cargo_orders, int ind
                                  const Scenario* scenario) {
   auto dim_vals = scenario->dim_manager->empty_dim_values();
   auto labelset_value = scenario->label_manager->order_labelset->empty_labelset_value();
-  auto labelset_value_bitset = scenario->label_manager->order_labelset->empty_labelset_value_bitset();
+  auto labelset_value_bitset =
+      scenario->label_manager->order_labelset->empty_labelset_value_bitset();
   auto available_vehicle_bitset = scenario->carrier_manager->full_vehicle_bitset();
 
-  return new Order(plan_datetime_range, ind, cargo_orders, dim_vals, labelset_value, std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
+  return new Order(plan_datetime_range, ind, cargo_orders, dim_vals, labelset_value,
+                   std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
 }
 
 Order* OrderFactory::creat_tmp_order(std::vector<CargoOrder*>& cargo_orders,

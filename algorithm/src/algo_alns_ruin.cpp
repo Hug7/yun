@@ -69,5 +69,4 @@ void AlnsRuinOperator::call(Solution* sol) {
     }
   }
   // todo 重新分配车辆资源，保证最优车型
-
 }

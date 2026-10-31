@@ -97,7 +97,8 @@ void VisualManager::localization_plan_result(const std::vector<Load*>& loads,
   // 目标文件夹
   const std::string target_dir_path = this->resolve_target_dir(target_dir);
   // 汇总 visual plan summary
-  const VisualPlanSummary visual_plan_summary = summarize_plan(loads, unassigned_orders, func_timings);
+  const VisualPlanSummary visual_plan_summary =
+      summarize_plan(loads, unassigned_orders, func_timings);
   // 将 visual plan summary 写入json
   this->visual_plan_summary_to_json(visual_plan_summary, target_dir_path);
   // 将 load 转化为 visual load

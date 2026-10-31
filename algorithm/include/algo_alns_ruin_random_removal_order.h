@@ -14,7 +14,7 @@
  * @brief alns ruin算子`RuinRandomRemovalOrder`的参数在lua中的字段集合
  */
 class AlnsRuinRandomRemovalOrderLuaField {
-public:
+ public:
   static constexpr const char* SELECT_ORDER_RANDOM_SEED = "select_order_random_seed";
   static constexpr const char* SELECT_ORDER_MIN_RATE = "select_order_min_rate";
   static constexpr const char* SELECT_ORDER_MAX_RATE = "select_order_max_rate";
@@ -45,5 +45,4 @@ class AlnsRuinRandomRemovalOrder : public AlnsRuinOperator {
   explicit AlnsRuinRandomRemovalOrder(const SolverContext* _context, const sol::table& cfg);
 
   std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) override;
-
 };

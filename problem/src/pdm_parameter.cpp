@@ -132,8 +132,11 @@ void Parameter::parse_cargo_order_group_rule(const YamlNode& param_node,
   this->cargo_order_group_rule = new CargoOrderGroupRule(order_labelset);
   if (param_node.contains_key(KEY_CARGO_ORDER_GROUP_RULE)) {
     const auto cargo_order_group_rule_yaml_node = param_node.parse_map(KEY_CARGO_ORDER_GROUP_RULE);
-    const auto label_code = cargo_order_group_rule_yaml_node.parse_string(KEY_CARGO_ORDER_GROUP_RULE_LABEL_CODE);
-    const auto label_value_group = cargo_order_group_rule_yaml_node.get_node(KEY_CARGO_ORDER_GROUP_RULE_LABEL_VALUE_GROUP).as<std::vector<std::vector<std::string>>>();
+    const auto label_code =
+        cargo_order_group_rule_yaml_node.parse_string(KEY_CARGO_ORDER_GROUP_RULE_LABEL_CODE);
+    const auto label_value_group =
+        cargo_order_group_rule_yaml_node.get_node(KEY_CARGO_ORDER_GROUP_RULE_LABEL_VALUE_GROUP)
+            .as<std::vector<std::vector<std::string>>>();
     this->cargo_order_group_rule->set_rule(label_code, label_value_group);
   }
 }

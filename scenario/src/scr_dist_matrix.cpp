@@ -33,7 +33,7 @@ DistMatrixManager* StandardCsvReader::loading_dist_matrix(LocationManager* locat
   }
   dist_matrix_code_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               DistMatrixCodeSchema::file_name, dist_matrix_code_count);
+                     DistMatrixCodeSchema::file_name, dist_matrix_code_count);
 
   // === loading DistMatrix.csv ===
   this->logger->info("Loading {} ...", DistMatrixSchema::file_name);
@@ -79,7 +79,7 @@ DistMatrixManager* StandardCsvReader::loading_dist_matrix(LocationManager* locat
   }
   dist_matrix_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               DistMatrixSchema::file_name, dist_matrix_count);
+                     DistMatrixSchema::file_name, dist_matrix_count);
 
   return dist_matrix_manager;
 }

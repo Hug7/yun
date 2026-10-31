@@ -67,5 +67,5 @@ void StandardCsvReader::loading_vehicle(CarrierManager* carrier_manager,
   }
   vehicle_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               VehicleSchema::file_name, vehicle_count);
+                     VehicleSchema::file_name, vehicle_count);
 }

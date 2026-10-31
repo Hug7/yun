@@ -74,7 +74,7 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
   }
   work_fixed_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               WorkFixedSchema::file_name, work_plan_count);
+                     WorkFixedSchema::file_name, work_plan_count);
 
   // === loading WorkEffectSchema.csv ===
   this->logger->info("Loading {} ...", WorkEffectSchema::file_name);
@@ -114,7 +114,7 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
   }
   work_effect_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               WorkEffectSchema::file_name, work_effect_count);
+                     WorkEffectSchema::file_name, work_effect_count);
 
   // === WorkCalendarDay.csv ===
   this->logger->info("Loading {} ...", WorkCalendarDailySchema::file_name);
@@ -155,7 +155,7 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
   }
   work_calendar_daily_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               WorkCalendarDailySchema::file_name, work_calendar_daily_count);
+                     WorkCalendarDailySchema::file_name, work_calendar_daily_count);
 
   // === WorkCalendarWeek.csv ===
   const std::string work_calendar_weekly_file_path =
@@ -212,5 +212,5 @@ void StandardCsvReader::loading_work_plan(LocationManager* location_manager,
   }
   work_calendar_weekly_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               WorkCalendarWeeklySchema::file_name, work_calendar_week_count);
+                     WorkCalendarWeeklySchema::file_name, work_calendar_week_count);
 }

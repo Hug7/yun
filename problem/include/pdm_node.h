@@ -73,9 +73,9 @@ class Node {
 
   [[nodiscard]] bool hase_prev() const { return this->prev != nullptr; }
 
-  [[nodiscard]] bool is_pick() const {return this->activity_type == ActivityType::PICK;}
+  [[nodiscard]] bool is_pick() const { return this->activity_type == ActivityType::PICK; }
 
-  [[nodiscard]] bool is_drop() const {return this->activity_type == ActivityType::DROP;}
+  [[nodiscard]] bool is_drop() const { return this->activity_type == ActivityType::DROP; }
 
   void add_front_activity(Activity::UPtr activity);
 

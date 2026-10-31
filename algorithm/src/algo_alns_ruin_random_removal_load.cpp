@@ -6,7 +6,8 @@
 #include "algo_alns_ruin_random_removal_load.h"
 
 // ====== implement of AlnsRuinRandomRemovalLoad ======
-AlnsRuinRandomRemovalLoad::AlnsRuinRandomRemovalLoad(const SolverContext* _context, const sol::table& cfg)
+AlnsRuinRandomRemovalLoad::AlnsRuinRandomRemovalLoad(const SolverContext* _context,
+                                                     const sol::table& cfg)
     : AlnsRuinOperator(AlnsRuinOperatorCode::RuinRandomRemovalLoad, _context) {
   if (cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MIN_RATE].valid()) {
     this->select_load_min_rate =
@@ -41,7 +42,8 @@ AlnsRuinRandomRemovalLoad::AlnsRuinRandomRemovalLoad(const SolverContext* _conte
   }
 }
 
-std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalLoad::execute(Solution* sol) {
+std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalLoad::execute(
+    Solution* sol) {
   // 当前解空间
   const int load_count = static_cast<int>(sol->loads.size());
   // ruin的load数量

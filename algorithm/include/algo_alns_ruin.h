@@ -7,8 +7,8 @@
 
 #include <magic_enum/magic_enum.hpp>
 #include <string>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "pdm_context.h"
 #include "pdm_solution.h"

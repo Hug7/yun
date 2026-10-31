@@ -24,8 +24,7 @@ struct InsertSlot {
 
   InsertSlot() : node_type(ActivityType::DROP), ind(-1) {}
 
-  InsertSlot(const ActivityType _node_type, const int _ind)
-      : node_type(_node_type), ind(_ind) {}
+  InsertSlot(const ActivityType _node_type, const int _ind) : node_type(_node_type), ind(_ind) {}
 };
 
 class PickDropPattern {

@@ -34,8 +34,8 @@ class VisualManagerTest : public ::testing::Test {
 TEST_F(VisualManagerTest, ConstructorThrowsWhenOutputDirIsNotWritable) {
   const auto readonly_dir = kRoot / "readonly";
   std::filesystem::create_directories(readonly_dir);
-  std::filesystem::permissions(readonly_dir, std::filesystem::perms::owner_read |
-                                                 std::filesystem::perms::owner_exec);
+  std::filesystem::permissions(
+      readonly_dir, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec);
   const auto logger = LogManager::create("visual_manager_test", "", "", "error");
 
   EXPECT_THROW(VisualManager((readonly_dir / "output").string(), nullptr, logger),
@@ -45,8 +45,8 @@ TEST_F(VisualManagerTest, ConstructorThrowsWhenOutputDirIsNotWritable) {
 TEST_F(VisualManagerTest, WriteResultThrowsWhenOutputDirIsNotWritable) {
   const auto readonly_dir = kRoot / "readonly";
   std::filesystem::create_directories(readonly_dir);
-  std::filesystem::permissions(readonly_dir, std::filesystem::perms::owner_read |
-                                                 std::filesystem::perms::owner_exec);
+  std::filesystem::permissions(
+      readonly_dir, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec);
   const auto logger = LogManager::create("visual_manager_test", "", "", "error");
   const VisualManager manager(readonly_dir.string(), nullptr, logger);
 

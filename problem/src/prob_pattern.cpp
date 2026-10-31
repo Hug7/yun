@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "pdm_node.h"
 #include "prob_pattern.h"
+
+#include "pdm_node.h"
 
 Node* PickDropPattern::find_first_pick_node(std::unique_ptr<Node>& node) const {
   Node* head_node = node.get();

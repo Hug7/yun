@@ -114,7 +114,7 @@ std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
 // ====== implement of WorkEffect ======
 WorkEffect::WorkEffect(const DimensionManager* dim_manager) : dims_len(dim_manager->len) {
   // this->effect_map
-   constexpr int activity_type_count = static_cast<int>(ActivityType::NONE);
+  constexpr int activity_type_count = static_cast<int>(ActivityType::NONE);
 
   this->effect_map = std::vector<std::vector<double>>(
       activity_type_count,

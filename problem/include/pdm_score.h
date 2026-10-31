@@ -162,8 +162,9 @@ class CostConstrScore {
    */
   const InfeasibleReason reason;
 
-  CostConstrScore(const CostConstrCode code, const bool feasible, const double weight, const double value,
-                  const bool seq_type, const bool vehicle_type, InfeasibleReason reason)
+  CostConstrScore(const CostConstrCode code, const bool feasible, const double weight,
+                  const double value, const bool seq_type, const bool vehicle_type,
+                  InfeasibleReason reason)
       : code(code),
         feasible(feasible),
         weight(weight),
@@ -172,8 +173,8 @@ class CostConstrScore {
         vehicle_type(vehicle_type),
         reason(std::move(reason)) {}
 
-  CostConstrScore(const CostConstrCode code, const double weight, const double value, const bool seq_type,
-                  const bool vehicle_type)
+  CostConstrScore(const CostConstrCode code, const double weight, const double value,
+                  const bool seq_type, const bool vehicle_type)
       : code(code),
         feasible(true),
         weight(weight),

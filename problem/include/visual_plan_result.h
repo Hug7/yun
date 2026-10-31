@@ -227,7 +227,6 @@ struct VisualFuncTiming {
   VisualFuncTiming() = default;
 };
 
-
 struct VisualCarrierVehicleSummary {
   /**
    * @brief 承运商编码

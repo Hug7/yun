@@ -165,7 +165,8 @@ VisualLoad build_visual_load(const Scenario* scenario, Load* load, const size_t 
 }
 }  // namespace
 
-std::vector<VisualLoad> VisualManager::loads_to_visual_loads(const std::vector<Load*>& loads) const {
+std::vector<VisualLoad> VisualManager::loads_to_visual_loads(
+    const std::vector<Load*>& loads) const {
   // 拼装visual load
   std::vector<VisualLoad> visual_loads;
   visual_loads.reserve(loads.size());
@@ -177,8 +178,7 @@ std::vector<VisualLoad> VisualManager::loads_to_visual_loads(const std::vector<L
 }
 
 void VisualManager::visual_load_to_json(const std::vector<VisualLoad>& visual_loads,
-                                 const std::string& target_dir_path) const {
-
+                                        const std::string& target_dir_path) const {
   // 写出json文件
   const std::string file_path = target_dir_path + "/" + LOADS_FILE_NAME;
   std::ofstream file(file_path);

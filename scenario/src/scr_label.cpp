@@ -33,7 +33,7 @@ LabelManager* StandardCsvReader::loading_label() const {
   }
   label_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               LabelSchema::file_name, label_count);
+                     LabelSchema::file_name, label_count);
 
   // === loading LabelValue.csv ===
   this->logger->info("Loading {} ...", LabelValueSchema::file_name);
@@ -63,7 +63,7 @@ LabelManager* StandardCsvReader::loading_label() const {
   }
   label_value_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               LabelValueSchema::file_name, label_value_count);
+                     LabelValueSchema::file_name, label_value_count);
 
   // === loading LabelApply.csv ===
   this->logger->info("Loading {} ...", LabelApplySchema::file_name);
@@ -94,7 +94,7 @@ LabelManager* StandardCsvReader::loading_label() const {
   }
   label_apply_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               LabelApplySchema::file_name, label_apply_row_count);
+                     LabelApplySchema::file_name, label_apply_row_count);
 
   return label_manager;
 }

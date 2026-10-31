@@ -63,7 +63,9 @@ class Vehicle {
     return this->vehicle_model->dist_matrix_code;
   };
 
-  [[nodiscard]] const DistMatrix* get_dist_matrix() const { return this->vehicle_model->dist_matrix; }
+  [[nodiscard]] const DistMatrix* get_dist_matrix() const {
+    return this->vehicle_model->dist_matrix;
+  }
 
   [[nodiscard]] bool unusable() const { return this->count == 0; }
 };

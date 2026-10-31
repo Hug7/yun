@@ -42,7 +42,7 @@ class VehicleUsage {
 
   void release_vehicle();
 
-  [[nodiscard]] bool has_available_vehicle() const {return this->cur_usage < this->max_usable;};
+  [[nodiscard]] bool has_available_vehicle() const { return this->cur_usage < this->max_usable; };
 };
 
 /**
@@ -61,7 +61,8 @@ class VehicleResource {
   const int len;
 
   explicit VehicleResource(VehicleUsage::VecUPtr vehicle_usages)
-      : vehicle_usages(std::move(vehicle_usages)), len(static_cast<int>(this->vehicle_usages.size())) {};
+      : vehicle_usages(std::move(vehicle_usages)),
+        len(static_cast<int>(this->vehicle_usages.size())) {};
 
   [[nodiscard]] UPtr deep_copy() const;
 

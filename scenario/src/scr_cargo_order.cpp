@@ -93,7 +93,7 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
   }
   cargo_order_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               CargoOrderSchema::file_name, cargo_order_count);
+                     CargoOrderSchema::file_name, cargo_order_count);
 
   // === loading CargoSubOrder.csv ===
   const std::string cargo_sub_order_file_path =
@@ -130,7 +130,7 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
   }
   cargo_sub_order_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               CargoSubOrderSchema::file_name, cargo_sub_order_count);
+                     CargoSubOrderSchema::file_name, cargo_sub_order_count);
 
   // === loading CargoSubOrderDimensionValue.csv ===
   const std::string cargo_sub_order_dimension_value_file_path =
@@ -180,7 +180,7 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
   }
   cargo_sub_order_dimension_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               CargoSubOrderDimensionValueSchema::file_name, cargo_sub_order_dimension_count);
+                     CargoSubOrderDimensionValueSchema::file_name, cargo_sub_order_dimension_count);
 
   // === loading CargoSubOrderLabelValue.csv ===
   this->logger->info("Loading {} ...", CargoSubOrderLabelValueSchema::file_name);
@@ -232,7 +232,7 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
   }
   cargo_sub_order_label_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               CargoSubOrderLabelValueSchema::file_name, cargo_sub_order_label_count);
+                     CargoSubOrderLabelValueSchema::file_name, cargo_sub_order_label_count);
 
   return cargo_order_manager;
 }

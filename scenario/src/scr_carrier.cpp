@@ -32,7 +32,7 @@ CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) 
   }
   carrier_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               CarrierSchema::file_name, carrier_count);
+                     CarrierSchema::file_name, carrier_count);
 
   // === loading CarrierLabelValue.csv ===
   this->logger->info("Loading {} ...", CarrierLabelValueSchema::file_name);
@@ -80,7 +80,7 @@ CarrierManager* StandardCsvReader::loading_carrier(LabelManager* label_manager) 
   }
   carrier_label_value_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               CarrierLabelValueSchema::file_name, carrier_label_value_count);
+                     CarrierLabelValueSchema::file_name, carrier_label_value_count);
 
   return carrier_manager;
 }

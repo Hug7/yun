@@ -23,8 +23,8 @@ AlnsModel::~AlnsModel() {
 
 Solution* AlnsModel::solve() const {
   const auto logger = this->workspace->context->logger;
-  int pre_update_best_sol_iter = 0;                               // 上一次更新最优的迭代次数
-  int last_iter = 0;                                              // 最后一次迭代次数
+  int pre_update_best_sol_iter = 0;                                     // 上一次更新最优的迭代次数
+  int last_iter = 0;                                                    // 最后一次迭代次数
   const auto start_ts = chrono_util::to_timestamp(chrono_util::now());  // 开始时间戳
 
   for (int iter = 1; iter <= this->parameter->max_iter; ++iter) {

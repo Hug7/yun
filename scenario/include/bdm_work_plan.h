@@ -26,7 +26,8 @@ class Calendar {
   /**
    * @brief 日期的时间窗列表
    * @details
-   * 每个元素为一个日期的时间范围，每个时间范围为一个`pair<int,int>`，分别表示开始时间和结束时间，单位: s 例如: `{{0, 3600}, {3600, 7200}}`
+   * 每个元素为一个日期的时间范围，每个时间范围为一个`pair<int,int>`，分别表示开始时间和结束时间，单位:
+   * s 例如: `{{0, 3600}, {3600, 7200}}`
    * 表示该日期有2个时间范围，第一个时间范围从0开始，持续3600s，第二个时间范围从3600开始，持续7200s
    */
   std::vector<std::vector<std::pair<int, int>>> day_time_ranges;
@@ -39,7 +40,7 @@ class Calendar {
    * @brief 设置某一天的时间范围列表
    */
   void set_one_day_time_ranges(const int day_ind, std::vector<std::pair<int, int>>& time_ranges);
-  
+
   /**
    * @brief 后处理: 填充空的时间窗范围
    */
@@ -71,7 +72,8 @@ class WorkEffect {
 
   void add(const Dimension* dim, ActivityType activity_type, double quantity);
 
-  [[nodiscard]] long get_work_time(ActivityType activity_type, const std::vector<long>& dims_val) const;
+  [[nodiscard]] long get_work_time(ActivityType activity_type,
+                                   const std::vector<long>& dims_val) const;
 
   ~WorkEffect() = default;
 };

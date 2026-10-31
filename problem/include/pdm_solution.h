@@ -10,8 +10,8 @@
 
 #include "pdm_load.h"
 #include "pdm_order.h"
-#include "pdm_segment.h"
 #include "pdm_resource.h"
+#include "pdm_segment.h"
 
 class Solution {
  public:

@@ -61,7 +61,7 @@ void StandardCsvReader::loading_available_vehicle(CarrierManager* carrier_manage
   }
   location_available_vehicle_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",
-               LocationAvailableVehicleSchema::file_name, location_available_vehicle_count);
+                     LocationAvailableVehicleSchema::file_name, location_available_vehicle_count);
 
   // 更新所有站点的可用车辆
   for (auto& [location_code, location] : location_manager->location_map) {

@@ -12,7 +12,7 @@
 
 namespace TimeWindowInfer {
 TimeWindowPlan::UPtr forward_s_s(TimeWindowPlan::UPtr& pre_node_plan_tw, const long cost_time,
-                                  const long work_time, const TimeWindow* ori_tw);
+                                 const long work_time, const TimeWindow* ori_tw);
 
 void forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const long cost_time, const long work_time,
                  const std::vector<TimeWindow*>& ori_tws, TimeWindowPlan::VecUPtr& plan_node_tws);
