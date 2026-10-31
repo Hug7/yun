@@ -25,9 +25,9 @@ jobs:
     env:
       MACOSX_DEPLOYMENT_TARGET: "14.0"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -55,7 +55,7 @@ jobs:
           PY
 
       - name: Cache Conan
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.conan2
           key: conan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock') }}
@@ -71,7 +71,7 @@ jobs:
       - name: Build SDK
         run: python scripts/build_sdk.py --version "${{ steps.version.outputs.version }}" --out-dir dist --clean
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: yun-sdk
           path: dist/*
@@ -89,11 +89,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: yun-sdk
           path: dist
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: dist/*
           generate_release_notes: true
