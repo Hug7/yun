@@ -2,6 +2,8 @@
 
 <img src="resources/assets/logo.png" alt="alt text" width=240>
 
+[![CI](https://github.com/Hug7/yun/actions/workflows/ci.yml/badge.svg)](https://github.com/Hug7/yun/actions/workflows/ci.yml)
+
 ## 项目简介
 
 `YUN` 是一个面向城配和干线取送货场景的车辆路径规划（VRP）`跨编程语言`的求解器。它解决的问题是：在订单、站点、车辆、距离与作业时间等客观条件下，结合业务规则和优化偏好，将货物订单组织为若干车次，为车次选择合适车辆并规划装卸和配送顺序，最终给出车辆路径、成本、计划时间以及未指派订单。
@@ -250,6 +252,8 @@ python3.11 scripts/build_sdk.py --version 0.1.0 --out-dir dist/sdk --clean
 
 * 测试用例和demo见项目: [yun-cases](https://github.com/Hug7/yun-cases)
 
+
+开发前请先阅读 [质量门禁](docs/quality_gates.md)。
 
 ### 7. Continuing
 
