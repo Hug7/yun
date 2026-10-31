@@ -203,7 +203,7 @@ delete solver;
 
 `yun` 通过 pybind11 暴露 `_core` 扩展，供 [yunpyopt](https://github.com/Hug7/yunpyopt) 打包为 wheel。
 
-前置条件：macOS 14.0+（arm64）、Xcode Command Line Tools、CMake ≥ 3.15、Conan 2.33+、Python 3.11。
+前置条件：macOS 14.0+（arm64）、Xcode Command Line Tools、CMake ≥ 3.24、Conan 2.33+、Python 3.11。
 
 > C++ 代码使用 `std::format`，需要 macOS 13.3+；wheel 平台标签按 major 取整到 `14_0`，因此发布构建以 14.0 为最低版本。
 
