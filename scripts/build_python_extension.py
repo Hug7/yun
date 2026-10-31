@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 
 YUN_ROOT = Path(__file__).resolve().parents[1]
+CONAN_LOCK = YUN_ROOT / "conan.lock"
 DEFAULT_BUILD_DIR = YUN_ROOT / "build" / "python-extension"
 TARGET_NAME = "yun_python_binding"
 
@@ -77,6 +78,9 @@ def _build(
     jobs: int,
     clean: bool,
 ) -> Path:
+    if not CONAN_LOCK.is_file():
+        raise SystemExit(f"找不到依赖锁文件: {CONAN_LOCK}")
+
     _require_tool("cmake")
     conan = _require_tool("conan")
     _ensure_conan_profile(conan)
@@ -104,6 +108,7 @@ def _build(
             "-DYUN_BUILD_TESTS=OFF",
             f"-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES={YUN_ROOT / 'conan_provider.cmake'}",
             f"-DCONAN_HOST_PROFILE={host_profile}",
+            f"-DCONAN_INSTALL_ARGS=--build=missing;--lockfile={CONAN_LOCK}",
             f"-DPython3_EXECUTABLE={python}",
             "-DCMAKE_SKIP_RPATH=ON",
             "-DCMAKE_OSX_ARCHITECTURES=arm64",
