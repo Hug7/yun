@@ -1,0 +1,24 @@
+{
+    "version": "0.5",
+    "requires": [
+        "yaml-cpp/0.8.0#131511e225a521dd94fd8b2ee2268ab2%1751505982.977",
+        "spdlog/1.17.0#bcbaaf7147bda6ad24ffbd1ac3d7142c%1767636069.964",
+        "sol2/3.5.0#fd3c55a708ff1d23db3fe4e026f3af32%1742996322.952",
+        "pybind11/2.13.6#42746850cd4c68d1b1ea42de456c2182%1755673714.548",
+        "magic_enum/0.9.8#07eec6b649e10d7ce20e21fce5077e4a%1785743220.261",
+        "lua/5.4.6#f917ddf41444d585bf4fe87513f2b8de%1744016909.458",
+        "libfork/3.8.0#7a451ea7257f27a577bf3fc004cdd7ef%1715480707.579",
+        "gtest/1.18.0#e2507fc4efe2ec9e2db9e5c91eefab9f%1786446847.733",
+        "fmt/12.1.0#50abab23274d56bb8f42c94b3b9a40c7%1761885265.231"
+    ],
+    "build_requires": [
+        "cmake/4.4.2#8a0d360635c870b1d5c675489ee25074%1786458127.662"
+    ],
+    "python_requires": [],
+    "overrides": {
+        "lua/5.4.6": [
+            "lua/5.4.6"
+        ]
+    },
+    "config_requires": []
+}

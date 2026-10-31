@@ -69,7 +69,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.conan2
-          key: conan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake') }}
+          key: conan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock') }}
           restore-keys: |
             conan-${{ runner.os }}-${{ runner.arch }}-
 
@@ -102,7 +102,8 @@ jobs:
             -DYUN_BUILD_TESTS=ON \
             -DYUN_BUILD_PYTHON=OFF \
             -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$PWD/conan_provider.cmake" \
-            -DCONAN_HOST_PROFILE="$PWD/build/ci/conan-host-profile"
+            -DCONAN_HOST_PROFILE="$PWD/build/ci/conan-host-profile" \
+            -DCONAN_INSTALL_ARGS="--build=missing;--lockfile=$PWD/conan.lock"
 
       - name: Build
         run: cmake --build build/ci --parallel "$(sysctl -n hw.ncpu)"

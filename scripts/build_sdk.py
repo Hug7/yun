@@ -27,6 +27,7 @@ import tarfile
 from pathlib import Path
 
 YUN_ROOT = Path(__file__).resolve().parents[1]
+CONAN_LOCK = YUN_ROOT / "conan.lock"
 DEFAULT_BUILD_DIR = YUN_ROOT / "build" / "sdk"
 DEFAULT_OUT_DIR = YUN_ROOT / "dist" / "sdk"
 BINDING_SOURCE = YUN_ROOT / "python" / "yun_solver_binding.cpp"
@@ -280,6 +281,9 @@ def main() -> None:
     )
     print(f"build python: {python} ({major}.{minor}, {platform_tag})", flush=True)
 
+    if not CONAN_LOCK.is_file():
+        raise SystemExit(f"找不到依赖锁文件: {CONAN_LOCK}")
+
     host_profile = _write_conan_host_profile(build_dir)
     _run(
         [
@@ -293,6 +297,7 @@ def main() -> None:
             "-DYUN_BUILD_TESTS=OFF",
             f"-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES={YUN_ROOT / 'conan_provider.cmake'}",
             f"-DCONAN_HOST_PROFILE={host_profile}",
+            f"-DCONAN_INSTALL_ARGS=--build=missing;--lockfile={CONAN_LOCK}",
             f"-DPython3_EXECUTABLE={python}",
             "-DCMAKE_SKIP_RPATH=ON",
             "-DCMAKE_OSX_ARCHITECTURES=arm64",
