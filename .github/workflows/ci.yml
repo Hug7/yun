@@ -14,6 +14,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lint tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "clang-format==22.1.8" "ruff==0.15.20"
+
+      - name: clang-format
+        run: git ls-files -z '*.h' '*.cpp' | xargs -0 clang-format --dry-run --Werror
+
+      - name: ruff check
+        run: ruff check conanfile.py scripts/
+
+      - name: ruff format
+        run: ruff format --check conanfile.py scripts/
+
+      - name: Python syntax
+        run: python -m compileall -q conanfile.py scripts
+
+      - name: actionlint
+        run: |
+          set -euo pipefail
+          version=1.7.7
+          asset="actionlint_${version}_linux_amd64.tar.gz"
+          base="https://github.com/rhysd/actionlint/releases/download/v${version}"
+          curl -fsSL "${base}/${asset}" -o "/tmp/${asset}"
+          curl -fsSL "${base}/actionlint_${version}_checksums.txt" -o /tmp/actionlint.sha256
+          (cd /tmp && grep " ${asset}$" actionlint.sha256 | sha256sum -c -)
+          tar -xzf "/tmp/${asset}" -C /tmp actionlint
+          /tmp/actionlint -color .github/workflows/*.yml
+
   build-test:
     name: Build & Test (macOS arm64)
     runs-on: macos-15
