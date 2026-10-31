@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.24)
 project(yun_python_binding LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
