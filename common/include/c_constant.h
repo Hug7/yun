@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -75,12 +76,12 @@ namespace DistMatrixParameter {
  * @brief maximum driving distance, unit: m
  * @details representative 6000 km
  */
-constexpr long MAX_DISTANCE = 6000000;
+constexpr std::int64_t MAX_DISTANCE = 6000000;
 /**
  * @brief maximum driving time, unit: s
  * @details representative 100 h
  */
-constexpr long MAX_TIME = 360000;
+constexpr std::int64_t MAX_TIME = 360000;
 }  // namespace DistMatrixParameter
 
 namespace LocationParameter {
@@ -110,22 +111,22 @@ namespace TimeWindowParameter {
  * @brief default plan datetime range (start), unit: s
  * @details representative 1970-01-01 00:00
  */
-constexpr long DEFAULT_PLAN_DATETIME_RANGE_START = -28800;
+constexpr std::int64_t DEFAULT_PLAN_DATETIME_RANGE_START = -28800;
 /**
  * @brief default paln datetime range (end), unit: s
  * @details representative 2096-11-16 02:00
  */
-constexpr long DEFAULT_PLAN_DATETIME_RANGE_END = 4003840810;
+constexpr std::int64_t DEFAULT_PLAN_DATETIME_RANGE_END = 4003840810;
 /**
  * @brief default early time, unit: s
  * @details representative 1970-01-01 00:00
  */
-constexpr long DEFAULT_EARLY_TIME = -28800;
+constexpr std::int64_t DEFAULT_EARLY_TIME = -28800;
 /**
  * @brief default early time, unit: s
  * @details representative 2096-11-16 02:00
  */
-constexpr long DEFAULT_LATE_TIME = 4003840810;
+constexpr std::int64_t DEFAULT_LATE_TIME = 4003840810;
 /**
  * @brief max interval of continuous time bucket, unit: s
  */

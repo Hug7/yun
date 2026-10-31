@@ -62,13 +62,13 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
                                cargo_order_code + " not found in" +
                                std::string(CargoOrderSchema::file_name));
     }
-    long earliest_pick_time_sec =
+    std::int64_t earliest_pick_time_sec =
         TimeParse::parse_tm_to_sec(earliest_pick_date_time_str, TimeParse::fmt_yyyymmddhhmm_1);
-    long latest_pick_time_sec =
+    std::int64_t latest_pick_time_sec =
         TimeParse::parse_tm_to_sec(latest_pick_date_time_str, TimeParse::fmt_yyyymmddhhmm_1);
-    long earliest_drop_time_sec =
+    std::int64_t earliest_drop_time_sec =
         TimeParse::parse_tm_to_sec(earliest_drop_date_time_str, TimeParse::fmt_yyyymmddhhmm_1);
-    long latest_drop_time_sec =
+    std::int64_t latest_drop_time_sec =
         TimeParse::parse_tm_to_sec(latest_drop_date_time_str, TimeParse::fmt_yyyymmddhhmm_1);
     if (earliest_pick_time_sec > latest_pick_time_sec) {
       throw std::runtime_error(std::format(

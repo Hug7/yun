@@ -22,11 +22,11 @@ DistMatrix::DistMatrix(const int dist_matrix_ind, const int matrix_len)
 
 DistMatrix::~DistMatrix() { delete[] this->arr; }
 
-long DistMatrix::get_dist(const int from_ind, const int to_ind) const {
+std::int64_t DistMatrix::get_dist(const int from_ind, const int to_ind) const {
   return this->arr[from_ind * this->matrix_len + to_ind].dist;
 }
 
-long DistMatrix::get_time(const int from_ind, const int to_ind) const {
+std::int64_t DistMatrix::get_time(const int from_ind, const int to_ind) const {
   return this->arr[from_ind * this->matrix_len + to_ind].time;
 }
 
@@ -34,8 +34,8 @@ DistTime DistMatrix::get_dist_time(const int from_ind, const int to_ind) const {
   return this->arr[from_ind * this->matrix_len + to_ind];
 }
 
-void DistMatrix::set_dist_time(const int from_ind, const int to_ind, const long dist,
-                               const long time) {
+void DistMatrix::set_dist_time(const int from_ind, const int to_ind, const std::int64_t dist,
+                               const std::int64_t time) {
   this->arr[from_ind * this->matrix_len + to_ind] = DistTime(dist, time);
 }
 
@@ -73,8 +73,8 @@ DistMatrixCode* DistMatrixManager::get_dist_matrix_code(const std::string& dist_
 }
 
 void DistMatrixManager::set_dist_time(const std::string& dist_matrix_code, const int row_ind,
-                                      const int col_ind, const long cost_dist,
-                                      const long cost_time) {
+                                      const int col_ind, const std::int64_t cost_dist,
+                                      const std::int64_t cost_time) {
   auto dist_matrix_code_it = this->dist_matrix_code_map.find(dist_matrix_code);
 
   if (dist_matrix_code_it == this->dist_matrix_code_map.end()) {

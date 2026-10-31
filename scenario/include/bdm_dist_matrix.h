@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -28,8 +29,8 @@ class DistMatrixCode : public Item {
 };
 
 struct DistTime {
-  long dist = DistMatrixParameter::MAX_DISTANCE;
-  long time = DistMatrixParameter::MAX_TIME;
+  std::int64_t dist = DistMatrixParameter::MAX_DISTANCE;
+  std::int64_t time = DistMatrixParameter::MAX_TIME;
 };
 
 /**
@@ -62,17 +63,17 @@ class DistMatrix {
    * @brief 获取两个位置之间的距离
    * @param from_ind 起始位置索引
    * @param to_ind 结束位置索引
-   * @return long 两个位置之间的距离
+   * @return std::int64_t 两个位置之间的距离
    */
-  long get_dist(const int from_ind, const int to_ind) const;
+  std::int64_t get_dist(const int from_ind, const int to_ind) const;
 
   /**
    * @brief 获取两个位置之间的耗时
    * @param from_ind 起始位置索引
    * @param to_ind 结束位置索引
-   * @return long 两个位置之间的耗时
+   * @return std::int64_t 两个位置之间的耗时
    */
-  long get_time(const int from_ind, const int to_ind) const;
+  std::int64_t get_time(const int from_ind, const int to_ind) const;
 
   /**
    * @brief 获取两个位置之间的距离和耗时
@@ -89,7 +90,8 @@ class DistMatrix {
    * @param dist 两个位置之间的距离, 单位:m
    * @param time 两个位置之间的耗时, 单位:s
    */
-  void set_dist_time(const int from_ind, const int to_ind, const long dist, const long time);
+  void set_dist_time(const int from_ind, const int to_ind, const std::int64_t dist,
+                     const std::int64_t time);
 };
 
 /**
@@ -144,7 +146,7 @@ class DistMatrixManager {
    * @param cost_time 两个位置之间的耗时, 单位:s
    */
   void set_dist_time(const std::string& dist_matrix_code, const int row_ind, const int col_ind,
-                     const long cost_dist, const long cost_time);
+                     const std::int64_t cost_dist, const std::int64_t cost_time);
   /**
    * @brief 获取距离矩阵
    * @param dist_matrix_code 距离矩阵自定义code

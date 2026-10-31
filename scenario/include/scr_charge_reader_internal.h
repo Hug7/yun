@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -51,11 +52,11 @@ inline std::vector<std::string> split_path_values(const std::string& text) {
   return values;
 }
 
-inline long parse_long(const std::string& text, const char* file_name, const size_t row,
-                       const char* field) {
+inline std::int64_t parse_long(const std::string& text, const char* file_name, const size_t row,
+                               const char* field) {
   try {
     size_t pos = 0;
-    const long value = std::stol(text, &pos);
+    const std::int64_t value = std::stoll(text, &pos);
     if (pos != text.size()) {
       throw std::invalid_argument("trailing characters");
     }
@@ -138,18 +139,18 @@ inline ChargeItemType parse_item_type(const std::string& text, const size_t row)
   return ChargeItemType::FLAT;
 }
 
-inline long power10(const int precision) {
-  long scale = 1;
+inline std::int64_t power10(const int precision) {
+  std::int64_t scale = 1;
   for (int u = 0; u < precision; u++) {
     scale *= 10;
   }
   return scale;
 }
 
-inline long parse_bound(const std::string& text, const ChargeConditionType condition_type,
-                        const Dimension* dimension, const bool is_upper, const size_t row) {
+inline std::int64_t parse_bound(const std::string& text, const ChargeConditionType condition_type,
+                                const Dimension* dimension, const bool is_upper, const size_t row) {
   if (condition_type == ChargeConditionType::NONE || text.empty()) {
-    return is_upper ? std::numeric_limits<long>::max() : 0;
+    return is_upper ? std::numeric_limits<std::int64_t>::max() : 0;
   }
   switch (condition_type) {
     case ChargeConditionType::DISTANCE: {
@@ -157,12 +158,12 @@ inline long parse_bound(const std::string& text, const ChargeConditionType condi
       if (km < 0) {
         fail(ChargeTierSchema::file_name, row, "bound must be non-negative");
       }
-      return static_cast<long>(
+      return static_cast<std::int64_t>(
           std::llround(km * static_cast<double>(ChargeParameter::METER_PER_KM)));
     }
     case ChargeConditionType::PICK_NODE_COUNT:
     case ChargeConditionType::DROP_NODE_COUNT: {
-      const long value = parse_long(text, ChargeTierSchema::file_name, row, "bound");
+      const std::int64_t value = parse_long(text, ChargeTierSchema::file_name, row, "bound");
       if (value < 0) {
         fail(ChargeTierSchema::file_name, row, "bound must be non-negative");
       }
@@ -176,16 +177,16 @@ inline long parse_bound(const std::string& text, const ChargeConditionType condi
       if (value < 0) {
         fail(ChargeTierSchema::file_name, row, "bound must be non-negative");
       }
-      const long scale = power10(dimension->precision);
-      return static_cast<long>(std::llround(value * static_cast<double>(scale)));
+      const std::int64_t scale = power10(dimension->precision);
+      return static_cast<std::int64_t>(std::llround(value * static_cast<double>(scale)));
     }
     case ChargeConditionType::NONE:
       break;
   }
-  return is_upper ? std::numeric_limits<long>::max() : 0;
+  return is_upper ? std::numeric_limits<std::int64_t>::max() : 0;
 }
 
-inline long parse_price(const std::string& text, const size_t row) {
+inline std::int64_t parse_price(const std::string& text, const size_t row) {
   const double yuan = parse_double(text, ChargeItemSchema::file_name, row, "Price");
   if (yuan < 0) {
     fail(ChargeItemSchema::file_name, row, "Price must be non-negative");
@@ -193,7 +194,8 @@ inline long parse_price(const std::string& text, const size_t row) {
   if (yuan > 1e9) {
     fail(ChargeItemSchema::file_name, row, "Price is too large");
   }
-  return static_cast<long>(std::llround(yuan * static_cast<double>(ChargeParameter::MONEY_SCALE)));
+  return static_cast<std::int64_t>(
+      std::llround(yuan * static_cast<double>(ChargeParameter::MONEY_SCALE)));
 }
 
 }  // namespace ChargeReaderInternal

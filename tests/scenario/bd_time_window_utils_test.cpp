@@ -14,14 +14,15 @@
 
 namespace {
 
-void ExpectTimeWindow(const TimeWindow* tw, long early, long late) {
+void ExpectTimeWindow(const TimeWindow* tw, std::int64_t early, std::int64_t late) {
   ASSERT_NE(tw, nullptr);
   EXPECT_EQ(tw->early, early);
   EXPECT_EQ(tw->late, late);
 }
 
-void ExpectPlan(TimeWindowPlan::UPtr& plan, long early_arr, long late_arr, long early_dest,
-                long late_dest, long wait_time, long over_time) {
+void ExpectPlan(TimeWindowPlan::UPtr& plan, std::int64_t early_arr, std::int64_t late_arr,
+                std::int64_t early_dest, std::int64_t late_dest, std::int64_t wait_time,
+                std::int64_t over_time) {
   ASSERT_NE(plan, nullptr);
   EXPECT_EQ(plan->early_arr, early_arr);
   EXPECT_EQ(plan->late_arr, late_arr);

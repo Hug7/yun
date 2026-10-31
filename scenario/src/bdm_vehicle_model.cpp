@@ -36,7 +36,7 @@ VehicleModel* VehicleModelManager::create_vehicle_model(const std::string& code,
   }
 
   const int vehicle_model_ind = this->generate_index->next();
-  std::vector<long> dim_vals = this->dim_manager->empty_dim_values();
+  std::vector<std::int64_t> dim_vals = this->dim_manager->empty_dim_values();
   const auto vehicle_model = new VehicleModel(
       code, name, vehicle_model_ind, dist_matrix_code, dist_matrix, dim_vals,
       this->labelset->empty_labelset_value(), this->labelset->empty_labelset_value_bitset());

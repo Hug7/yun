@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <ctime>
 #include <format>
 #include <regex>
@@ -58,9 +59,9 @@ static auto fmt_yyyymmddhhmm_2 = "%Y%m%d%H%M";
 
 static auto fmt_yyyymmddhhmm_3 = "%Y-%m-%d %H:%M:%S";
 
-inline long parse_tm_to_sec(const std::string& time_str, const char* fmt) {
+inline std::int64_t parse_tm_to_sec(const std::string& time_str, const char* fmt) {
   chrono_util::DateTime dt = chrono_util::parse(time_str, fmt);
-  return static_cast<long>(chrono_util::to_unix(dt));
+  return static_cast<std::int64_t>(chrono_util::to_unix(dt));
 }
 /**
  * @brief 时间戳(秒) -> 时间字符串
@@ -69,8 +70,8 @@ inline long parse_tm_to_sec(const std::string& time_str, const char* fmt) {
  * @param fmt
  * @return
  */
-inline std::string format_sec_to_tm(const long time_sec, const char* fmt) {
-  const chrono_util::DateTime dt = chrono_util::from_unix(static_cast<int64_t>(time_sec));
+inline std::string format_sec_to_tm(const std::int64_t time_sec, const char* fmt) {
+  const chrono_util::DateTime dt = chrono_util::from_unix(static_cast<std::int64_t>(time_sec));
   return chrono_util::format(dt, fmt);
 }
 }  // namespace TimeParse

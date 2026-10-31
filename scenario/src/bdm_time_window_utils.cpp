@@ -13,12 +13,13 @@
 
 // ====== implement of TimeWindowInfer ======
 TimeWindowPlan::UPtr TimeWindowInfer::forward_s_s(TimeWindowPlan::UPtr& pre_node_plan_tw,
-                                                  const long cost_time, const long work_time,
+                                                  const std::int64_t cost_time,
+                                                  const std::int64_t work_time,
                                                   const TimeWindow* ori_tw) {
   auto cur_tw = std::make_unique<TimeWindowPlan>();
 
-  const long plan_early_arr = pre_node_plan_tw->early_depart + cost_time;
-  const long plan_late_arr = pre_node_plan_tw->late_depart + cost_time;
+  const std::int64_t plan_early_arr = pre_node_plan_tw->early_depart + cost_time;
+  const std::int64_t plan_late_arr = pre_node_plan_tw->late_depart + cost_time;
 
   if (plan_early_arr <= ori_tw->late) {
     if (plan_late_arr >= ori_tw->early) {
@@ -46,8 +47,9 @@ TimeWindowPlan::UPtr TimeWindowInfer::forward_s_s(TimeWindowPlan::UPtr& pre_node
   return cur_tw;
 }
 
-void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const long cost_time,
-                                  const long work_time, const std::vector<TimeWindow*>& ori_tws,
+void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw,
+                                  const std::int64_t cost_time, const std::int64_t work_time,
+                                  const std::vector<TimeWindow*>& ori_tws,
                                   TimeWindowPlan::VecUPtr& plan_node_tws) {
   bool non_wait_over_flag = false;
   const size_t plan_node_tws_len = plan_node_tws.size();
@@ -56,8 +58,8 @@ void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const 
     non_wait_over_flag = true;
   }
 
-  const long plan_early_arr = pre_node_plan_tw->early_depart + cost_time;
-  const long plan_late_arr = pre_node_plan_tw->late_depart + cost_time;
+  const std::int64_t plan_early_arr = pre_node_plan_tw->early_depart + cost_time;
+  const std::int64_t plan_late_arr = pre_node_plan_tw->late_depart + cost_time;
 
   for (const auto& cur_ori_tw : ori_tws) {
     if (plan_late_arr < cur_ori_tw->early) {
@@ -93,7 +95,8 @@ void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const 
 }
 
 TimeWindowPlan::VecUPtr TimeWindowInfer::forward(TimeWindowPlan::VecUPtr& pre_node_plan_tws,
-                                                 const long cost_time, const long work_time,
+                                                 const std::int64_t cost_time,
+                                                 const std::int64_t work_time,
                                                  const std::vector<TimeWindow*>& ori_tws) {
   TimeWindowPlan::VecUPtr plan_node_tws;
   for (auto& pre_node_plan_tw : pre_node_plan_tws) {
@@ -103,8 +106,8 @@ TimeWindowPlan::VecUPtr TimeWindowInfer::forward(TimeWindowPlan::VecUPtr& pre_no
 }
 
 TimeWindow* TimeWindowUntils::intersection(const TimeWindow* tw_a, const TimeWindow* tw_b) {
-  const long tmp_early = std::max(tw_a->early, tw_b->early);
-  const long tmp_late = std::min(tw_a->late, tw_b->late);
+  const std::int64_t tmp_early = std::max(tw_a->early, tw_b->early);
+  const std::int64_t tmp_late = std::min(tw_a->late, tw_b->late);
   if (tmp_early > tmp_late) {
     return nullptr;
   }
@@ -131,8 +134,8 @@ std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
 
   while (true) {
     // 获取最大最小时间窗
-    long cur_max_early = (*tws_arr[0])[idx[0]]->early;
-    long cur_min_late = (*tws_arr[0])[idx[0]]->late;
+    std::int64_t cur_max_early = (*tws_arr[0])[idx[0]]->early;
+    std::int64_t cur_min_late = (*tws_arr[0])[idx[0]]->late;
     std::size_t cur_min_late_ind = 0;
     for (std::size_t u = 1; u < n; ++u) {
       const TimeWindow* cand = (*tws_arr[u])[idx[u]];

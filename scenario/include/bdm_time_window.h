@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <ctime>
 #include <memory>
 #include <vector>
@@ -22,17 +23,17 @@ class TimeWindow {
   /**
    * @brief start time of the time window
    */
-  const long early;
+  const std::int64_t early;
   /**
    * @brief end time of the time window
    */
-  const long late;
+  const std::int64_t late;
 
   TimeWindow()
       : early(TimeWindowParameter::DEFAULT_EARLY_TIME),
         late(TimeWindowParameter::DEFAULT_LATE_TIME) {};
 
-  TimeWindow(const long early, const long late) : early(early), late(late) {}
+  TimeWindow(const std::int64_t early, const std::int64_t late) : early(early), late(late) {}
 
   TimeWindow(TimeWindow* other) : early(other->early), late(other->late) {}
 };

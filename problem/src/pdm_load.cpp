@@ -100,11 +100,11 @@ void Load::change_vehicle(const Vehicle* _vehicle) {
   }
 }
 
-long Load::get_total_travel_dist() const {
+std::int64_t Load::get_total_travel_dist() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_DIST)) {
     return this->route_profile->total_travel_dist;
   }
-  long total_travel_dist = 0;
+  std::int64_t total_travel_dist = 0;
   Node* tail_node = this->last_node;
   while (tail_node->hase_prev()) {
     total_travel_dist += tail_node->travel_dist;
@@ -114,11 +114,11 @@ long Load::get_total_travel_dist() const {
   return total_travel_dist;
 }
 
-long Load::get_total_travel_time() const {
+std::int64_t Load::get_total_travel_time() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_TIME)) {
     return this->route_profile->total_travel_time;
   }
-  long total_travel_time = 0;
+  std::int64_t total_travel_time = 0;
   Node* tail_node = this->last_node;
   while (tail_node->hase_prev()) {
     total_travel_time += tail_node->travel_time;
@@ -208,7 +208,7 @@ void Load::update_time_window() const {
     // 冻结表 →写缓冲→ 重算并写入写缓冲; 返回的引用在本次推导内有效
     const std::vector<TimeWindow*>& cur_tws =
         tw_cache->lookup(this->get_node_tw_store_buffer(), head_node);
-    const long work_time = head_node->get_work_time();
+    const std::int64_t work_time = head_node->get_work_time();
     head_node->ptws =
         TimeWindowInfer::forward(pre_node->ptws, head_node->travel_time, work_time, cur_tws);
     pre_node = head_node;
@@ -253,8 +253,8 @@ TimeWindowPlan::VecUPtr Load::infer_time_window_plans() const {
         time_window_plans[pre_ptw_ind]->early_arr - pre_node->travel_time;
     cur_time_window_plan->late_depart =
         time_window_plans[pre_ptw_ind]->late_arr - pre_node->travel_time;
-    long cur_early_arr = cur_time_window_plan->early_depart - cur_node->get_work_time();
-    long cur_late_arr = cur_time_window_plan->late_depart - cur_node->get_work_time();
+    std::int64_t cur_early_arr = cur_time_window_plan->early_depart - cur_node->get_work_time();
+    std::int64_t cur_late_arr = cur_time_window_plan->late_depart - cur_node->get_work_time();
     for (const auto& twp : cur_node->ptws) {
       if (twp->wait_time > 0) {
         cur_time_window_plan->early_arr = cur_early_arr - twp->wait_time;

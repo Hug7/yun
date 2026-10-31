@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -24,7 +25,7 @@ class CargoSubOrder : public Item {
   /**
    * @brief 订单明细属性
    */
-  std::vector<long> dim_vals;
+  std::vector<std::int64_t> dim_vals;
   /**
    * @brief 订单明细标签集合值
    */
@@ -39,7 +40,7 @@ class CargoSubOrder : public Item {
   const int qty;
 
   CargoSubOrder(const std::string& code, const std::string& name, const int ind,
-                std::vector<long>& dim_vals, LabelsetValue* labelset_value,
+                std::vector<std::int64_t>& dim_vals, LabelsetValue* labelset_value,
                 std::unique_ptr<LabelsetValueBitset> labelset_value_bitset, const int qty)
       : Item(code, name, ind),
         dim_vals(dim_vals),
@@ -129,7 +130,8 @@ class CargoOrder : public Item {
    * @return 订单明细对象指针
    */
   CargoSubOrder* create_cargo_sub_order(const std::string& code, const std::string& name,
-                                        std::vector<long>& dim_vals, LabelsetValue* labelset_value,
+                                        std::vector<std::int64_t>& dim_vals,
+                                        LabelsetValue* labelset_value,
                                         std::unique_ptr<LabelsetValueBitset> labelset_value_bitset,
                                         const int qty);
   /**

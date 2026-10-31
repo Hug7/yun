@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "bdm_vehicle.h"
 #include "pdm_cache.h"
 #include "pdm_cache_time_window.h"
@@ -93,9 +95,9 @@ class Load {
 
   void change_vehicle(const Vehicle* _vehicle);
 
-  [[nodiscard]] long get_total_travel_dist() const;
+  [[nodiscard]] std::int64_t get_total_travel_dist() const;
 
-  [[nodiscard]] long get_total_travel_time() const;
+  [[nodiscard]] std::int64_t get_total_travel_time() const;
 
   [[nodiscard]] double get_obj_val() const;
 
@@ -130,9 +132,9 @@ class Load {
 
   void fill_locations(std::vector<const Location*>& locations) const;
 
-  [[nodiscard]] virtual const std::vector<long>& get_peak_load_dims() const = 0;
+  [[nodiscard]] virtual const std::vector<std::int64_t>& get_peak_load_dims() const = 0;
 
-  [[nodiscard]] virtual const std::vector<long>& get_total_load_dims() const = 0;
+  [[nodiscard]] virtual const std::vector<std::int64_t>& get_total_load_dims() const = 0;
 
   virtual int get_pick_node_count() = 0;
 
@@ -155,11 +157,11 @@ class Load {
   [[nodiscard]] virtual int get_activity_count() const = 0;
 
  protected:
-  [[nodiscard]] const std::vector<long>& get_peak_load_dims_sp() const;
+  [[nodiscard]] const std::vector<std::int64_t>& get_peak_load_dims_sp() const;
 
-  [[nodiscard]] const std::vector<long>& get_peak_load_dims_sd() const;
+  [[nodiscard]] const std::vector<std::int64_t>& get_peak_load_dims_sd() const;
 
-  [[nodiscard]] const std::vector<long>& get_peak_load_dims_mp() const;
+  [[nodiscard]] const std::vector<std::int64_t>& get_peak_load_dims_mp() const;
 
   [[nodiscard]] int get_pick_node_count_sp() const;
 
@@ -199,9 +201,9 @@ class LoadSPMD : public Load {
 
   int get_drop_node_count() override;
 
-  [[nodiscard]] const std::vector<long>& get_peak_load_dims() const override;
+  [[nodiscard]] const std::vector<std::int64_t>& get_peak_load_dims() const override;
 
-  [[nodiscard]] const std::vector<long>& get_total_load_dims() const override;
+  [[nodiscard]] const std::vector<std::int64_t>& get_total_load_dims() const override;
 
   LabelsetValueBitset* get_pick_loc_labelset_value_bitset() override;
 

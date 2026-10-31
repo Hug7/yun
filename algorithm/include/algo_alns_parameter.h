@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstdint>
 #include <memory>
 #include <sol/sol.hpp>
 
@@ -61,7 +62,7 @@ class AlnsParameter {
   /**
    * @brief 最大运行时长
    */
-  long max_running_time_sec{600};
+  std::int64_t max_running_time_sec{600};
   /**
    * @brief 算子学习因子
    */

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -30,7 +31,7 @@ class FuncTiming {
   /**
    * @brief 开始时间戳(s)
    */
-  long start_date_time_sec{0};
+  std::int64_t start_date_time_sec{0};
   /**
    * @brief 结束时间
    */
@@ -38,7 +39,7 @@ class FuncTiming {
   /**
    * @brief 结束时间戳(s)
    */
-  long end_date_time_sec{0};
+  std::int64_t end_date_time_sec{0};
 
   explicit FuncTiming(std::string func_code) : func_code{std::move(func_code)} {
     const auto date_time = chrono_util::now();
@@ -54,7 +55,7 @@ class FuncTiming {
 
   [[nodiscard]] bool is_not_complete() const { return this->end_date_time.empty(); }
 
-  [[nodiscard]] long elapsed_second() const {
+  [[nodiscard]] std::int64_t elapsed_second() const {
     return this->end_date_time_sec - this->start_date_time_sec;
   }
 };

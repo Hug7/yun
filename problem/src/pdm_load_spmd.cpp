@@ -12,11 +12,11 @@ int LoadSPMD::get_pick_node_count() { return this->get_pick_node_count_sp(); }
 
 int LoadSPMD::get_drop_node_count() { return this->get_drop_node_count_md(); }
 
-const std::vector<long>& LoadSPMD::get_peak_load_dims() const {
+const std::vector<std::int64_t>& LoadSPMD::get_peak_load_dims() const {
   return this->get_peak_load_dims_sp();
 }
 
-const std::vector<long>& LoadSPMD::get_total_load_dims() const {
+const std::vector<std::int64_t>& LoadSPMD::get_total_load_dims() const {
   return this->get_peak_load_dims_sp();
 }
 

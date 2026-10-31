@@ -5,20 +5,24 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "bdm_time_window.h"
 #include "bdm_time_window_plan.h"
 
 namespace TimeWindowInfer {
-TimeWindowPlan::UPtr forward_s_s(TimeWindowPlan::UPtr& pre_node_plan_tw, const long cost_time,
-                                 const long work_time, const TimeWindow* ori_tw);
+TimeWindowPlan::UPtr forward_s_s(TimeWindowPlan::UPtr& pre_node_plan_tw,
+                                 const std::int64_t cost_time, const std::int64_t work_time,
+                                 const TimeWindow* ori_tw);
 
-void forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const long cost_time, const long work_time,
-                 const std::vector<TimeWindow*>& ori_tws, TimeWindowPlan::VecUPtr& plan_node_tws);
+void forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw, const std::int64_t cost_time,
+                 const std::int64_t work_time, const std::vector<TimeWindow*>& ori_tws,
+                 TimeWindowPlan::VecUPtr& plan_node_tws);
 
-TimeWindowPlan::VecUPtr forward(TimeWindowPlan::VecUPtr& pre_node_plan_tws, const long cost_time,
-                                const long work_time, const std::vector<TimeWindow*>& ori_tws);
+TimeWindowPlan::VecUPtr forward(TimeWindowPlan::VecUPtr& pre_node_plan_tws,
+                                const std::int64_t cost_time, const std::int64_t work_time,
+                                const std::vector<TimeWindow*>& ori_tws);
 }  // namespace TimeWindowInfer
 
 namespace TimeWindowUntils {

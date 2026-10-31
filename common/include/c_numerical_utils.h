@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 
 /**
  * @brief 精度的幂
@@ -24,22 +25,22 @@ inline double decimal_places(const double value, const int precision) {
   return std::round(value * PRECISION_POW[precision]) / PRECISION_POW[precision];
 }
 /**
- * @brief 将double数值放大
+ * @brief 将 double 放大为 64 位整数
  * @param value 数值
  * @param precision 精度(10的指数)
  * @return value * 10^precision
  */
-inline long scale_to_long(const double value, const int precision) {
-  return static_cast<long>(value * PRECISION_POW[precision]);
+inline std::int64_t scale_to_long(const double value, const int precision) {
+  return static_cast<std::int64_t>(value * PRECISION_POW[precision]);
 }
 /**
- * @brief 将long数值缩小
+ * @brief 将 64 位整数缩小为 double
  * @details 缩小后的数值会保留小数点后precision位
  * @param value 数值
  * @param precision 精度(10的指数)
  * @return round(value / 10^precision, precision)
  */
-inline double unscale_from_long(const long value, const int precision) {
+inline double unscale_from_long(const std::int64_t value, const int precision) {
   const double result = static_cast<double>(value) / static_cast<double>(PRECISION_POW[precision]);
   return decimal_places(result, precision);
 }

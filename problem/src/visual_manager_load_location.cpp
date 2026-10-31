@@ -78,7 +78,7 @@ std::vector<VisualLabel> decode_orders_labels(const Labelset* labelset,
  * @return 可视化维度集合
  */
 std::vector<VisualDimension> to_visual_dimensions(const DimensionManager* dim_manager,
-                                                  const std::vector<long>& dim_vals) {
+                                                  const std::vector<std::int64_t>& dim_vals) {
   const int dim_len = std::min(dim_manager->len, static_cast<int>(dim_vals.size()));
   std::vector<VisualDimension> dimensions;
   dimensions.reserve(dim_len);

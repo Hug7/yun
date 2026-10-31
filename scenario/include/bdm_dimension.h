@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -89,5 +90,5 @@ class DimensionManager {
   /**
    * @brief 获取所有维度的空数组
    */
-  [[nodiscard]] std::vector<long> empty_dim_values() const;
+  [[nodiscard]] std::vector<std::int64_t> empty_dim_values() const;
 };

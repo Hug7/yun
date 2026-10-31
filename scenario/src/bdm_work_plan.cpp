@@ -57,8 +57,8 @@ std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
     while (early_dt <= late_dt) {
       int day_of_week = chrono_util::day_of_week(early_dt);
       for (auto& time_range : this->day_time_ranges[day_of_week]) {
-        long cur_early = chrono_util::to_unix(early_dt) + time_range.first;
-        long cur_late = chrono_util::to_unix(early_dt) + time_range.second;
+        std::int64_t cur_early = chrono_util::to_unix(early_dt) + time_range.first;
+        std::int64_t cur_late = chrono_util::to_unix(early_dt) + time_range.second;
         cur_early = std::max(cur_early, tw->early);
         cur_late = std::min(cur_late, tw->late);
         if (cur_early >= cur_late) {
@@ -83,8 +83,8 @@ std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
   } else if (this->time_range_type == CalendarTimeRangeType::DAILY) {
     while (early_dt <= late_dt) {
       for (auto& time_range : this->day_time_ranges[0]) {
-        long cur_early = chrono_util::to_unix(early_dt) + time_range.first;
-        long cur_late = chrono_util::to_unix(early_dt) + time_range.second;
+        std::int64_t cur_early = chrono_util::to_unix(early_dt) + time_range.first;
+        std::int64_t cur_late = chrono_util::to_unix(early_dt) + time_range.second;
         cur_early = std::max(cur_early, tw->early);
         cur_late = std::min(cur_late, tw->late);
         if (cur_early >= cur_late) {
@@ -130,14 +130,15 @@ void WorkEffect::add(const Dimension* dim, ActivityType activity_type, double qu
   }
 }
 
-long WorkEffect::get_work_time(ActivityType activity_type,
-                               const std::vector<long>& dim_vals) const {
-  long work_time = 0;
+std::int64_t WorkEffect::get_work_time(ActivityType activity_type,
+                                       const std::vector<std::int64_t>& dim_vals) const {
+  std::int64_t work_time = 0;
   auto& dim_effects = this->effect_map[static_cast<int>(activity_type)];
   for (int u = 0; u < this->dims_len; u++) {
     double unit_process_q = dim_effects[u];
     if (unit_process_q > 0) {
-      work_time = std::max(work_time, static_cast<long>((dim_vals[u] * 3600.0) / unit_process_q));
+      work_time =
+          std::max(work_time, static_cast<std::int64_t>((dim_vals[u] * 3600.0) / unit_process_q));
     }
   }
   return work_time;

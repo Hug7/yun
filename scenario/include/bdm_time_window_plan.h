@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -17,33 +18,34 @@ class TimeWindowPlan {
   /**
    * early arrive time
    */
-  long early_arr;
+  std::int64_t early_arr;
   /**
    * late arrive time
    */
-  long late_arr;
+  std::int64_t late_arr;
   /**
    * early departure time
    */
-  long early_depart;
+  std::int64_t early_depart;
   /**
    * late departure time
    */
-  long late_depart;
+  std::int64_t late_depart;
   /**
    * wait time
    */
-  long wait_time;
+  std::int64_t wait_time;
   /**
    * over time
    */
-  long over_time;
+  std::int64_t over_time;
 
   TimeWindowPlan()
       : early_arr(0), late_arr(0), early_depart(0), late_depart(0), wait_time(0), over_time(0) {};
 
-  TimeWindowPlan(const long early_arr, const long late_arr, const long early_depart,
-                 const long late_depart, long wait_time, const long over_time)
+  TimeWindowPlan(const std::int64_t early_arr, const std::int64_t late_arr,
+                 const std::int64_t early_depart, const std::int64_t late_depart,
+                 std::int64_t wait_time, const std::int64_t over_time)
       : early_arr(early_arr),
         late_arr(late_arr),
         early_depart(early_depart),

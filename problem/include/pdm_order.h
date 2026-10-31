@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -55,15 +56,15 @@ class Order {
   /**
    * @brief pick work time
    */
-  long pick_work_time;
+  std::int64_t pick_work_time;
   /**
    * @brief drop work time
    */
-  long drop_work_time;
+  std::int64_t drop_work_time;
   /**
    * @brief 订单明细属性
    */
-  std::vector<long> dim_vals;
+  std::vector<std::int64_t> dim_vals;
   /**
    * @brief 订单明细标签集合值
    */
@@ -78,7 +79,7 @@ class Order {
   Bitset::UPtr available_vehicle_bitset;
 
   Order(const PlanDatetimeRange* plan_datetime_range, int ind,
-        std::vector<CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
+        std::vector<CargoOrder*>& cargo_orders, std::vector<std::int64_t>& dim_vals,
         LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
         Bitset::UPtr available_vehicle_bitset);
 

@@ -51,10 +51,10 @@ DistMatrixManager* StandardCsvReader::loading_dist_matrix(LocationManager* locat
         DistMatrixSchema::headers[DistMatrixSchema::TO_LOCATION_CODE], u);
     const std::string dist_matrix_code = dist_matrix_doc.GetCell<std::string>(
         DistMatrixSchema::headers[DistMatrixSchema::DIST_MATRIX_CODE], u);
-    const long cost_dist =
-        dist_matrix_doc.GetCell<long>(DistMatrixSchema::headers[DistMatrixSchema::DISTANCE], u);
-    const long cost_time =
-        dist_matrix_doc.GetCell<long>(DistMatrixSchema::headers[DistMatrixSchema::TIME], u);
+    const std::int64_t cost_dist = dist_matrix_doc.GetCell<std::int64_t>(
+        DistMatrixSchema::headers[DistMatrixSchema::DISTANCE], u);
+    const std::int64_t cost_time =
+        dist_matrix_doc.GetCell<std::int64_t>(DistMatrixSchema::headers[DistMatrixSchema::TIME], u);
     // find form location
     Location* from_location = location_manager->get_location(from_location_code);
     if (from_location == nullptr) {

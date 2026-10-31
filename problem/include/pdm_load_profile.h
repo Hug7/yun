@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -42,12 +43,12 @@ class LoadRouteProfile {
   /**
    * @brief peak loading value of all dimensions for the load
    */
-  std::vector<long> peak_load_dims;
+  std::vector<std::int64_t> peak_load_dims;
   /**
    * @brief 车次所有订单的维度总量
    * @details 与峰值装载不同，这里按车次上所有订单的维度值求和，用于计费
    */
-  std::vector<long> total_load_dims;
+  std::vector<std::int64_t> total_load_dims;
   /**
    * @brief bitset of labelset value for the pick location
    */
@@ -69,9 +70,9 @@ class LoadRouteProfile {
 
   int drop_node_count;
 
-  long total_travel_dist;
+  std::int64_t total_travel_dist;
 
-  long total_travel_time;
+  std::int64_t total_travel_time;
 
   explicit LoadRouteProfile(const Scenario* scenario);
 

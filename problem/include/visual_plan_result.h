@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -102,15 +103,15 @@ struct VisualLoad {
 
   double loading_rate{0.0};
 
-  long total_driving_distance_meter{0};
+  std::int64_t total_driving_distance_meter{0};
 
-  long total_driving_time_second{0};
+  std::int64_t total_driving_time_second{0};
 
-  long total_work_time_second{0};
+  std::int64_t total_work_time_second{0};
 
-  long total_wait_time_second{0};
+  std::int64_t total_wait_time_second{0};
 
-  long total_cost_time_second{0};
+  std::int64_t total_cost_time_second{0};
 
   double soft_penalty_value{0};
 
@@ -128,19 +129,19 @@ struct VisualLoad {
 
   std::string plan_earliest_start_time;
 
-  long plan_earliest_start_timestamp{0};
+  std::int64_t plan_earliest_start_timestamp{0};
 
   std::string plan_earliest_end_time;
 
-  long plan_earliest_end_timestamp{0};
+  std::int64_t plan_earliest_end_timestamp{0};
 
   std::string plan_latest_start_time;
 
-  long plan_latest_start_timestamp{0};
+  std::int64_t plan_latest_start_timestamp{0};
 
   std::string plan_latest_end_time;
 
-  long plan_latest_end_timestamp{0};
+  std::int64_t plan_latest_end_timestamp{0};
 
   VisualLoad() = default;
 };
@@ -162,37 +163,37 @@ struct VisualLoadLocation {
 
   std::vector<VisualLabel> order_labels;
 
-  long prev_driving_distance_meter{0};
+  std::int64_t prev_driving_distance_meter{0};
 
-  long prev_driving_time_second{0};
+  std::int64_t prev_driving_time_second{0};
 
-  long wait_time_second{0};
+  std::int64_t wait_time_second{0};
 
-  long work_time_second{0};
+  std::int64_t work_time_second{0};
 
   std::string plan_earliest_arrive_time;
 
-  long plan_earliest_arrive_timestamp{0};
+  std::int64_t plan_earliest_arrive_timestamp{0};
 
   std::string plan_earliest_start_work_time;
 
-  long plan_earliest_start_work_timestamp{0};
+  std::int64_t plan_earliest_start_work_timestamp{0};
 
   std::string plan_earliest_depart_time;
 
-  long plan_earliest_depart_timestamp{0};
+  std::int64_t plan_earliest_depart_timestamp{0};
 
   std::string plan_latest_arrive_time;
 
-  long plan_latest_arrive_timestamp{0};
+  std::int64_t plan_latest_arrive_timestamp{0};
 
   std::string plan_latest_start_work_time;
 
-  long plan_latest_start_work_timestamp{0};
+  std::int64_t plan_latest_start_work_timestamp{0};
 
   std::string plan_latest_depart_time;
 
-  long plan_latest_depart_timestamp{0};
+  std::int64_t plan_latest_depart_timestamp{0};
 
   VisualLoadLocation() = default;
 };
@@ -222,7 +223,7 @@ struct VisualFuncTiming {
    * @brief 函数耗时
    * @details = end_date_time - start_date_time，单位(s)
    */
-  long elapsed_second{0};
+  std::int64_t elapsed_second{0};
 
   VisualFuncTiming() = default;
 };
@@ -247,11 +248,11 @@ struct VisualCarrierVehicleSummary {
   /**
    * @brief 总行驶距离(m)
    */
-  long total_travel_distance{0};
+  std::int64_t total_travel_distance{0};
   /**
    * @brief 总行驶耗时(s)
    */
-  long total_travel_time{0};
+  std::int64_t total_travel_time{0};
   /**
    * @brief 总成本(= LoadConstrProfile::total_cost)
    */
@@ -287,11 +288,11 @@ struct VisualPlanSummary {
   /**
    * @brief 总行驶距离(m)
    */
-  long total_travel_distance{0};
+  std::int64_t total_travel_distance{0};
   /**
    * @brief 总行驶耗时(s)
    */
-  long total_travel_time{0};
+  std::int64_t total_travel_time{0};
   /**
    * @brief 总成本(= Σ LoadConstrProfile::total_cost)
    */
@@ -322,7 +323,7 @@ struct VisualPlanSummary {
    * @brief 总求解时长
    * @details = end_date_time - start_date_time，单位(s)
    */
-  long running_time_second{0};
+  std::int64_t running_time_second{0};
   /**
    * @brief 策略函数耗时列表
    */

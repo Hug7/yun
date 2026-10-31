@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <limits>
 #include <string>
 #include <vector>
@@ -19,11 +20,11 @@ namespace ChargeParameter {
 /**
  * @brief 金额定点精度：1e-4 元
  */
-constexpr long MONEY_SCALE = 10000;
+constexpr std::int64_t MONEY_SCALE = 10000;
 /**
  * @brief 1 km = 1000 m
  */
-constexpr long METER_PER_KM = 1000;
+constexpr std::int64_t METER_PER_KM = 1000;
 }  // namespace ChargeParameter
 
 /**
@@ -75,11 +76,11 @@ struct ChargeTier {
   /**
    * @brief 下界（含），内部单位
    */
-  long lower;
+  std::int64_t lower;
   /**
    * @brief 上界（不含），内部单位
    */
-  long upper;
+  std::int64_t upper;
   /**
    * @brief 计费项在 ChargeManager::items 中的起始位置
    */
@@ -101,7 +102,7 @@ struct ChargeItem {
   /**
    * @brief 单价，单位：1e-4 元/计价单位
    */
-  long price;
+  std::int64_t price;
   /**
    * @brief 维度索引，非维度计费项为 -1
    */
@@ -182,7 +183,7 @@ class ChargeLoadView {
   /**
    * @brief 车次总里程（米）
    */
-  [[nodiscard]] virtual long distance_m() const = 0;
+  [[nodiscard]] virtual std::int64_t distance_m() const = 0;
 
   /**
    * @brief 提货节点数
@@ -197,7 +198,7 @@ class ChargeLoadView {
   /**
    * @brief 车次维度总量（原始值）
    */
-  [[nodiscard]] virtual const long* dim_vals() const = 0;
+  [[nodiscard]] virtual const std::int64_t* dim_vals() const = 0;
 
   /**
    * @brief 车次停靠点（按顺序，不含 depot 哨兵）
@@ -234,7 +235,7 @@ struct ChargeResult {
   /**
    * @brief 运费，单位：1e-4 元
    */
-  long amount{0};
+  std::int64_t amount{0};
   /**
    * @brief 是否至少有一个计费编码可以计费
    * @details false 表示没有任何条款匹配、或所有条款都未通过 OD 覆盖检查
@@ -366,7 +367,7 @@ class ChargeManager {
   /**
    * @brief 维度精度对应的 10^precision
    */
-  std::vector<long> dim_scales;
+  std::vector<std::int64_t> dim_scales;
   /**
    * @brief 站点数量
    */

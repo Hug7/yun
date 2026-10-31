@@ -7,8 +7,8 @@
 
 // ====== implement of HcVehicleCapacity ======
 HardConstrScore::UPtr HcVehicleCapacity::eval(Load* load) {
-  const std::vector<long>& dim_vals = load->vehicle->vehicle_model->dim_vals;
-  const std::vector<long>& peak_load_dims = load->get_peak_load_dims();
+  const std::vector<std::int64_t>& dim_vals = load->vehicle->vehicle_model->dim_vals;
+  const std::vector<std::int64_t>& peak_load_dims = load->get_peak_load_dims();
 
   const size_t dim_len = dim_vals.size();
   for (size_t u = 0; u < dim_len; u++) {

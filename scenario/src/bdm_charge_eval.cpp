@@ -13,8 +13,8 @@ namespace {
 /**
  * @brief 非负整数除法，四舍五入
  */
-long div_round(const __int128 numerator, const long denominator) {
-  return static_cast<long>((numerator + denominator / 2) / denominator);
+std::int64_t div_round(const __int128 numerator, const std::int64_t denominator) {
+  return static_cast<std::int64_t>((numerator + denominator / 2) / denominator);
 }
 
 /**
@@ -67,10 +67,10 @@ thread_local std::vector<ChargePathSeq> tls_path_seqs;
 thread_local std::vector<std::vector<uint64_t>> tls_od_pairs;
 thread_local std::vector<uint8_t> tls_od_slot_valid;
 thread_local std::vector<std::vector<uint8_t>> tls_secondary_covered;
-thread_local std::vector<std::vector<long>> tls_secondary_pair_sums;
-thread_local std::vector<long> tls_secondary_other_sums;
+thread_local std::vector<std::vector<std::int64_t>> tls_secondary_pair_sums;
+thread_local std::vector<std::int64_t> tls_secondary_other_sums;
 thread_local std::vector<uint32_t> tls_secondary_epoch;  // 次级编码 i 最后一次被“归零”的代数
-thread_local std::vector<long> tls_charge_code_max;
+thread_local std::vector<std::int64_t> tls_charge_code_max;
 thread_local std::vector<uint32_t> tls_charge_code_epoch;  // 计费编码 i 最后一次被“归零”的代数
 thread_local std::vector<int> tls_touched_secondaries;
 thread_local std::vector<int> tls_touched_charge_codes;
@@ -97,18 +97,18 @@ class ChargeEvaluator {
   int vehicle_ind{-1};
 
   bool distance_loaded_{false};
-  long distance_value_{0};
+  std::int64_t distance_value_{0};
   bool pick_loaded_{false};
   int pick_value_{0};
   bool drop_loaded_{false};
   int drop_value_{0};
   bool dims_loaded_{false};
-  const long* dims_value_{nullptr};
+  const std::int64_t* dims_value_{nullptr};
 
-  [[nodiscard]] long get_distance();
+  [[nodiscard]] std::int64_t get_distance();
   [[nodiscard]] int get_pick_count();
   [[nodiscard]] int get_drop_count();
-  [[nodiscard]] const long* get_dim_vals();
+  [[nodiscard]] const std::int64_t* get_dim_vals();
 
   void build_od_pairs();
   void build_ordered_seqs();
@@ -119,8 +119,8 @@ class ChargeEvaluator {
   void eval_rule(int rule_ind);
   [[nodiscard]] bool match_path(const ChargeRule& rule, int& od_pair_ind);
   [[nodiscard]] bool match_tier(const ChargeRule& rule, const ChargeTier*& tier);
-  [[nodiscard]] long calc_items(const ChargeTier& tier);
-  void accumulate(int secondary_ind, int od_pair_ind, long amount);
+  [[nodiscard]] std::int64_t calc_items(const ChargeTier& tier);
+  void accumulate(int secondary_ind, int od_pair_ind, std::int64_t amount);
 
   [[nodiscard]] ChargeResult finalize();
 };
@@ -142,7 +142,7 @@ ChargeResult ChargeEvaluator::run() {
   return this->finalize();
 }
 
-long ChargeEvaluator::get_distance() {
+std::int64_t ChargeEvaluator::get_distance() {
   if (!this->distance_loaded_) {
     this->distance_value_ = this->view.distance_m();
     this->distance_loaded_ = true;
@@ -166,7 +166,7 @@ int ChargeEvaluator::get_drop_count() {
   return this->drop_value_;
 }
 
-const long* ChargeEvaluator::get_dim_vals() {
+const std::int64_t* ChargeEvaluator::get_dim_vals() {
   if (!this->dims_loaded_) {
     this->dims_value_ = this->view.dim_vals();
     this->dims_loaded_ = true;
@@ -341,7 +341,7 @@ void ChargeEvaluator::eval_rule(const int rule_ind) {
     return;
   }
 
-  const long amount = this->calc_items(*matched_tier);
+  const std::int64_t amount = this->calc_items(*matched_tier);
   this->accumulate(rule.secondary_ind, od_pair_ind, amount);
 }
 
@@ -383,7 +383,7 @@ bool ChargeEvaluator::match_path(const ChargeRule& rule, int& od_pair_ind) {
 }
 
 bool ChargeEvaluator::match_tier(const ChargeRule& rule, const ChargeTier*& tier) {
-  long metric = 0;
+  std::int64_t metric = 0;
   switch (rule.condition_type) {
     case ChargeConditionType::NONE:
       break;
@@ -397,7 +397,7 @@ bool ChargeEvaluator::match_tier(const ChargeRule& rule, const ChargeTier*& tier
       metric = this->get_drop_count();
       break;
     case ChargeConditionType::DIMENSION: {
-      const long* dims = this->get_dim_vals();
+      const std::int64_t* dims = this->get_dim_vals();
       if (dims == nullptr || rule.condition_dim_ind < 0 ||
           rule.condition_dim_ind >= this->manager.dim_len) {
         return false;
@@ -417,8 +417,8 @@ bool ChargeEvaluator::match_tier(const ChargeRule& rule, const ChargeTier*& tier
   return false;
 }
 
-long ChargeEvaluator::calc_items(const ChargeTier& tier) {
-  long amount = 0;
+std::int64_t ChargeEvaluator::calc_items(const ChargeTier& tier) {
+  std::int64_t amount = 0;
   for (int u = 0; u < tier.item_len; u++) {
     const ChargeItem& item = this->manager.items[tier.item_begin + u];
     switch (item.type) {
@@ -432,17 +432,17 @@ long ChargeEvaluator::calc_items(const ChargeTier& tier) {
       case ChargeItemType::PICK_STOP: {
         const int pick_count = this->get_pick_count();
         const int extra = pick_count > 1 ? pick_count - 1 : 0;
-        amount += item.price * static_cast<long>(extra);
+        amount += item.price * static_cast<std::int64_t>(extra);
         break;
       }
       case ChargeItemType::DROP_STOP: {
         const int drop_count = this->get_drop_count();
         const int extra = drop_count > 1 ? drop_count - 1 : 0;
-        amount += item.price * static_cast<long>(extra);
+        amount += item.price * static_cast<std::int64_t>(extra);
         break;
       }
       case ChargeItemType::DIMENSION: {
-        const long* dims = this->get_dim_vals();
+        const std::int64_t* dims = this->get_dim_vals();
         if (dims == nullptr || item.dim_ind < 0 || item.dim_ind >= this->manager.dim_len) {
           break;
         }
@@ -451,11 +451,11 @@ long ChargeEvaluator::calc_items(const ChargeTier& tier) {
         break;
       }
       case ChargeItemType::DIMENSION_DISTANCE: {
-        const long* dims = this->get_dim_vals();
+        const std::int64_t* dims = this->get_dim_vals();
         if (dims == nullptr || item.dim_ind < 0 || item.dim_ind >= this->manager.dim_len) {
           break;
         }
-        const long denominator =
+        const std::int64_t denominator =
             this->manager.dim_scales[item.dim_ind] * ChargeParameter::METER_PER_KM;
         amount +=
             div_round(static_cast<__int128>(item.price) * dims[item.dim_ind] * this->get_distance(),
@@ -468,11 +468,11 @@ long ChargeEvaluator::calc_items(const ChargeTier& tier) {
 }
 
 void ChargeEvaluator::accumulate(const int secondary_ind, const int od_pair_ind,
-                                 const long amount) {
+                                 const std::int64_t amount) {
   this->touch_secondary(secondary_ind);
   if (od_pair_ind >= 0) {
     std::vector<uint8_t>& covered = tls_secondary_covered[secondary_ind];
-    std::vector<long>& pair_sums = tls_secondary_pair_sums[secondary_ind];
+    std::vector<std::int64_t>& pair_sums = tls_secondary_pair_sums[secondary_ind];
     const size_t pair_ind = static_cast<size_t>(od_pair_ind);
     if (pair_ind < covered.size() && pair_ind < pair_sums.size()) {
       covered[pair_ind] = 1;
@@ -485,7 +485,7 @@ void ChargeEvaluator::accumulate(const int secondary_ind, const int od_pair_ind,
 
 ChargeResult ChargeEvaluator::finalize() {
   for (const int secondary_ind : tls_touched_secondaries) {
-    long secondary_amount = 0;
+    std::int64_t secondary_amount = 0;
     if (this->manager.secondary_od_slot[secondary_ind] >= 0) {
       const int slot = this->manager.secondary_od_slot[secondary_ind];
       if (!tls_od_slot_valid[slot]) {
@@ -493,7 +493,7 @@ ChargeResult ChargeEvaluator::finalize() {
       }
       const std::vector<uint64_t>& pairs = tls_od_pairs[slot];
       const std::vector<uint8_t>& covered = tls_secondary_covered[secondary_ind];
-      const std::vector<long>& pair_sums = tls_secondary_pair_sums[secondary_ind];
+      const std::vector<std::int64_t>& pair_sums = tls_secondary_pair_sums[secondary_ind];
       if (pairs.empty() || covered.size() != pairs.size() || pair_sums.size() != pairs.size()) {
         continue;
       }
@@ -507,7 +507,7 @@ ChargeResult ChargeEvaluator::finalize() {
       if (!all_covered) {
         continue;
       }
-      long max_pair_amount = 0;
+      std::int64_t max_pair_amount = 0;
       for (size_t u = 0; u < pair_sums.size(); u++) {
         if (u == 0 || pair_sums[u] > max_pair_amount) {
           max_pair_amount = pair_sums[u];
@@ -529,9 +529,9 @@ ChargeResult ChargeEvaluator::finalize() {
     }
   }
 
-  long best_amount = -1;
+  std::int64_t best_amount = -1;
   for (const int charge_code_ind : tls_touched_charge_codes) {
-    const long amount = tls_charge_code_max[charge_code_ind];
+    const std::int64_t amount = tls_charge_code_max[charge_code_ind];
     if (best_amount < 0 || amount < best_amount) {
       best_amount = amount;
     }

@@ -35,13 +35,15 @@ class LoadChargeView final : public ChargeLoadView {
     return load->vehicle != nullptr ? load->vehicle->ind : -1;
   }
 
-  [[nodiscard]] long distance_m() const override { return load->get_total_travel_dist(); }
+  [[nodiscard]] std::int64_t distance_m() const override { return load->get_total_travel_dist(); }
 
   [[nodiscard]] int pick_node_count() const override { return load->get_pick_node_count(); }
 
   [[nodiscard]] int drop_node_count() const override { return load->get_drop_node_count(); }
 
-  [[nodiscard]] const long* dim_vals() const override { return load->get_total_load_dims().data(); }
+  [[nodiscard]] const std::int64_t* dim_vals() const override {
+    return load->get_total_load_dims().data();
+  }
 
   [[nodiscard]] const Location* const* stops() const override {
     ensure_stops();

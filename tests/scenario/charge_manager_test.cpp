@@ -23,10 +23,10 @@ namespace {
  */
 class StaticChargeLoadView final : public ChargeLoadView {
  public:
-  StaticChargeLoadView(const int vehicle_ind, const long distance_m, const int pick_node_count,
-                       const int drop_node_count, const long* dim_vals,
-                       const Location* const* stops, const int stop_count,
-                       const Location* const* order_pick_locs,
+  StaticChargeLoadView(const int vehicle_ind, const std::int64_t distance_m,
+                       const int pick_node_count, const int drop_node_count,
+                       const std::int64_t* dim_vals, const Location* const* stops,
+                       const int stop_count, const Location* const* order_pick_locs,
                        const Location* const* order_drop_locs, const int order_count)
       : vehicle_ind_(vehicle_ind),
         distance_m_(distance_m),
@@ -55,7 +55,7 @@ class StaticChargeLoadView final : public ChargeLoadView {
     return vehicle_ind_;
   }
 
-  [[nodiscard]] long distance_m() const override {
+  [[nodiscard]] std::int64_t distance_m() const override {
     ++distance_calls;
     return distance_m_;
   }
@@ -70,7 +70,7 @@ class StaticChargeLoadView final : public ChargeLoadView {
     return drop_node_count_;
   }
 
-  [[nodiscard]] const long* dim_vals() const override {
+  [[nodiscard]] const std::int64_t* dim_vals() const override {
     ++dims_calls;
     return dim_vals_;
   }
@@ -102,10 +102,10 @@ class StaticChargeLoadView final : public ChargeLoadView {
 
  private:
   int vehicle_ind_;
-  long distance_m_;
+  std::int64_t distance_m_;
   int pick_node_count_;
   int drop_node_count_;
-  const long* dim_vals_;
+  const std::int64_t* dim_vals_;
   const Location* const* stops_;
   int stop_count_;
   const Location* const* order_pick_locs_;
@@ -169,9 +169,9 @@ class ChargeFixture {
 
   void build() { charge.build_indexes(&dims, &labels, &carriers, &models, &locations); }
 
-  [[nodiscard]] StaticChargeLoadView make_view(const long distance, const int pick, const int drop,
-                                               const long* dim_vals, const Location* const* stops,
-                                               const int stop_count,
+  [[nodiscard]] StaticChargeLoadView make_view(const std::int64_t distance, const int pick,
+                                               const int drop, const std::int64_t* dim_vals,
+                                               const Location* const* stops, const int stop_count,
                                                const Location* const* order_picks = nullptr,
                                                const Location* const* order_drops = nullptr,
                                                const int order_count = 0) const {
@@ -184,14 +184,14 @@ class ChargeFixture {
  * @brief 追加一条无线路、无条件的规则
  */
 void add_flat_rule(ChargeFixture& fixture, const int charge_code_ind,
-                   const std::string& secondary_code, const long price) {
+                   const std::string& secondary_code, const std::int64_t price) {
   ChargeRule rule;
   rule.charge_code_ind = charge_code_ind;
   rule.secondary_ind = fixture.charge.add_secondary(charge_code_ind, secondary_code);
   rule.tier_begin = static_cast<int>(fixture.charge.tiers.size());
   rule.tier_len = 1;
   fixture.charge.rules.push_back(rule);
-  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<long>::max(),
+  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<std::int64_t>::max(),
                                             static_cast<int>(fixture.charge.items.size()), 1});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::FLAT, price, -1});
 }
@@ -201,7 +201,7 @@ void add_flat_rule(ChargeFixture& fixture, const int charge_code_ind,
  */
 void add_od_rule(ChargeFixture& fixture, const int charge_code_ind,
                  const std::string& secondary_code, const std::string& from, const std::string& to,
-                 const long price) {
+                 const std::int64_t price) {
   ChargeRule rule;
   rule.charge_code_ind = charge_code_ind;
   rule.secondary_ind = fixture.charge.add_secondary(charge_code_ind, secondary_code);
@@ -211,7 +211,7 @@ void add_od_rule(ChargeFixture& fixture, const int charge_code_ind,
   rule.tier_begin = static_cast<int>(fixture.charge.tiers.size());
   rule.tier_len = 1;
   fixture.charge.rules.push_back(rule);
-  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<long>::max(),
+  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<std::int64_t>::max(),
                                             static_cast<int>(fixture.charge.items.size()), 1});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::FLAT, price, -1});
 }
@@ -297,14 +297,14 @@ TEST(ChargeManagerTest, DimensionTierAndDimensionDistanceItem) {
   rule.tier_len = 2;
   fixture.charge.rules.push_back(rule);
   fixture.charge.tiers.push_back(ChargeTier{0, 1000, 0, 1});
-  fixture.charge.tiers.push_back(ChargeTier{1000, std::numeric_limits<long>::max(), 1, 2});
+  fixture.charge.tiers.push_back(ChargeTier{1000, std::numeric_limits<std::int64_t>::max(), 1, 2});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::FLAT, 500000, -1});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::DIMENSION, 5000, 0});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::DIMENSION_DISTANCE, 100, 0});
   fixture.build();
 
   // 12.50kg：0.5 * 12.5 = 6.25 元；0.01 * 12.5 * 10km = 1.25 元；合计 7.5 元
-  const long dim_vals[] = {1250};
+  const std::int64_t dim_vals[] = {1250};
   const Location* const stops[] = {fixture.locations.get_location("SH")};
   EXPECT_EQ(fixture.charge.evaluate(fixture.make_view(10000, 1, 1, dim_vals, stops, 1)).amount,
             75000);
@@ -321,7 +321,7 @@ TEST(ChargeManagerTest, PathMismatchIsZero) {
   rule.tier_begin = 0;
   rule.tier_len = 1;
   fixture.charge.rules.push_back(rule);
-  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<long>::max(), 0, 1});
+  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<std::int64_t>::max(), 0, 1});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::FLAT, 1000000, -1});
   fixture.build();
 
@@ -346,7 +346,7 @@ TEST(ChargeManagerTest, ConsecutiveDuplicateStopsAreCollapsed) {
   rule.tier_begin = 0;
   rule.tier_len = 1;
   fixture.charge.rules.push_back(rule);
-  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<long>::max(), 0, 1});
+  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<std::int64_t>::max(), 0, 1});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::FLAT, 1000000, -1});
   fixture.build();
 
@@ -369,7 +369,7 @@ TEST(ChargeManagerTest, OdPairUsesOrderLocationsNotRouteEndpoints) {
   rule.tier_begin = 0;
   rule.tier_len = 1;
   fixture.charge.rules.push_back(rule);
-  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<long>::max(), 0, 1});
+  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<std::int64_t>::max(), 0, 1});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::FLAT, 1000000, -1});
   fixture.build();
 
@@ -395,7 +395,7 @@ TEST(ChargeManagerTest, OdPairRequiresEveryOdToBeQuoted) {
   rule.tier_begin = 0;
   rule.tier_len = 1;
   fixture.charge.rules.push_back(rule);
-  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<long>::max(), 0, 1});
+  fixture.charge.tiers.push_back(ChargeTier{0, std::numeric_limits<std::int64_t>::max(), 0, 1});
   fixture.charge.items.push_back(ChargeItem{ChargeItemType::FLAT, 1000000, -1});
   fixture.build();
 

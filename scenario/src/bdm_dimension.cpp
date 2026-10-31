@@ -40,6 +40,6 @@ Dimension* DimensionManager::get_dimension(const std::string& code) const {
   }
 }
 
-std::vector<long> DimensionManager::empty_dim_values() const {
-  return std::vector<long>(this->len, 0);
+std::vector<std::int64_t> DimensionManager::empty_dim_values() const {
+  return std::vector<std::int64_t>(this->len, 0);
 }

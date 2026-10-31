@@ -7,6 +7,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -28,12 +29,12 @@ class PlanDatetimeRange {
    * @brief 开始时间
    * @details 格式为 "yyyy-mm-dd hh:mm" 的时间戳(s)
    */
-  long start_time{TimeWindowParameter::DEFAULT_PLAN_DATETIME_RANGE_START};
+  std::int64_t start_time{TimeWindowParameter::DEFAULT_PLAN_DATETIME_RANGE_START};
   /**
    * @brief 结束时间
    * @details 格式为 "yyyy-mm-dd hh:mm" 的时间戳(s)
    */
-  long end_time{TimeWindowParameter::DEFAULT_PLAN_DATETIME_RANGE_END};
+  std::int64_t end_time{TimeWindowParameter::DEFAULT_PLAN_DATETIME_RANGE_END};
 
   PlanDatetimeRange() = default;
 

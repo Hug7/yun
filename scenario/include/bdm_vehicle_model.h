@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -31,7 +32,7 @@ class VehicleModel : public Item {
   /**
    * @brief 车型属性值列表
    */
-  std::vector<long> dim_vals;
+  std::vector<std::int64_t> dim_vals;
   /**
    * @brief 车型标签集合值
    */
@@ -43,7 +44,7 @@ class VehicleModel : public Item {
 
   VehicleModel(const std::string& code, const std::string& name, const int ind,
                const DistMatrixCode* dist_matrix_code, const DistMatrix* dist_matrix,
-               std::vector<long>& dim_vals, LabelsetValue* labelset_value,
+               std::vector<std::int64_t>& dim_vals, LabelsetValue* labelset_value,
                std::unique_ptr<LabelsetValueBitset> labelset_value_bitset)
       : Item(code, name, ind),
         dist_matrix_code(dist_matrix_code),
