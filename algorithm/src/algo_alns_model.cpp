@@ -48,7 +48,7 @@ Solution* AlnsModel::solve() const {
       operator_combinations[sub_iter]->cal_operator_score(status_code);
       // 更新-上一次更新最优的迭代次数
       if (status_code == AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION) {
-        pre_update_best_sol_iter = sub_iter;
+        pre_update_best_sol_iter = iter;
       }
     }
     // 判断是否超时
@@ -57,6 +57,7 @@ Solution* AlnsModel::solve() const {
       logger->info(
           "Early termination, out of maximum running time second={}, current iterations={}",
           this->parameter->max_running_time_sec, iter);
+      break;
     }
     // TODO 执行 local search
     // 更新 sa 的温度
