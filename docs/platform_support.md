@@ -108,7 +108,7 @@ docker run --rm --platform linux/arm64 \
 
 - Conan 会写源码根目录的 `CMakeUserPresets.json`，所以容器里先 `cp -a /src /tmp/src`，不要只读挂载后直接构建。
 - Docker Desktop VM 内存有限；`--parallel 2` 可避免 `cc1plus` 被 OOM kill。
-- 该镜像适合同步验证后续 Linux arm64 SDK 的 manylinux 基线。
+- 该镜像用于构建/验证 Linux arm64 SDK 的 manylinux_2_28 基线。
 - Docker Desktop 不能运行 Windows 容器；Windows ARM64 需要 `windows-11-arm` runner 或 Windows ARM64 VM。
 
 ## 已知限制
@@ -117,5 +117,5 @@ docker run --rm --platform linux/arm64 \
 - Windows 暂不支持 ASan；CI 的 ASan 只覆盖 macOS 与 Linux x86_64/arm64。
 - Windows ARM64 为实验性支持：CI 已通过，但 `windows-11-arm` 仍是 public preview，job 暂保留 `continue-on-error`，不阻断合并。
 - 不支持 32 位 Windows。
-- Python 预编译 SDK 与 pybind11 扩展仍只发布 macOS arm64（`scripts/build_sdk.py`、`scripts/build_python_extension.py` 里有 `platform.system() == "Darwin"` 检查）；多平台 SDK 需要单独改造这两个脚本和 `sdk-release.yml`。
+- 预编译 SDK 覆盖 macOS arm64、Linux x86_64/arm64、Windows x86_64 四个平台：Linux 以 manylinux_2_28（glibc ≥ 2.28，GCC 14）为基线；Windows 消费方仅支持 clang-cl（不支持 MSVC）。SDK 的端到端消费验证由 `yunpyopt` 负责，详见 [sdk_guide.md](sdk_guide.md)。
 - Windows 仅支持 clang-cl，不支持 MinGW GCC。

@@ -210,15 +210,15 @@ ctest --test-dir build/ci --output-on-failure
 
 `Solver` 析构时释放 `context`、`order_pool` 和 `workspace`；`SolverContext` 析构时先刷新 logger，再释放 `Scenario`、`Parameter`、`VisualManager` 和 `Problem`。
 
-### 5. Python 绑定（当前仅 macOS）
+### 5. Python 绑定与预编译 SDK
 
 `yun` 通过 pybind11 暴露 `_core` 扩展，供 [yunpyopt](https://github.com/Hug7/yunpyopt) 打包为 wheel。
+
+#### 本地构建 Python 扩展（macOS）
 
 前置条件：macOS 14.0+（arm64）、Xcode Command Line Tools、CMake ≥ 3.24、Conan 2.33+、Python 3.11。
 
 > C++ 代码使用 `std::format`，需要 macOS 13.3+；wheel 平台标签按 major 取整到 `14_0`，因此发布构建以 14.0 为最低版本。
->
-> 预编译 SDK 与 Python 扩展目前仍只发布 macOS arm64；Linux / Windows 的核心构建、单测和功能测试已纳入 CI 并全部通过（见 [platform_support.md](docs/platform_support.md)），但 Python 打包不在本轮范围。
 
 ```bash
 # 在 yun 仓库根目录
@@ -235,25 +235,37 @@ python3.11 scripts/build_python_extension.py --out ../yunpyopt/src/yunpyopt
 - 用 `CMAKE_SKIP_RPATH=ON` 清理 conan 缓存带来的 `LC_RPATH`；
 - 构建后按路径冒烟导入，并向 `--out` 目录复制（自动清理旧 `.so`）。
 
-#### 预编译 SDK（供 yunpyopt 发布）
+#### 预编译 SDK（四平台）
 
-`yun` 的 GitHub Release 提供 `yun-sdk-<version>-macos-arm64.tar.gz`，内容：
+GitHub Release 提供：
 
-- `include/`：yun 各组件头文件 + fmt/spdlog/yaml-cpp/magic_enum/libfork 头文件
-- `lib/libyun_sdk.a`：yun_* + spdlog/fmt/yaml-cpp/lua 的单体静态库
-- `src/yun_solver_binding.cpp`、`CMakeLists.txt`
-- `VERSION`
+| 平台 | 产物 | 构建基线 |
+|---|---|---|
+| macOS arm64 | `yun-sdk-<version>-macos-arm64.tar.gz` | macOS 14.0+，AppleClang |
+| Linux x86_64 | `yun-sdk-<version>-linux-x86_64.tar.gz` | manylinux_2_28（glibc ≥ 2.28），GCC 14 |
+| Linux arm64 | `yun-sdk-<version>-linux-arm64.tar.gz` | 同上 |
+| Windows x86_64 | `yun-sdk-<version>-windows-x86_64.tar.gz` | clang-cl + MSVC STL（/MD） |
 
-本地构建：
+每个包包含：`include/`（yun 各组件 + fmt/spdlog/yaml-cpp/magic_enum/sol2/libfork/lua 头文件）、单体静态库 `lib/libyun_sdk.a`（Windows 为 `lib/yun_sdk.lib`）、`lib/cmake/yun/`、`src/yun_solver_binding.cpp`、`CMakeLists.txt`、`VERSION`、`SDK_PLATFORM`、`LICENSE`。
+
+本地构建（在目标平台上执行）：
 
 ```bash
-python3.11 scripts/build_sdk.py --version 0.1.0 --out-dir dist/sdk --clean
+python3.11 scripts/build_sdk.py --version 0.2.0 --out-dir dist/sdk --clean
 ```
 
-产物在 `dist/sdk/`（tarball + `SHA256SUMS`）。`.github/workflows/sdk-release.yml`
-在 tag `v*` 或手动 `workflow_dispatch` 时构建并上传到 GitHub Release。
-`yunpyopt` 通过 `yun-sdk-version.txt` 固定版本，并用 `scripts/fetch_sdk.py`
-下载/校验，构建时不再需要 yun 源码或 conan。
+产物在 `dist/sdk/`（tarball + 同名 `.sha256`）。SDK 构建脚本需要 Python 3.9+ 和 Conan，但 SDK 产物本身与 Python 版本无关。
+
+消费方通过 CMake package 使用：
+
+```cmake
+find_package(yun CONFIG REQUIRED)   # 将 CMAKE_PREFIX_PATH 指向解压后的 SDK 根目录
+target_link_libraries(your_target PRIVATE yun::sdk)
+```
+
+Linux 消费方需使用 GCC 13.2+，且运行时 libstdc++ 需匹配 GCC 14；Windows 消费方仅支持 clang-cl（不支持 MSVC）。完整说明见 [sdk_guide.md](docs/sdk_guide.md)。
+
+`.github/workflows/sdk-release.yml` 在 tag `v*` 或手动 `workflow_dispatch` 时构建四个平台产物，并生成合并的 `SHA256SUMS`。`yunpyopt` 通过 `yun-sdk-version.txt` 固定版本，并用 `scripts/fetch_sdk.py` 下载/校验；SDK 的端到端消费验证由 `yunpyopt` 负责。
 
 说明：
 

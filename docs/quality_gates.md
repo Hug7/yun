@@ -10,6 +10,9 @@
 
 平台与工具链最低版本见 [platform_support.md](platform_support.md)。
 
+> 预编译 SDK 的构建与发布不在 PR 门禁内：由 `.github/workflows/sdk-release.yml`
+> 在 tag 或手动触发时构建；SDK 的端到端消费验证由 `yunpyopt` 负责。
+
 ## 本地命令
 
 ```bash
