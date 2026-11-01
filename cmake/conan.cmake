@@ -31,13 +31,6 @@ if(WIN32 AND (CMAKE_CXX_COMPILER_TARGET MATCHES "aarch64|arm64"
   list(APPEND _yun_conan_args "-s" "arch=armv8")
 endif()
 
-if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # MinGW GCC（可选平台）：显式声明线程/异常模型，避免 Conan 包 ID 不一致
-  list(APPEND _yun_conan_args
-    "-s" "compiler.threads=posix"
-    "-s" "compiler.exception=seh")
-endif()
-
 set(CONAN_INSTALL_ARGS "${_yun_conan_args}" CACHE STRING "" FORCE)
 
 include("${CMAKE_CURRENT_LIST_DIR}/../conan_provider.cmake")

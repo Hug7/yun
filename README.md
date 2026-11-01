@@ -135,7 +135,7 @@ macOS 可以继续使用：
 ./RUN.sh --mode debug
 ```
 
-Linux / Windows（clang-cl）建议直接使用 CMake：
+Linux（GCC）/ Windows（clang-cl）建议直接使用 CMake：
 
 ```bash
 cmake -S . -B build/ci -DCMAKE_BUILD_TYPE=Debug \

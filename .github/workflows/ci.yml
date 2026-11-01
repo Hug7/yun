@@ -99,30 +99,6 @@ jobs:
             msvc_arch: ""
             cmake_target: ""
             experimental: false
-          - name: Linux x86_64 Clang 18
-            slug: linux-x64-clang-18
-            os: ubuntu-24.04
-            cc: clang-18
-            cxx: clang++-18
-            generator: -G Ninja
-            arch: x64
-            python_arch: x64
-            toolchain: clang
-            msvc_arch: ""
-            cmake_target: ""
-            experimental: false
-          - name: Linux arm64 Clang 18
-            slug: linux-arm64-clang-18
-            os: ubuntu-24.04-arm
-            cc: clang-18
-            cxx: clang++-18
-            generator: -G Ninja
-            arch: arm64
-            python_arch: arm64
-            toolchain: clang
-            msvc_arch: ""
-            cmake_target: ""
-            experimental: false
           - name: Windows x64 clang-cl
             slug: windows-x64-clang-cl
             os: windows-2022
@@ -161,12 +137,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-14 ninja-build
-
-      - name: Install Clang 18
-        if: matrix.toolchain == 'clang'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-18 libstdc++-14-dev ninja-build
 
       - name: Prepare MSVC environment
         if: runner.os == 'Windows'

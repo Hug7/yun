@@ -12,11 +12,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# ── 编译器支持门禁：只允许 Clang / GCC ────────────────────
+# ── 编译器支持门禁：Linux GCC / macOS AppleClang / Windows clang-cl ──
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
     message(FATAL_ERROR
-        "yun 仅支持 Clang / GCC；当前 C++ 编译器为 ${CMAKE_CXX_COMPILER_ID}。"
-        "Windows 请使用 clang-cl 或 MinGW GCC，不支持 MSVC。")
+        "yun 支持 Linux GCC、macOS AppleClang、Windows clang-cl；"
+        "当前 C++ 编译器为 ${CMAKE_CXX_COMPILER_ID}，不支持 MSVC。")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
@@ -30,7 +30,19 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
     message(FATAL_ERROR "需要 AppleClang >= 16（当前 ${CMAKE_CXX_COMPILER_VERSION}）")
 endif()
 
+# Linux 只支持 GCC；Clang 仅用于 macOS（AppleClang）和 Windows（clang-cl）
+if(UNIX AND NOT APPLE AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(FATAL_ERROR "Linux 仅支持 GCC（当前 ${CMAKE_CXX_COMPILER_ID}）")
+endif()
+
 if(WIN32)
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+       OR (DEFINED CMAKE_CXX_COMPILER_FRONTEND_VARIANT
+           AND NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
+        message(FATAL_ERROR
+            "Windows 仅支持 clang-cl（当前 ${CMAKE_CXX_COMPILER_ID}/"
+            "${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}）")
+    endif()
     if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
         message(FATAL_ERROR "Windows 仅支持 64 位构建")
     endif()
