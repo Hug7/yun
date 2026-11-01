@@ -9,6 +9,7 @@
 #include <ctime>
 #include <format>
 #include <regex>
+#include <stdexcept>
 
 #include "c_chrono_util.h"
 

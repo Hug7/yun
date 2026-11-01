@@ -4,6 +4,7 @@
  */
 
 #include <magic_enum/magic_enum.hpp>
+#include <stdexcept>
 #include <string>
 #include <vector>
 

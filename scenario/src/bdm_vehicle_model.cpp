@@ -5,6 +5,8 @@
 
 #include "bdm_vehicle_model.h"
 
+#include <stdexcept>
+
 #include "c_numerical_utils.h"
 
 // ====== implement of VehicleModel ======

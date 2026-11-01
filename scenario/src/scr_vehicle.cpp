@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <stdexcept>
 #include <string>
 
 #include "c_csv_utils.h"

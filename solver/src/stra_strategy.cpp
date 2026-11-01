@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
+#include <stdexcept>
 
 #include "algo_alns_model.h"
 #include "algo_alns_operator.h"

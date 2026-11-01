@@ -5,6 +5,9 @@
 
 #include "algo_alns_ruin_random_removal_order.h"
 
+#include <algorithm>
+#include <stdexcept>
+
 // ====== implement of AlnsRuinRandomRemovalOrder ======
 AlnsRuinRandomRemovalOrder::AlnsRuinRandomRemovalOrder(const SolverContext* _context,
                                                        const sol::table& cfg)

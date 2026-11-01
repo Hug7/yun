@@ -6,6 +6,7 @@
 #pragma once
 
 #include <array>
+#include <stdexcept>
 
 #include "c_rapidcsv.h"
 

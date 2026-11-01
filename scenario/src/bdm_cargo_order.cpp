@@ -5,6 +5,8 @@
 
 #include "bdm_cargo_order.h"
 
+#include <stdexcept>
+
 #include "c_numerical_utils.h"
 
 // ====== implement of SubCargoOrder ======

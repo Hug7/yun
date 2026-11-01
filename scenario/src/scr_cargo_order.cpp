@@ -4,6 +4,7 @@
  */
 
 #include <format>
+#include <stdexcept>
 #include <string>
 
 #include "c_csv_utils.h"

@@ -6,6 +6,7 @@
 #include "algo_alns_parameter.h"
 
 #include <algorithm>
+#include <stdexcept>
 #include <thread>
 
 // ====== implement of parse_alns_parameter ======

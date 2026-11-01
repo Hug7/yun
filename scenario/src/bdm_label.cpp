@@ -5,6 +5,8 @@
 
 #include "bdm_label.h"
 
+#include <stdexcept>
+
 // ====== implement of Label ======
 Label::~Label() {
   for (const auto& value : this->values) {

@@ -5,6 +5,8 @@
 
 #include "cc_manager.h"
 
+#include <algorithm>
+
 #include "cc_charge.h"
 
 // ====== implement of Load CostConstraintManager ======

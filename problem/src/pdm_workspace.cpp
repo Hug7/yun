@@ -6,6 +6,7 @@
 #include "pdm_workspace.h"
 
 #include <ranges>
+#include <stdexcept>
 
 // ====== implement of Workspace ======
 Workspace::Workspace(const SolverContext* _context, const OrderPool* order_pool)

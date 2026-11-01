@@ -7,6 +7,7 @@
 
 #include <format>
 #include <magic_enum/magic_enum.hpp>
+#include <stdexcept>
 #include <unordered_set>
 
 #include "bdm_time_window.h"

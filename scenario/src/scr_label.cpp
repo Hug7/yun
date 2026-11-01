@@ -5,6 +5,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <stdexcept>
 #include <string>
 
 #include "c_csv_utils.h"

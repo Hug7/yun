@@ -9,6 +9,7 @@
 
 #include <queue>
 #include <ranges>
+#include <stdexcept>
 #include <vector>
 
 #include "c_rang_utils.h"

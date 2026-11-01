@@ -5,6 +5,8 @@
 
 #include "bdm_dimension.h"
 
+#include <stdexcept>
+
 // ====== implement of DimensionManager ======
 DimensionManager::~DimensionManager() {
   for (auto& d : this->dimensions) {

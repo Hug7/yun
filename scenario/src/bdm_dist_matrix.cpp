@@ -5,6 +5,8 @@
 
 #include "bdm_dist_matrix.h"
 
+#include <stdexcept>
+
 // ====== implement of DistMatrix ======
 DistMatrix::DistMatrix(const int dist_matrix_ind, const int matrix_len)
     : dist_matrix_ind(dist_matrix_ind), matrix_len(matrix_len) {

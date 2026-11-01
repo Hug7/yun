@@ -6,6 +6,7 @@
 #include "algo_alns_operator.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 #include "algo_alns_repair_greedy.h"
 #include "algo_alns_repair_regret_k.h"

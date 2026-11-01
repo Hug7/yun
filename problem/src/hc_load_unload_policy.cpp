@@ -5,6 +5,7 @@
 
 #include "hc_load_unload_policy.h"
 
+#include <algorithm>
 #include <unordered_map>
 
 // ====== implement of HcLoadUnloadPolicyFILO ======

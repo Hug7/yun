@@ -5,6 +5,8 @@
 
 #include "bdm_carrier.h"
 
+#include <stdexcept>
+
 // ====== implement of Carrier ======
 Carrier::~Carrier() {
   vehicles.clear();
