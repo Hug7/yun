@@ -218,7 +218,7 @@ ctest --test-dir build/ci --output-on-failure
 
 > C++ 代码使用 `std::format`，需要 macOS 13.3+；wheel 平台标签按 major 取整到 `14_0`，因此发布构建以 14.0 为最低版本。
 >
-> 预编译 SDK 与 Python 扩展目前仍只发布 macOS arm64；Linux / Windows 的核心构建、单测和功能测试已纳入 CI，但 Python 打包不在本轮范围。
+> 预编译 SDK 与 Python 扩展目前仍只发布 macOS arm64；Linux / Windows 的核心构建、单测和功能测试已纳入 CI 并全部通过（见 [platform_support.md](docs/platform_support.md)），但 Python 打包不在本轮范围。
 
 ```bash
 # 在 yun 仓库根目录
