@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 cmake_policy(SET CMP0091 NEW)
 
-project(yun VERSION 0.1.0 LANGUAGES C CXX)
+project(yun VERSION 0.2.0 LANGUAGES C CXX)
 
 export(PACKAGE yun)
 
@@ -95,6 +95,12 @@ add_subdirectory(scenario)
 add_subdirectory(problem)
 add_subdirectory(algorithm)
 add_subdirectory(solver)
+
+option(YUN_BUILD_SDK "Generate SDK packaging manifests" OFF)
+if(YUN_BUILD_SDK)
+    include(cmake/sdk.cmake)
+endif()
+
 option(YUN_BUILD_PYTHON "Build the Python pybind11 binding" OFF)
 if(YUN_BUILD_PYTHON)
     add_subdirectory(python)
