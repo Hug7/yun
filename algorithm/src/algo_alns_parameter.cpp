@@ -5,6 +5,10 @@
 
 #include "algo_alns_parameter.h"
 
+#include <algorithm>
+#include <stdexcept>
+#include <thread>
+
 // ====== implement of parse_alns_parameter ======
 std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
                                                     const std::shared_ptr<spdlog::logger>& logger) {
@@ -12,14 +16,15 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
 
   if (cfg[AlnsParameterLuaField::WORKER_COUNT].valid()) {
     const int worker_count = static_cast<int>(cfg[AlnsParameterLuaField::WORKER_COUNT]);
-    const int n = static_cast<int>(std::thread::hardware_concurrency());
+    const int n = std::max(1, static_cast<int>(std::thread::hardware_concurrency()));
     if (worker_count >= n) {
+      const int fallback_worker_count = std::max(1, n - 1);
       logger->warn(
           std::format("AlnsParameter: worker_count={} exceed the maximum number of parallel "
                       "execute {}, degrade the "
                       "number of threads to {}",
-                      worker_count, n, n - 1));
-      alns_parameter->worker_count = n - 1;
+                      worker_count, n, fallback_worker_count));
+      alns_parameter->worker_count = fallback_worker_count;
     } else {
       alns_parameter->worker_count = worker_count;
     }

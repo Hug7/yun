@@ -11,6 +11,7 @@
 #include <atomic>
 #include <exception>
 #include <memory>
+#include <stdexcept>
 #include <thread>
 #include <vector>
 
@@ -88,10 +89,16 @@ struct ParallelGuard {
 }  // namespace
 
 // ====== implement of ParallelExecutor ======
+namespace {
+std::size_t default_worker_count() {
+  const unsigned int hardware_threads = std::thread::hardware_concurrency();
+  return hardware_threads > 1 ? static_cast<std::size_t>(hardware_threads - 1) : 1;
+}
+}  // namespace
+
 ParallelExecutor::ParallelExecutor(const int worker_count)
-    : pool(std::make_unique<lf::lazy_pool>(worker_count > 0
-                                               ? static_cast<std::size_t>(worker_count)
-                                               : std::thread::hardware_concurrency() - 1)),
+    : pool(std::make_unique<lf::lazy_pool>(worker_count > 0 ? static_cast<std::size_t>(worker_count)
+                                                            : default_worker_count())),
       worker_count_(worker_count) {}
 
 ParallelExecutor::~ParallelExecutor() = default;

@@ -258,6 +258,20 @@ inline void skip_ws(const char*& p) {
   while (*p == ' ' || *p == '\t') ++p;
 }
 
+// Portable replacement for POSIX strncasecmp (MSVC only provides _strnicmp).
+// Compares at most n characters of two ASCII strings, ignoring case.
+inline int ascii_strncasecmp(const char* a, const char* b, size_t n) {
+  for (size_t i = 0; i < n; ++i) {
+    auto la = static_cast<unsigned char>(a[i]);
+    auto lb = static_cast<unsigned char>(b[i]);
+    if (la >= 'A' && la <= 'Z') la = static_cast<unsigned char>(la + ('a' - 'A'));
+    if (lb >= 'A' && lb <= 'Z') lb = static_cast<unsigned char>(lb + ('a' - 'A'));
+    if (la != lb) return la - lb;
+    if (la == 0) return 0;
+  }
+  return 0;
+}
+
 // strptime-style format parser.
 // Supported specifiers:
 //   %Y — 4-digit year        %m — 2-digit month (01-12)
@@ -321,10 +335,10 @@ inline bool parse_format(const char* s, const char* fmt, DateTime& out) {
           sec = parse_int2(p);
           break;
         case 'p':
-          if (strncasecmp(p, "AM", 2) == 0) {
+          if (ascii_strncasecmp(p, "AM", 2) == 0) {
             is_pm = false;
             p += 2;
-          } else if (strncasecmp(p, "PM", 2) == 0) {
+          } else if (ascii_strncasecmp(p, "PM", 2) == 0) {
             is_pm = true;
             p += 2;
           } else
@@ -357,7 +371,7 @@ inline bool parse_format(const char* s, const char* fmt, DateTime& out) {
           bool found = false;
           for (int i = 0; i < 12; ++i) {
             size_t len = strlen(months_abbr[i]);
-            if (strncasecmp(p, months_abbr[i], len) == 0 &&
+            if (ascii_strncasecmp(p, months_abbr[i], len) == 0 &&
                 (p[len] == ' ' || p[len] == '-' || p[len] == ',' || p[len] == 0)) {
               M = i + 1;
               p += len;
@@ -372,7 +386,7 @@ inline bool parse_format(const char* s, const char* fmt, DateTime& out) {
           bool found = false;
           for (int i = 0; i < 12; ++i) {
             size_t len = strlen(months_full[i]);
-            if (strncasecmp(p, months_full[i], len) == 0) {
+            if (ascii_strncasecmp(p, months_full[i], len) == 0) {
               M = i + 1;
               p += len;
               found = true;

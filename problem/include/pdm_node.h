@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <unordered_set>
 #include <vector>
@@ -55,19 +56,19 @@ class Node {
   /**
    * @brief distance for previous node to this node
    */
-  long travel_dist;
+  std::int64_t travel_dist;
   /**
    * @brief time for previous node to this node
    */
-  long travel_time;
+  std::int64_t travel_time;
 
   Node(ActivityType activity_type, const Location* loc);
 
   Node(ActivityType activity_type, const Location* loc, Activity::UPtr activity);
 
-  void set_travel_dist(long travel_dist);
+  void set_travel_dist(std::int64_t travel_dist);
 
-  void set_travel_time(long travel_time);
+  void set_travel_time(std::int64_t travel_time);
 
   [[nodiscard]] bool hase_next() const { return this->next != nullptr; }
 
@@ -95,7 +96,7 @@ class Node {
    */
   void get_orders(std::vector<const Order*>& out) const;
 
-  [[nodiscard]] long get_work_time() const;
+  [[nodiscard]] std::int64_t get_work_time() const;
 
   [[nodiscard]] int get_activity_count() const;
 };

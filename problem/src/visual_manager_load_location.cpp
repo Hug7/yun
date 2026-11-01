@@ -78,7 +78,7 @@ std::vector<VisualLabel> decode_orders_labels(const Labelset* labelset,
  * @return 可视化维度集合
  */
 std::vector<VisualDimension> to_visual_dimensions(const DimensionManager* dim_manager,
-                                                  const std::vector<long>& dim_vals) {
+                                                  const std::vector<std::int64_t>& dim_vals) {
   const int dim_len = std::min(dim_manager->len, static_cast<int>(dim_vals.size()));
   std::vector<VisualDimension> dimensions;
   dimensions.reserve(dim_len);
@@ -229,7 +229,7 @@ void VisualManager::visual_load_location_to_json(
     const std::string& target_dir_path) const {
   // 写出json文件
   const std::string file_path = target_dir_path + "/" + LOAD_LOCATIONS_FILE_NAME;
-  std::ofstream file(file_path);
+  std::ofstream file(file_path, std::ios::binary);
   if (!file.is_open()) {
     this->logger->error(std::format("创建文件 {} 失败!", file_path));
     throw std::runtime_error(std::format("创建文件 {} 失败!", file_path));

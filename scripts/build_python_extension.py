@@ -24,6 +24,21 @@ DEFAULT_BUILD_DIR = YUN_ROOT / "build" / "python-extension"
 TARGET_NAME = "yun_python_binding"
 
 
+def _use_utf8_stdio() -> None:
+    """让日志在非 UTF-8 控制台上也安全。
+
+    Windows 的管道流默认使用 ANSI 代码页（如 cp1252），打印中文会抛
+    UnicodeEncodeError；这里统一改成 UTF-8，并对无法编码的字符转义。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
+_use_utf8_stdio()
+
+
 def _run(cmd: list[str], *, cwd: Path | None = None) -> None:
     print("+", " ".join(str(part) for part in cmd), flush=True)
     subprocess.run(cmd, cwd=cwd, check=True)

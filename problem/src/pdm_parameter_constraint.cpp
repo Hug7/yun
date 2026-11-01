@@ -6,6 +6,7 @@
 #include "pdm_parameter_constraint.h"
 
 #include <magic_enum/magic_enum.hpp>
+#include <stdexcept>
 
 namespace {
 constexpr char KEY_CODE[] = "code";

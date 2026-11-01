@@ -38,6 +38,10 @@ target_compile_definitions(charge_manager_test PRIVATE
     YUN_CHARGE_OVERLAP_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data/charge_case_overlap")
 add_test(NAME charge_manager_test COMMAND charge_manager_test)
 
+add_executable(libfork_smoke_test algorithm/libfork_smoke_test.cpp)
+target_link_libraries(libfork_smoke_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME libfork_smoke_test COMMAND libfork_smoke_test)
+
 add_executable(csv_write_demo common/csv_write_demo.cpp)
 target_link_libraries(csv_write_demo PRIVATE yun_common)
 

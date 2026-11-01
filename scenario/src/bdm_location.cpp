@@ -5,6 +5,8 @@
 
 #include "bdm_location.h"
 
+#include <stdexcept>
+
 #include "bdm_available_vehicle.h"
 
 // ====== implement of Location ======

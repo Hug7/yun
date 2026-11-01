@@ -3,24 +3,47 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cstdlib>
+#include <iostream>
+#include <string>
+
 #include "s_solver.h"
 
-int main() {
-  // 允许通过环境变量切换测试用例和日志目录；默认路径仅用于本地调试
-  const char* env_case_dir = std::getenv("YUN_CASE_DIR");
-  const std::string case_file_path = env_case_dir != nullptr
-                                         ? std::string(env_case_dir)
-                                         : "/Users/liq/worksapce/code_l/yun-cases/tests/C_SUC_001";
-  // 日志目录和等级由调用方传入（封装后的C++包不读取 Config.yaml）
-  const char* env_log_dir = std::getenv("YUN_LOG_DIR");
-  const std::string log_dir =
-      env_log_dir != nullptr ? std::string(env_log_dir) : "/Users/liq/worksapce/code_l/yun/log";
-  const std::string log_level = "debug";
-  // create solver
-  Solver* solver = new Solver(case_file_path, log_dir, log_level);
-  // create plan
-  solver->solve();
+int main(int argc, char** argv) {
+  std::string case_dir;
+  std::string log_dir;
+  std::string log_level = "debug";
 
-  delete solver;
+  if (argc >= 2) {
+    case_dir = argv[1];
+  }
+  if (argc >= 3) {
+    log_dir = argv[2];
+  }
+  if (argc >= 4) {
+    log_level = argv[3];
+  }
+
+  if (case_dir.empty()) {
+    if (const char* env = std::getenv("YUN_CASE_DIR")) {
+      case_dir = env;
+    }
+  }
+  if (log_dir.empty()) {
+    if (const char* env = std::getenv("YUN_LOG_DIR")) {
+      log_dir = env;
+    }
+  }
+  if (log_dir.empty()) {
+    log_dir = "log";
+  }
+
+  if (case_dir.empty()) {
+    std::cerr << "Usage: vrp_exec <case_dir> [log_dir] [log_level]\n";
+    return 2;
+  }
+
+  Solver solver(case_dir, log_dir, log_level);
+  solver.solve();
   return 0;
 }

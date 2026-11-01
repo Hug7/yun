@@ -45,7 +45,7 @@ jobs:
       - name: actionlint
         run: |
           set -euo pipefail
-          version=1.7.7
+          version=1.7.8
           asset="actionlint_${version}_linux_amd64.tar.gz"
           base="https://github.com/rhysd/actionlint/releases/download/v${version}"
           curl -fsSL "${base}/${asset}" -o "/tmp/${asset}"
@@ -55,61 +55,181 @@ jobs:
           /tmp/actionlint -color .github/workflows/*.yml
 
   build-test:
-    name: Build & Test (macOS arm64)
-    runs-on: macos-15
+    name: Build & Test (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64 AppleClang
+            slug: macos-arm64
+            os: macos-15
+            cc: clang
+            cxx: clang++
+            generator: ""
+            arch: arm64
+            python_arch: x64
+            toolchain: apple
+            msvc_arch: ""
+            cmake_target: ""
+            experimental: false
+          - name: Linux x86_64 GCC 14
+            slug: linux-x64-gcc-14
+            os: ubuntu-24.04
+            cc: gcc-14
+            cxx: g++-14
+            generator: -G Ninja
+            arch: x64
+            python_arch: x64
+            toolchain: gcc
+            msvc_arch: ""
+            cmake_target: ""
+            experimental: false
+          - name: Linux arm64 GCC 14
+            slug: linux-arm64-gcc-14
+            os: ubuntu-24.04-arm
+            cc: gcc-14
+            cxx: g++-14
+            generator: -G Ninja
+            arch: arm64
+            python_arch: arm64
+            toolchain: gcc
+            msvc_arch: ""
+            cmake_target: ""
+            experimental: false
+          - name: Windows x64 clang-cl
+            slug: windows-x64-clang-cl
+            os: windows-2022
+            cc: clang-cl
+            cxx: clang-cl
+            generator: -G Ninja
+            arch: x64
+            python_arch: x64
+            toolchain: clang-cl
+            msvc_arch: x64
+            cmake_target: ""
+            experimental: false
+          - name: Windows arm64 clang-cl
+            slug: windows-arm64-clang-cl
+            os: windows-11-arm
+            cc: clang-cl
+            cxx: clang-cl
+            generator: -G Ninja
+            arch: arm64
+            python_arch: arm64
+            toolchain: clang-cl
+            msvc_arch: arm64
+            cmake_target: aarch64-pc-windows-msvc
+            # windows-11-arm 仍是 public preview；稳定后改成 false
+            experimental: true
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+          architecture: ${{ matrix.python_arch }}
+
+      - name: Install GCC 14
+        if: matrix.toolchain == 'gcc'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14 ninja-build
+
+      # ilammy/msvc-dev-cmd 仍声明 node20（上游 2024-04 后停更，node24 的
+      # PR 未合并）；这里改用持续维护、已切到 node24 的分支，输入兼容。
+      - name: Prepare MSVC environment
+        if: runner.os == 'Windows'
+        uses: TheMrMilchmann/setup-msvc-dev@v4.1.0
+        with:
+          arch: ${{ matrix.msvc_arch }}
+
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y --no-progress
+
+      - name: Expose LLVM (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: printf '%s\n' 'C:\Program Files\LLVM\bin' >> "$GITHUB_PATH"
+
+      - name: Ensure LLVM (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Get-Command clang-cl -ErrorAction SilentlyContinue) {
+            clang-cl --version
+            exit 0
+          }
+          choco install llvm -y --no-progress
+          & "C:\Program Files\LLVM\bin\clang-cl.exe" --version
+
+      - name: Check compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${{ matrix.cc }}" --version
+          "${{ matrix.cxx }}" --version
 
       - name: Cache Conan
         uses: actions/cache@v5
         with:
           path: ~/.conan2
-          key: conan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock') }}
+          key: conan-${{ runner.os }}-${{ runner.arch }}-${{ matrix.slug }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock', 'cmake/conan.cmake') }}
           restore-keys: |
-            conan-${{ runner.os }}-${{ runner.arch }}-
+            conan-${{ runner.os }}-${{ runner.arch }}-${{ matrix.slug }}-
 
-      - name: Install build tools
+      - name: Install Conan
+        shell: bash
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install "conan>=2.33,<3"
           conan profile detect --force
-          python - <<'PY'
-          import subprocess
-          import sys
-
-          version = subprocess.check_output(["cmake", "--version"], text=True).split()[2]
-          major, minor = (int(part) for part in version.split(".")[:2])
-          if (major, minor) < (3, 24):
-              sys.exit(f"conan_provider.cmake requires CMake >= 3.24, got {version}")
-          print("cmake", version)
-          PY
 
       - name: Configure
+        shell: bash
         run: |
-          mkdir -p build/ci
-          cat > build/ci/conan-host-profile <<'EOF'
-          include(default)
-          [settings]
-          compiler.cppstd=20
-          EOF
-          cmake -S . -B build/ci \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DYUN_BUILD_TESTS=ON \
-            -DYUN_BUILD_PYTHON=OFF \
-            -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$PWD/conan_provider.cmake" \
-            -DCONAN_HOST_PROFILE="$PWD/build/ci/conan-host-profile" \
-            -DCONAN_INSTALL_ARGS="--build=missing;--lockfile=$PWD/conan.lock"
+          set -euo pipefail
+          if command -v cygpath >/dev/null 2>&1; then
+            root="$(cygpath -m "$GITHUB_WORKSPACE")"
+          else
+            root="$GITHUB_WORKSPACE"
+          fi
+          # 让 conan 构建依赖时也使用 ARM64 目标（包括 x64 clang-cl 交叉编译的情况）
+          if [ -n "${{ matrix.cmake_target }}" ]; then
+            export CFLAGS="--target=${{ matrix.cmake_target }}"
+            export CXXFLAGS="--target=${{ matrix.cmake_target }}"
+          fi
+          args=(
+            -S "$root"
+            -B build/ci
+            -DCMAKE_BUILD_TYPE=Debug
+            -DYUN_BUILD_TESTS=ON
+            -DYUN_BUILD_PYTHON=OFF
+            -DCMAKE_C_COMPILER="${{ matrix.cc }}"
+            -DCMAKE_CXX_COMPILER="${{ matrix.cxx }}"
+            -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$root/cmake/conan.cmake"
+            "-DCONAN_INSTALL_ARGS=--build=missing;--lockfile=$root/conan.lock"
+          )
+          if [ -n "${{ matrix.cmake_target }}" ]; then
+            args+=(
+              -DCMAKE_C_COMPILER_TARGET="${{ matrix.cmake_target }}"
+              -DCMAKE_CXX_COMPILER_TARGET="${{ matrix.cmake_target }}"
+            )
+          fi
+          if [ -n "${{ matrix.generator }}" ]; then
+            args+=(-G Ninja)
+          fi
+          cmake "${args[@]}"
 
       - name: Build
-        run: cmake --build build/ci --parallel "$(sysctl -n hw.ncpu)"
+        run: cmake --build build/ci --parallel
 
       - name: Unit tests
-        run: ctest --test-dir build/ci --output-on-failure --timeout 120 --no-tests=error
+        run: ctest --test-dir build/ci --output-on-failure --timeout 300 --no-tests=error
 
       - name: Checkout functional cases
         uses: actions/checkout@v5
@@ -120,101 +240,122 @@ jobs:
           fetch-depth: 1
 
       - name: Functional test (C_SUC_001)
+        shell: bash
         run: |
           set -euo pipefail
-          case_root="${RUNNER_TEMP}/yun-case"
-          log_dir="${RUNNER_TEMP}/yun-log"
-          rm -rf "${case_root}" "${log_dir}"
-          mkdir -p "${case_root}" "${log_dir}"
-          unzip -q .ci/yun-cases/feature_tests/C_SUC_001.zip -d "${case_root}"
-          case_dir="${case_root}/C_SUC_001"
-          YUN_CASE_DIR="${case_dir}" YUN_LOG_DIR="${log_dir}" ./build/ci/tests/vrp_exec
-          python - "${case_dir}" <<'PY'
-          import json
-          import pathlib
-          import sys
-
-          case_dir = pathlib.Path(sys.argv[1])
-          outputs = sorted(path for path in case_dir.glob("output/*") if path.is_dir())
-          assert outputs, f"no output directory under {case_dir}/output"
-          latest = outputs[-1]
-          required = [
-              "PlanSummary.json",
-              "Loads.json",
-              "LoadLocations.json",
-              "UnassignedCargoOrders.json",
-          ]
-          for name in required:
-              path = latest / name
-              assert path.is_file(), f"missing {path}"
-              json.loads(path.read_text())
-          summary = json.loads((latest / "PlanSummary.json").read_text())
-          assert summary["TotalCargoOrderCount"] > 0, summary
-          assert summary["TotalLoadCount"] > 0, summary
-          assert summary["UnassignedCargoOrderCount"] == 0, summary
-          print(
-              "C_SUC_001 OK:",
-              f"loads={summary['TotalLoadCount']}",
-              f"objective={summary['TotalObjective']}",
-              f"output={latest}",
-          )
-          PY
+          python scripts/ci/run_functional_case.py \
+            --build-dir build/ci \
+            --case-zip .ci/yun-cases/feature_tests/C_SUC_001.zip \
+            --work-dir "$RUNNER_TEMP/yun-case"
 
       - name: Upload test logs
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: ci-logs-${{ github.run_attempt }}
+          name: ci-logs-${{ matrix.slug }}-${{ github.run_attempt }}
           path: |
             build/ci/Testing/Temporary/LastTest.log
-            ${{ runner.temp }}/yun-case/C_SUC_001/output/**/*.log
+            ${{ runner.temp }}/yun-case/case/output/**/*.log
           if-no-files-found: ignore
           retention-days: 7
 
   asan:
-    name: ASan (macOS arm64)
-    runs-on: macos-15
+    name: ASan (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64
+            slug: macos-arm64
+            os: macos-15
+            cc: clang
+            cxx: clang++
+            generator: ""
+            arch: arm64
+            python_arch: x64
+            toolchain: apple
+            experimental: false
+          - name: Linux x86_64 GCC 14
+            slug: linux-x64-gcc-14
+            os: ubuntu-24.04
+            cc: gcc-14
+            cxx: g++-14
+            generator: -G Ninja
+            arch: x64
+            python_arch: x64
+            toolchain: gcc
+            experimental: false
+          - name: Linux arm64 GCC 14
+            slug: linux-arm64-gcc-14
+            os: ubuntu-24.04-arm
+            cc: gcc-14
+            cxx: g++-14
+            generator: -G Ninja
+            arch: arm64
+            python_arch: arm64
+            toolchain: gcc
+            experimental: false
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+          architecture: ${{ matrix.python_arch }}
+
+      - name: Install GCC 14
+        if: matrix.toolchain == 'gcc'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14 ninja-build
 
       - name: Cache Conan
         uses: actions/cache@v5
         with:
           path: ~/.conan2
-          key: conan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock') }}
+          key: conan-asan-${{ runner.os }}-${{ runner.arch }}-${{ matrix.slug }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock', 'cmake/conan.cmake') }}
           restore-keys: |
-            conan-${{ runner.os }}-${{ runner.arch }}-
+            conan-asan-${{ runner.os }}-${{ runner.arch }}-${{ matrix.slug }}-
 
-      - name: Install build tools
+      - name: Install Conan
+        shell: bash
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install "conan>=2.33,<3"
           conan profile detect --force
 
       - name: Configure (ASan)
+        shell: bash
         run: |
-          mkdir -p build/asan
-          cat > build/asan/conan-host-profile <<'EOF'
-          include(default)
-          [settings]
-          compiler.cppstd=20
-          EOF
-          cmake -S . -B build/asan \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DYUN_BUILD_TESTS=ON \
-            -DYUN_BUILD_PYTHON=OFF \
-            -DENABLE_ASAN=ON \
-            -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$PWD/conan_provider.cmake" \
-            -DCONAN_HOST_PROFILE="$PWD/build/asan/conan-host-profile" \
-            -DCONAN_INSTALL_ARGS="--build=missing;--lockfile=$PWD/conan.lock"
+          set -euo pipefail
+          if command -v cygpath >/dev/null 2>&1; then
+            root="$(cygpath -m "$GITHUB_WORKSPACE")"
+          else
+            root="$GITHUB_WORKSPACE"
+          fi
+          args=(
+            -S "$root"
+            -B build/asan
+            -DCMAKE_BUILD_TYPE=Debug
+            -DYUN_BUILD_TESTS=ON
+            -DYUN_BUILD_PYTHON=OFF
+            -DENABLE_ASAN=ON
+            -DCMAKE_C_COMPILER="${{ matrix.cc }}"
+            -DCMAKE_CXX_COMPILER="${{ matrix.cxx }}"
+            -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$root/cmake/conan.cmake"
+            "-DCONAN_INSTALL_ARGS=--build=missing;--lockfile=$root/conan.lock"
+          )
+          if [ -n "${{ matrix.generator }}" ]; then
+            args+=(-G Ninja)
+          fi
+          cmake "${args[@]}"
 
       - name: Build (ASan)
-        run: cmake --build build/asan --parallel "$(sysctl -n hw.ncpu)"
+        run: cmake --build build/asan --parallel
 
       - name: Test (ASan)
         env:
@@ -225,7 +366,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: asan-logs-${{ github.run_attempt }}
+          name: asan-logs-${{ matrix.slug }}-${{ github.run_attempt }}
           path: build/asan/Testing/Temporary/LastTest.log
           if-no-files-found: ignore
           retention-days: 7

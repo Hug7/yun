@@ -10,12 +10,13 @@ add_library(yun_common INTERFACE ${YUN_COMMON_SOURCE_FILES})
 # 3. set library properties
 set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR} ${CMAKE_PREFIX_PATH})
 
+find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(magic_enum REQUIRED)
 target_link_libraries(yun_common INTERFACE
-    fmt::fmt spdlog::spdlog yaml-cpp::yaml-cpp magic_enum::magic_enum)
+    fmt::fmt spdlog::spdlog yaml-cpp::yaml-cpp magic_enum::magic_enum Threads::Threads)
 
 # 4. include directories
 target_include_directories(yun_common

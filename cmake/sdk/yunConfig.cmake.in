@@ -1,0 +1,28 @@
+# 由 yun scripts/build_sdk.py 生成，请勿手工修改。
+include(CMakeFindDependencyMacro)
+find_dependency(Threads)
+
+get_filename_component(_yun_sdk_root "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+
+if(NOT EXISTS "${_yun_sdk_root}/lib/@YUN_SDK_LIB_NAME@")
+    set(yun_FOUND FALSE)
+    set(yun_NOT_FOUND_MESSAGE
+        "yun SDK 缺少 lib/@YUN_SDK_LIB_NAME@（SDK 根目录: ${_yun_sdk_root}）")
+    return()
+endif()
+
+if(NOT TARGET yun::sdk)
+    add_library(yun::sdk STATIC IMPORTED)
+    set_target_properties(yun::sdk PROPERTIES
+        IMPORTED_LOCATION "${_yun_sdk_root}/lib/@YUN_SDK_LIB_NAME@"
+        INTERFACE_INCLUDE_DIRECTORIES
+            "${_yun_sdk_root}/include;${_yun_sdk_root}/include/yun/common;${_yun_sdk_root}/include/yun/scenario;${_yun_sdk_root}/include/yun/problem;${_yun_sdk_root}/include/yun/algorithm;${_yun_sdk_root}/include/yun/solver"
+        INTERFACE_COMPILE_FEATURES "cxx_std_20"
+        INTERFACE_COMPILE_DEFINITIONS
+            "SPDLOG_COMPILED_LIB;SPDLOG_FMT_EXTERNAL;YAML_CPP_STATIC_DEFINE"
+        INTERFACE_LINK_LIBRARIES "@YUN_SDK_SYSTEM_LIBS@"
+    )
+endif()
+
+set(yun_FOUND TRUE)
+unset(_yun_sdk_root)

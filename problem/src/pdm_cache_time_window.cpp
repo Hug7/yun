@@ -6,6 +6,7 @@
 #include "pdm_cache_time_window.h"
 
 #include <ranges>
+#include <stdexcept>
 #include <vector>
 
 #include "bdm_time_window.h"

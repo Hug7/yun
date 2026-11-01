@@ -159,8 +159,8 @@ TEST(NodeOpsDeepCopyChain, ClonesNodesAndActivityChains) {
 
   const ActivityType expect_types[4] = {ActivityType::START, ActivityType::PICK, ActivityType::DROP,
                                         ActivityType::END};
-  const long expect_dist[4] = {0, 100, 200, 300};
-  const long expect_time[4] = {0, 60, 120, 180};
+  const std::int64_t expect_dist[4] = {0, 100, 200, 300};
+  const std::int64_t expect_time[4] = {0, 60, 120, 180};
 
   const Node* src_node = src_head.get();
   Node* copy_node = copy_head.get();

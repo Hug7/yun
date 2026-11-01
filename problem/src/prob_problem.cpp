@@ -6,6 +6,7 @@
 #include "prob_problem.h"
 
 #include <memory>
+#include <stdexcept>
 
 #include "cc_charge.h"
 #include "pdm_order.h"

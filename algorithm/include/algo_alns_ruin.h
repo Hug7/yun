@@ -6,6 +6,7 @@
 #pragma once
 
 #include <magic_enum/magic_enum.hpp>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

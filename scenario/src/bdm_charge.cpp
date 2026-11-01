@@ -37,7 +37,7 @@ void ChargeManager::build_indexes(const DimensionManager* dim_manager,
       throw std::runtime_error("ChargeManager: dimension " + dim_manager->dimensions[u]->code +
                                " precision must be in [0, 9]");
     }
-    long scale = 1;
+    std::int64_t scale = 1;
     for (int p = 0; p < precision; p++) {
       scale *= 10;
     }

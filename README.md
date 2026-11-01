@@ -129,22 +129,31 @@ classDef planned stroke-dasharray: 5 5
 
 ### 1. 本地运行入口
 
-构建和运行入口如下：
+macOS 可以继续使用：
 
 ```bash
 ./RUN.sh --mode debug
-./build/Debug/tests/vrp_exec
 ```
 
-`RUN.sh` 先调用 `RUN_CONAN.sh` 安装依赖，再调用 `RUN_BUILD.sh` 配置并编译。当前可执行目标是 `tests/vrp_exec`，其 `main()` 在 `tests/vrp_main.cpp` 中直接调用：
+Linux（GCC）/ Windows（clang-cl）建议直接使用 CMake：
 
-```cpp
-Solver* solver = new Solver(root_dir, log_dir, log_level);
-solver->solve();
-delete solver;
+```bash
+cmake -S . -B build/ci -DCMAKE_BUILD_TYPE=Debug \
+  -DYUN_BUILD_TESTS=ON -DYUN_BUILD_PYTHON=OFF \
+  -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$PWD/cmake/conan.cmake"
+cmake --build build/ci --parallel
+ctest --test-dir build/ci --output-on-failure
 ```
 
-当前 `root_dir`、`log_dir` 和日志等级都硬编码在 `tests/vrp_main.cpp`。运行目录 `root_dir` 至少需要包含完整的场景 CSV 以及 `Strategy.lua`；程序会把本次运行的新目录写到 `root_dir/output/` 下。
+当前可执行目标是 `tests/vrp_exec`，参数为 `<case_dir> [log_dir] [log_level]`：
+
+```bash
+./build/ci/tests/vrp_exec /path/to/C_SUC_001 /tmp/yun-log debug
+```
+
+也兼容环境变量 `YUN_CASE_DIR`、`YUN_LOG_DIR`。运行目录 `root_dir` 至少需要包含完整的场景 CSV 以及 `Strategy.lua`；程序会把本次运行的新目录写到 `root_dir/output/` 下。
+
+平台与工具链最低版本见 [platform_support.md](docs/platform_support.md)。
 
 ### 2. Solver 初始化
 
@@ -201,9 +210,11 @@ delete solver;
 
 `Solver` 析构时释放 `context`、`order_pool` 和 `workspace`；`SolverContext` 析构时先刷新 logger，再释放 `Scenario`、`Parameter`、`VisualManager` 和 `Problem`。
 
-### 5. Python 绑定（macOS）
+### 5. Python 绑定与预编译 SDK
 
 `yun` 通过 pybind11 暴露 `_core` 扩展，供 [yunpyopt](https://github.com/Hug7/yunpyopt) 打包为 wheel。
+
+#### 本地构建 Python 扩展（macOS）
 
 前置条件：macOS 14.0+（arm64）、Xcode Command Line Tools、CMake ≥ 3.24、Conan 2.33+、Python 3.11。
 
@@ -224,25 +235,37 @@ python3.11 scripts/build_python_extension.py --out ../yunpyopt/src/yunpyopt
 - 用 `CMAKE_SKIP_RPATH=ON` 清理 conan 缓存带来的 `LC_RPATH`；
 - 构建后按路径冒烟导入，并向 `--out` 目录复制（自动清理旧 `.so`）。
 
-#### 预编译 SDK（供 yunpyopt 发布）
+#### 预编译 SDK（四平台）
 
-`yun` 的 GitHub Release 提供 `yun-sdk-<version>-macos-arm64.tar.gz`，内容：
+GitHub Release 提供：
 
-- `include/`：yun 各组件头文件 + fmt/spdlog/yaml-cpp/magic_enum/libfork 头文件
-- `lib/libyun_sdk.a`：yun_* + spdlog/fmt/yaml-cpp/lua 的单体静态库
-- `src/yun_solver_binding.cpp`、`CMakeLists.txt`
-- `VERSION`
+| 平台 | 产物 | 构建基线 |
+|---|---|---|
+| macOS arm64 | `yun-sdk-<version>-macos-arm64.tar.gz` | macOS 14.0+，AppleClang |
+| Linux x86_64 | `yun-sdk-<version>-linux-x86_64.tar.gz` | manylinux_2_28（glibc ≥ 2.28），GCC 14 |
+| Linux arm64 | `yun-sdk-<version>-linux-arm64.tar.gz` | 同上 |
+| Windows x86_64 | `yun-sdk-<version>-windows-x86_64.tar.gz` | clang-cl + MSVC STL（/MD） |
 
-本地构建：
+每个包包含：`include/`（yun 各组件 + fmt/spdlog/yaml-cpp/magic_enum/sol2/libfork/lua 头文件）、单体静态库 `lib/libyun_sdk.a`（Windows 为 `lib/yun_sdk.lib`）、`lib/cmake/yun/`、`src/yun_solver_binding.cpp`、`CMakeLists.txt`、`VERSION`、`SDK_PLATFORM`、`LICENSE`。
+
+本地构建（在目标平台上执行）：
 
 ```bash
-python3.11 scripts/build_sdk.py --version 0.1.0 --out-dir dist/sdk --clean
+python3.11 scripts/build_sdk.py --version 0.2.0 --out-dir dist/sdk --clean
 ```
 
-产物在 `dist/sdk/`（tarball + `SHA256SUMS`）。`.github/workflows/sdk-release.yml`
-在 tag `v*` 或手动 `workflow_dispatch` 时构建并上传到 GitHub Release。
-`yunpyopt` 通过 `yun-sdk-version.txt` 固定版本，并用 `scripts/fetch_sdk.py`
-下载/校验，构建时不再需要 yun 源码或 conan。
+产物在 `dist/sdk/`（tarball + 同名 `.sha256`）。SDK 构建脚本需要 Python 3.9+ 和 Conan，但 SDK 产物本身与 Python 版本无关。
+
+消费方通过 CMake package 使用：
+
+```cmake
+find_package(yun CONFIG REQUIRED)   # 将 CMAKE_PREFIX_PATH 指向解压后的 SDK 根目录
+target_link_libraries(your_target PRIVATE yun::sdk)
+```
+
+Linux 消费方需使用 GCC 13.2+，且运行时 libstdc++ 需匹配 GCC 14；Windows 消费方仅支持 clang-cl（不支持 MSVC）。完整说明见 [sdk_guide.md](docs/sdk_guide.md)。
+
+`.github/workflows/sdk-release.yml` 在 tag `v*` 或手动 `workflow_dispatch` 时构建四个平台产物，并生成合并的 `SHA256SUMS`。`yunpyopt` 通过 `yun-sdk-version.txt` 固定版本，并用 `scripts/fetch_sdk.py` 下载/校验；SDK 的端到端消费验证由 `yunpyopt` 负责。
 
 说明：
 

@@ -6,6 +6,7 @@
 #include "pdm_solution.h"
 
 #include <ranges>
+#include <stdexcept>
 
 // ====== implement of Solution ======
 Solution::~Solution() {

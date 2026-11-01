@@ -5,6 +5,9 @@
 
 #include "algo_alns_ruin_random_removal_load.h"
 
+#include <algorithm>
+#include <stdexcept>
+
 // ====== implement of AlnsRuinRandomRemovalLoad ======
 AlnsRuinRandomRemovalLoad::AlnsRuinRandomRemovalLoad(const SolverContext* _context,
                                                      const sol::table& cfg)

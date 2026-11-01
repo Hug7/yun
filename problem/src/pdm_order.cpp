@@ -14,7 +14,7 @@
 
 // ====== implement of Order ======
 Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
-             std::vector<CargoOrder*>& cargo_orders, std::vector<long>& dim_vals,
+             std::vector<CargoOrder*>& cargo_orders, std::vector<std::int64_t>& dim_vals,
              LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
              Bitset::UPtr available_vehicle_bitset)
     : ind(ind) {

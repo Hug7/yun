@@ -16,6 +16,7 @@
 // 否则同一个 TU 内可能出现两套 frame 布局(ODR 违规)。
 
 #include <atomic>
+#include <version>
 
 #ifdef __cpp_lib_atomic_ref
 #undef __cpp_lib_atomic_ref

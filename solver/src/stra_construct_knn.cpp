@@ -28,9 +28,9 @@ struct OrderPairEdge {
   /**
    * @brief 平均距离
    */
-  long mean_dist;
+  std::int64_t mean_dist;
 
-  OrderPairEdge(const int order_ind, const long mean_dist)
+  OrderPairEdge(const int order_ind, const std::int64_t mean_dist)
       : order_ind(order_ind), mean_dist(mean_dist) {}
 };
 
@@ -42,14 +42,15 @@ struct OrderPairEdge {
  * @return 种子订单，集合为空时返回nullptr
  */
 int select_seed_order_ind(std::unordered_set<int>& unassigned_order_indices, Solution* sol) {
-  long seed_minimum_latest_drop_time = std::numeric_limits<long>::max();  // 最小的最晚卸货时间
-  int seed_order_ind = -1;                                                // 选中的订单索引
+  std::int64_t seed_minimum_latest_drop_time =
+      std::numeric_limits<std::int64_t>::max();  // 最小的最晚卸货时间
+  int seed_order_ind = -1;                       // 选中的订单索引
   for (int order_ind : unassigned_order_indices) {
     const Order* order = sol->unassigned_orders[order_ind];
     if (order->drop_time_windows.empty()) {
       continue;
     }
-    const long latest_drop_time = order->drop_time_windows.back()->late;
+    const std::int64_t latest_drop_time = order->drop_time_windows.back()->late;
 
     if (latest_drop_time < seed_minimum_latest_drop_time) {
       seed_minimum_latest_drop_time = latest_drop_time;
@@ -91,8 +92,8 @@ std::unordered_map<int, int> construct_knn_edge(const Order* from_order,
       continue;
     }
     const size_t bitset_len = available_vehicle_bitset->len();
-    long total_drop_dist = 0;
-    long total_pick_dist = 0;
+    std::int64_t total_drop_dist = 0;
+    std::int64_t total_pick_dist = 0;
     for (size_t u = 0; u < bitset_len; ++u) {
       if (available_vehicle_bitset->test(u)) {
         const auto dist_matrix = carrier_manager->vehicles[u]->get_dist_matrix();
@@ -106,8 +107,8 @@ std::unordered_map<int, int> construct_knn_edge(const Order* from_order,
         }
       }
     }
-    const long mean_drop_dist = total_drop_dist / vehicle_count;
-    const long mean_pick_dist = total_pick_dist / vehicle_count;
+    const std::int64_t mean_drop_dist = total_drop_dist / vehicle_count;
+    const std::int64_t mean_pick_dist = total_pick_dist / vehicle_count;
     drop_edges.emplace_back(order_b->ind, mean_drop_dist);
     pick_edges.emplace_back(order_b->ind, mean_pick_dist);
   }
@@ -130,7 +131,7 @@ std::unordered_map<int, int> construct_knn_edge(const Order* from_order,
   // 统计提货和卸货的序号，构建rank
   std::unordered_map<int, int> ranks;
   int pick_rank_ind = 0;
-  long pick_pre_rank_dist = -1;
+  std::int64_t pick_pre_rank_dist = -1;
   for (const auto& edge : pick_edges) {
     if (edge.mean_dist != pick_pre_rank_dist) {
       pick_pre_rank_dist = edge.mean_dist;
@@ -139,7 +140,7 @@ std::unordered_map<int, int> construct_knn_edge(const Order* from_order,
     ranks[edge.order_ind] += pick_rank_ind;
   }
   int drop_rank_ind = 0;
-  long drop_pre_rank_dist = -1;
+  std::int64_t drop_pre_rank_dist = -1;
   for (const auto& edge : drop_edges) {
     if (edge.mean_dist != drop_pre_rank_dist) {
       drop_pre_rank_dist = edge.mean_dist;

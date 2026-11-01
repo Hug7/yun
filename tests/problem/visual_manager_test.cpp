@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <filesystem>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 
@@ -25,32 +26,24 @@ class VisualManagerTest : public ::testing::Test {
     std::filesystem::create_directories(kRoot);
   }
 
-  void TearDown() override {
-    std::filesystem::permissions(kRoot, std::filesystem::perms::owner_all);
-    std::filesystem::remove_all(kRoot);
-  }
+  void TearDown() override { std::filesystem::remove_all(kRoot); }
 };
 
-TEST_F(VisualManagerTest, ConstructorThrowsWhenOutputDirIsNotWritable) {
-  const auto readonly_dir = kRoot / "readonly";
-  std::filesystem::create_directories(readonly_dir);
-  std::filesystem::permissions(
-      readonly_dir, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec);
+TEST_F(VisualManagerTest, ConstructorThrowsWhenOutputParentIsFile) {
+  const auto blocker = kRoot / "blocker";
+  std::ofstream(blocker).put('x');
   const auto logger = LogManager::create("visual_manager_test", "", "", "error");
 
-  EXPECT_THROW(VisualManager((readonly_dir / "output").string(), nullptr, logger),
-               std::runtime_error);
+  EXPECT_THROW(VisualManager((blocker / "output").string(), nullptr, logger), std::runtime_error);
 }
 
-TEST_F(VisualManagerTest, WriteResultThrowsWhenOutputDirIsNotWritable) {
-  const auto readonly_dir = kRoot / "readonly";
-  std::filesystem::create_directories(readonly_dir);
-  std::filesystem::permissions(
-      readonly_dir, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec);
+TEST_F(VisualManagerTest, WriteResultThrowsWhenTargetIsFile) {
+  const auto blocker = kRoot / "blocker2";
+  std::ofstream(blocker).put('x');
   const auto logger = LogManager::create("visual_manager_test", "", "", "error");
-  const VisualManager manager(readonly_dir.string(), nullptr, logger);
+  const VisualManager manager((kRoot / "out").string(), nullptr, logger);
 
-  EXPECT_THROW(manager.visual_load_to_json({}, readonly_dir.string()), std::runtime_error);
+  EXPECT_THROW(manager.visual_load_to_json({}, blocker.string()), std::runtime_error);
 }
 
 }  // namespace

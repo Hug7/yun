@@ -5,6 +5,8 @@
 
 #include "pdm_resource.h"
 
+#include <stdexcept>
+
 // ====== implement of VehicleUsage ======
 VehicleUsage::UPtr VehicleUsage::deep_copy() const {
   return std::make_unique<VehicleUsage>(this->vehicle, this->max_usable, this->cur_usage);

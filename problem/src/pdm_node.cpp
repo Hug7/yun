@@ -36,9 +36,9 @@ Node::Node(const ActivityType activity_type, const Location* loc,
   this->travel_time = 0;
 }
 
-void Node::set_travel_dist(long travel_dist) { this->travel_dist = travel_dist; }
+void Node::set_travel_dist(std::int64_t travel_dist) { this->travel_dist = travel_dist; }
 
-void Node::set_travel_time(long travel_time) { this->travel_time = travel_time; }
+void Node::set_travel_time(std::int64_t travel_time) { this->travel_time = travel_time; }
 
 void Node::add_front_activity(Activity::UPtr activity) {
   activity->owner_node = this;
@@ -115,8 +115,8 @@ void Node::get_orders(std::vector<const Order*>& out) const {
   }
 }
 
-long Node::get_work_time() const {
-  long work_time = 0;
+std::int64_t Node::get_work_time() const {
+  std::int64_t work_time = 0;
   if (this->activity_type == ActivityType::DROP) {
     work_time += this->loc->work_plan->fixed_drop_time;
     auto tail_activity = this->last;

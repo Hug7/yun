@@ -61,7 +61,7 @@ void VisualManager::visual_infeasible_cargo_order_to_json(
       build_visual_infeasible_cargo_orders(infeasible_cargo_orders);
   // 写出json文件
   const std::string file_path = this->output_dir + "/" + INFEASIBLE_CARGO_ORDERS_FILE_NAME;
-  std::ofstream file(file_path);
+  std::ofstream file(file_path, std::ios::binary);
   if (!file.is_open()) {
     this->logger->error(std::format("创建文件 {} 失败!", file_path));
     throw std::runtime_error(std::format("创建文件 {} 失败!", file_path));

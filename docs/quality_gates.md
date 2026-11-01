@@ -4,9 +4,14 @@
 |---|---|---|---|
 | C++ 格式 | clang-format | 22.1.8 | `Lint (ubuntu)` |
 | Python lint/格式 | ruff | 0.15.20 | `Lint (ubuntu)` |
-| workflow 语法 | actionlint | 1.7.7 | `Lint (ubuntu)` |
-| 单测 + 功能测试 | ctest / yun-cases v0.1.0 | - | `Build & Test (macOS arm64)` |
-| 内存错误 | AddressSanitizer | Xcode 自带 | `ASan (macOS arm64)` |
+| workflow 语法 | actionlint | 1.7.8 | `Lint (ubuntu)` |
+| 单测 + 功能测试 | ctest / yun-cases v0.1.0 | - | `Build & Test (macOS arm64 AppleClang)`、`Build & Test (Linux x86_64 GCC 14)`、`Build & Test (Linux arm64 GCC 14)`、`Build & Test (Windows x64 clang-cl)`、`Build & Test (Windows arm64 clang-cl)`（实验性） |
+| 内存错误 | AddressSanitizer | Xcode 自带 / GCC 14 | `ASan (macOS arm64)`、`ASan (Linux x86_64 GCC 14)`、`ASan (Linux arm64 GCC 14)` |
+
+平台与工具链最低版本见 [platform_support.md](platform_support.md)。
+
+> 预编译 SDK 的构建与发布不在 PR 门禁内：由 `.github/workflows/sdk-release.yml`
+> 在 tag 或手动触发时构建；SDK 的端到端消费验证由 `yunpyopt` 负责。
 
 ## 本地命令
 
@@ -19,12 +24,17 @@ ruff check conanfile.py scripts/
 ruff format --check conanfile.py scripts/
 
 # 单测 + 功能测试
-cmake --build build/ci --parallel "$(sysctl -n hw.ncpu)"
-ctest --test-dir build/ci --output-on-failure --timeout 120
-YUN_CASE_DIR=/path/to/C_SUC_001 YUN_LOG_DIR=/tmp/yun-log ./build/ci/tests/vrp_exec
+cmake --build build/ci --parallel
+ctest --test-dir build/ci --output-on-failure --timeout 300
 
-# ASan
-cmake --build build/asan --parallel "$(sysctl -n hw.ncpu)"
+# 功能测试（跨平台 Python 驱动）
+python scripts/ci/run_functional_case.py \
+  --build-dir build/ci \
+  --case-zip .ci/yun-cases/feature_tests/C_SUC_001.zip \
+  --work-dir build/functional
+
+# ASan（macOS / Linux）
+cmake --build build/asan --parallel
 ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 ctest --test-dir build/asan --output-on-failure
 ```
 
@@ -32,6 +42,7 @@ ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 ctest --test-dir build/asan --outpu
 
 - `common/include/c_rapidcsv.h` 是 vendored 第三方头文件，已在 `.clang-format-ignore` 排除。
 - `clang-format` 必须是 22.x；`.clang-format` 的 `AlignFunctionDeclarations` 在 21 及以下会解析失败。
+- 领域数值统一使用 `std::int64_t`（显式 `#include <cstdint>`），不要使用平台宽度不一致的 `long`。
 - 修改 `conanfile.py` 的依赖后需要重新生成 lockfile：
 
 ```bash

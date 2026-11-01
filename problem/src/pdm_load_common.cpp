@@ -6,8 +6,8 @@
 #include "pdm_load.h"
 
 // ====== implement of Load ======
-const std::vector<long>& Load::get_peak_load_dims_sp() const {
-  std::vector<long>& peak_load_dims = this->route_profile->peak_load_dims;
+const std::vector<std::int64_t>& Load::get_peak_load_dims_sp() const {
+  std::vector<std::int64_t>& peak_load_dims = this->route_profile->peak_load_dims;
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PEAK_LOAD_DIMS)) {
     return peak_load_dims;
   }
@@ -28,8 +28,8 @@ const std::vector<long>& Load::get_peak_load_dims_sp() const {
   return peak_load_dims;
 }
 
-const std::vector<long>& Load::get_peak_load_dims_sd() const {
-  std::vector<long>& peak_load_dims = this->route_profile->peak_load_dims;
+const std::vector<std::int64_t>& Load::get_peak_load_dims_sd() const {
+  std::vector<std::int64_t>& peak_load_dims = this->route_profile->peak_load_dims;
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PEAK_LOAD_DIMS)) {
     return peak_load_dims;
   }
@@ -49,8 +49,8 @@ const std::vector<long>& Load::get_peak_load_dims_sd() const {
   return peak_load_dims;
 }
 
-const std::vector<long>& Load::get_peak_load_dims_mp() const {
-  std::vector<long>& peak_load_dims = this->route_profile->peak_load_dims;
+const std::vector<std::int64_t>& Load::get_peak_load_dims_mp() const {
+  std::vector<std::int64_t>& peak_load_dims = this->route_profile->peak_load_dims;
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::PEAK_LOAD_DIMS)) {
     return peak_load_dims;
   }

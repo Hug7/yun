@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -41,8 +42,8 @@ class ChargeCsvReader {
    */
   struct TierDraft {
     int seq{0};
-    long lower{0};
-    long upper{0};
+    std::int64_t lower{0};
+    std::int64_t upper{0};
     std::vector<ChargeItem> items;
     size_t row{0};
   };

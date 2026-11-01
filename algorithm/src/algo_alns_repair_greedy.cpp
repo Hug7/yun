@@ -5,6 +5,9 @@
 
 #include "algo_alns_repair_greedy.h"
 
+#include <algorithm>
+#include <stdexcept>
+
 #include "c_numerical_utils.h"
 
 // ====== implement of AlnsRepairGreedy ======

@@ -5,7 +5,9 @@
 
 #include "bdm_available_vehicle.h"
 
+#include <algorithm>
 #include <format>
+#include <stdexcept>
 
 #include "bdm_carrier.h"
 

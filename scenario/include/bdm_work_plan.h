@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <ctime>
 #include <vector>
 
@@ -72,8 +73,8 @@ class WorkEffect {
 
   void add(const Dimension* dim, ActivityType activity_type, double quantity);
 
-  [[nodiscard]] long get_work_time(ActivityType activity_type,
-                                   const std::vector<long>& dims_val) const;
+  [[nodiscard]] std::int64_t get_work_time(ActivityType activity_type,
+                                           const std::vector<std::int64_t>& dims_val) const;
 
   ~WorkEffect() = default;
 };

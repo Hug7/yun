@@ -10,7 +10,7 @@ from conan import ConanFile
 
 class YunConan(ConanFile):
     name = "yun"
-    version = "0.1.0"
+    version = "0.2.0"
     settings = "os", "compiler", "build_type", "arch"
     generators = "CMakeDeps", "CMakeToolchain"
 

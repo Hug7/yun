@@ -7,6 +7,7 @@
 
 #include <format>
 #include <magic_enum/magic_enum.hpp>
+#include <stdexcept>
 
 #include "hc_constraint_code.h"
 #include "hc_load_unload_policy.h"

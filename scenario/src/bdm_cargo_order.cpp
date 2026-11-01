@@ -5,6 +5,8 @@
 
 #include "bdm_cargo_order.h"
 
+#include <stdexcept>
+
 #include "c_numerical_utils.h"
 
 // ====== implement of SubCargoOrder ======
@@ -40,7 +42,7 @@ void CargoOrder::set_drop_time_window(TimeWindow* _drop_time_window) {
 }
 
 CargoSubOrder* CargoOrder::create_cargo_sub_order(
-    const std::string& code, const std::string& name, std::vector<long>& dim_vals,
+    const std::string& code, const std::string& name, std::vector<std::int64_t>& dim_vals,
     LabelsetValue* labelset_value, std::unique_ptr<LabelsetValueBitset> labelset_value_bitset,
     const int qty) {
   if (this->sub_order_map.contains(code)) {
@@ -108,7 +110,7 @@ CargoSubOrder* CargoOrderManager::create_cargo_sub_order(const std::string& carg
   } else {
     LabelsetValue* labelset_value = this->labelset->empty_labelset_value();
     auto labelset_value_bitset = this->labelset->empty_labelset_value_bitset();
-    std::vector<long> dim_vals = this->dimension_manager->empty_dim_values();
+    std::vector<std::int64_t> dim_vals = this->dimension_manager->empty_dim_values();
     return it->second->create_cargo_sub_order(cargo_sub_order_code, cargo_sub_order_name, dim_vals,
                                               labelset_value, std::move(labelset_value_bitset),
                                               qty);

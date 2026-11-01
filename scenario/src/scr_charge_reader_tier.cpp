@@ -59,8 +59,8 @@ void ChargeCsvReader::load_tiers(std::vector<RuleDraft>& rule_drafts,
       }
     }
 
-    long lower = 0;
-    long upper = std::numeric_limits<long>::max();
+    std::int64_t lower = 0;
+    std::int64_t upper = std::numeric_limits<std::int64_t>::max();
     if (draft.rule.condition_type != ChargeConditionType::NONE) {
       const Dimension* dimension = draft.rule.condition_dim_ind >= 0
                                        ? this->dim_manager->dimensions[draft.rule.condition_dim_ind]
@@ -149,7 +149,7 @@ void ChargeCsvReader::load_items(std::vector<RuleDraft>& rule_drafts,
     }
 
     const ChargeItemType item_type = parse_item_type(item_type_text, u);
-    const long price = parse_price(price_text, u);
+    const std::int64_t price = parse_price(price_text, u);
     int dim_ind = -1;
     if (item_type == ChargeItemType::DIMENSION || item_type == ChargeItemType::DIMENSION_DISTANCE) {
       if (dimension_code.empty()) {
