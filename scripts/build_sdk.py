@@ -24,6 +24,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 import tarfile
 from pathlib import Path
 
@@ -39,6 +40,21 @@ SDK_VERSION_TEMPLATE = SDK_TEMPLATE_DIR / "yunConfigVersion.cmake.in"
 LICENSE_FILE = YUN_ROOT / "LICENSE"
 BUILD_TARGET = "yun_solver"
 COMPONENTS = ("common", "scenario", "problem", "algorithm", "solver")
+
+
+def _use_utf8_stdio() -> None:
+    """让日志在非 UTF-8 控制台上也安全。
+
+    Windows 的管道流默认使用 ANSI 代码页（如 cp1252），打印中文会抛
+    UnicodeEncodeError；这里统一改成 UTF-8，并对无法编码的字符转义。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
+_use_utf8_stdio()
 
 
 def _run(cmd: list[str]) -> None:
