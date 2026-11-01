@@ -151,7 +151,8 @@ jobs:
           python-version: "3.11"
           architecture: x64
 
-      - uses: ilammy/msvc-dev-cmd@v1
+      # 见 ci.yml：上游 ilammy/msvc-dev-cmd 仍用 node20，换成 node24 的维护分支。
+      - uses: TheMrMilchmann/setup-msvc-dev@v4.1.0
         with:
           arch: x64
 

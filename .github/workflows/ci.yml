@@ -138,9 +138,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y g++-14 ninja-build
 
+      # ilammy/msvc-dev-cmd 仍声明 node20（上游 2024-04 后停更，node24 的
+      # PR 未合并）；这里改用持续维护、已切到 node24 的分支，输入兼容。
       - name: Prepare MSVC environment
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: TheMrMilchmann/setup-msvc-dev@v4.1.0
         with:
           arch: ${{ matrix.msvc_arch }}
 
