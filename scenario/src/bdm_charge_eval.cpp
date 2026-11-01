@@ -426,8 +426,7 @@ std::int64_t ChargeEvaluator::calc_items(const ChargeTier& tier) {
         amount += item.price;
         break;
       case ChargeItemType::DISTANCE:
-        amount += div_round(item.price * this->get_distance(),
-                            ChargeParameter::METER_PER_KM);
+        amount += div_round(item.price * this->get_distance(), ChargeParameter::METER_PER_KM);
         break;
       case ChargeItemType::PICK_STOP: {
         const int pick_count = this->get_pick_count();
@@ -446,8 +445,8 @@ std::int64_t ChargeEvaluator::calc_items(const ChargeTier& tier) {
         if (dims == nullptr || item.dim_ind < 0 || item.dim_ind >= this->manager.dim_len) {
           break;
         }
-        amount += div_round(item.price * dims[item.dim_ind],
-                            this->manager.dim_scales[item.dim_ind]);
+        amount +=
+            div_round(item.price * dims[item.dim_ind], this->manager.dim_scales[item.dim_ind]);
         break;
       }
       case ChargeItemType::DIMENSION_DISTANCE: {
@@ -457,9 +456,7 @@ std::int64_t ChargeEvaluator::calc_items(const ChargeTier& tier) {
         }
         const std::int64_t denominator =
             this->manager.dim_scales[item.dim_ind] * ChargeParameter::METER_PER_KM;
-        amount +=
-            div_round(item.price * dims[item.dim_ind] * this->get_distance(),
-                      denominator);
+        amount += div_round(item.price * dims[item.dim_ind] * this->get_distance(), denominator);
         break;
       }
     }
