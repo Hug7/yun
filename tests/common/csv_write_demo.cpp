@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// rapidcsv 写 CSV 示例：三个常见场景，运行后在 /tmp/rapidcsv_demo 下生成文件并读回校验。
+// rapidcsv 写 CSV 示例：三个常见场景，运行后在系统临时目录下生成文件并读回校验。
 // 编译：clang++ -std=c++20 -I common/include tests/csv_write_demo.cpp -o /tmp/csv_write_demo
 
 #include <filesystem>
@@ -17,7 +17,7 @@
 
 namespace {
 
-const char* kOutputDir = "/tmp/rapidcsv_demo";
+const std::filesystem::path kOutputDir = std::filesystem::temp_directory_path() / "rapidcsv_demo";
 
 // 场景 1：带表头的业务数据。SetColumnName 写表头，SetRow 写整行，SetCell 写单个格子。
 // 两个坑：新建文件必须用空路径构造 Document（Document("不存在的路径") 会抛 ios 异常）；
@@ -124,7 +124,7 @@ void print_file(const std::string& path) {
 
 int main() {
   std::filesystem::create_directories(kOutputDir);
-  const std::string dir(kOutputDir);
+  const std::string dir(kOutputDir.string());
 
   demo_header_row_cell(dir + "/orders.csv");
   demo_matrix_without_header(dir + "/dist_matrix.csv");

@@ -60,7 +60,7 @@ void VisualManager::unassigned_order_to_json(const std::vector<const Order*>& un
       build_visual_cargo_orders(unassigned_orders, this->scenario);
 
   const std::string file_path = target_dir_path + "/" + UNASSIGNED_CARGO_ORDERS_FILE_NAME;
-  std::ofstream file(file_path);
+  std::ofstream file(file_path, std::ios::binary);
   if (!file.is_open()) {
     this->logger->error(std::format("创建文件 {} 失败!", file_path));
     throw std::runtime_error(std::format("创建文件 {} 失败!", file_path));
@@ -75,7 +75,7 @@ void VisualManager::unassigned_order_to_json(const std::vector<const Order*>& un
 void VisualManager::visual_plan_summary_to_json(const VisualPlanSummary& visual_plan_summary,
                                                 const std::string& target_dir_path) const {
   const std::string file_path = target_dir_path + "/" + PLAN_SUMMARY_FILE_NAME;
-  std::ofstream file(file_path);
+  std::ofstream file(file_path, std::ios::binary);
   if (!file.is_open()) {
     this->logger->error(std::format("创建文件 {} 失败!", file_path));
     throw std::runtime_error(std::format("创建文件 {} 失败!", file_path));

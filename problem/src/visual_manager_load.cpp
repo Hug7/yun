@@ -181,7 +181,7 @@ void VisualManager::visual_load_to_json(const std::vector<VisualLoad>& visual_lo
                                         const std::string& target_dir_path) const {
   // 写出json文件
   const std::string file_path = target_dir_path + "/" + LOADS_FILE_NAME;
-  std::ofstream file(file_path);
+  std::ofstream file(file_path, std::ios::binary);
   if (!file.is_open()) {
     this->logger->error(std::format("创建文件 {} 失败!", file_path));
     throw std::runtime_error(std::format("创建文件 {} 失败!", file_path));

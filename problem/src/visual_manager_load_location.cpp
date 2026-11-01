@@ -229,7 +229,7 @@ void VisualManager::visual_load_location_to_json(
     const std::string& target_dir_path) const {
   // 写出json文件
   const std::string file_path = target_dir_path + "/" + LOAD_LOCATIONS_FILE_NAME;
-  std::ofstream file(file_path);
+  std::ofstream file(file_path, std::ios::binary);
   if (!file.is_open()) {
     this->logger->error(std::format("创建文件 {} 失败!", file_path));
     throw std::runtime_error(std::format("创建文件 {} 失败!", file_path));

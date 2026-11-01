@@ -129,22 +129,31 @@ classDef planned stroke-dasharray: 5 5
 
 ### 1. 本地运行入口
 
-构建和运行入口如下：
+macOS 可以继续使用：
 
 ```bash
 ./RUN.sh --mode debug
-./build/Debug/tests/vrp_exec
 ```
 
-`RUN.sh` 先调用 `RUN_CONAN.sh` 安装依赖，再调用 `RUN_BUILD.sh` 配置并编译。当前可执行目标是 `tests/vrp_exec`，其 `main()` 在 `tests/vrp_main.cpp` 中直接调用：
+Linux / Windows（clang-cl）建议直接使用 CMake：
 
-```cpp
-Solver* solver = new Solver(root_dir, log_dir, log_level);
-solver->solve();
-delete solver;
+```bash
+cmake -S . -B build/ci -DCMAKE_BUILD_TYPE=Debug \
+  -DYUN_BUILD_TESTS=ON -DYUN_BUILD_PYTHON=OFF \
+  -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$PWD/cmake/conan.cmake"
+cmake --build build/ci --parallel
+ctest --test-dir build/ci --output-on-failure
 ```
 
-当前 `root_dir`、`log_dir` 和日志等级都硬编码在 `tests/vrp_main.cpp`。运行目录 `root_dir` 至少需要包含完整的场景 CSV 以及 `Strategy.lua`；程序会把本次运行的新目录写到 `root_dir/output/` 下。
+当前可执行目标是 `tests/vrp_exec`，参数为 `<case_dir> [log_dir] [log_level]`：
+
+```bash
+./build/ci/tests/vrp_exec /path/to/C_SUC_001 /tmp/yun-log debug
+```
+
+也兼容环境变量 `YUN_CASE_DIR`、`YUN_LOG_DIR`。运行目录 `root_dir` 至少需要包含完整的场景 CSV 以及 `Strategy.lua`；程序会把本次运行的新目录写到 `root_dir/output/` 下。
+
+平台与工具链最低版本见 [platform_support.md](docs/platform_support.md)。
 
 ### 2. Solver 初始化
 
@@ -201,13 +210,15 @@ delete solver;
 
 `Solver` 析构时释放 `context`、`order_pool` 和 `workspace`；`SolverContext` 析构时先刷新 logger，再释放 `Scenario`、`Parameter`、`VisualManager` 和 `Problem`。
 
-### 5. Python 绑定（macOS）
+### 5. Python 绑定（当前仅 macOS）
 
 `yun` 通过 pybind11 暴露 `_core` 扩展，供 [yunpyopt](https://github.com/Hug7/yunpyopt) 打包为 wheel。
 
 前置条件：macOS 14.0+（arm64）、Xcode Command Line Tools、CMake ≥ 3.24、Conan 2.33+、Python 3.11。
 
 > C++ 代码使用 `std::format`，需要 macOS 13.3+；wheel 平台标签按 major 取整到 `14_0`，因此发布构建以 14.0 为最低版本。
+>
+> 预编译 SDK 与 Python 扩展目前仍只发布 macOS arm64；Linux / Windows 的核心构建、单测和功能测试已纳入 CI，但 Python 打包不在本轮范围。
 
 ```bash
 # 在 yun 仓库根目录
