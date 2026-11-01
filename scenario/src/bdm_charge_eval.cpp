@@ -13,8 +13,8 @@ namespace {
 /**
  * @brief 非负整数除法，四舍五入
  */
-std::int64_t div_round(const __int128 numerator, const std::int64_t denominator) {
-  return static_cast<std::int64_t>((numerator + denominator / 2) / denominator);
+std::int64_t div_round(const std::int64_t numerator, const std::int64_t denominator) {
+  return (numerator + denominator / 2) / denominator;
 }
 
 /**
@@ -426,7 +426,7 @@ std::int64_t ChargeEvaluator::calc_items(const ChargeTier& tier) {
         amount += item.price;
         break;
       case ChargeItemType::DISTANCE:
-        amount += div_round(static_cast<__int128>(item.price) * this->get_distance(),
+        amount += div_round(item.price * this->get_distance(),
                             ChargeParameter::METER_PER_KM);
         break;
       case ChargeItemType::PICK_STOP: {
@@ -446,7 +446,7 @@ std::int64_t ChargeEvaluator::calc_items(const ChargeTier& tier) {
         if (dims == nullptr || item.dim_ind < 0 || item.dim_ind >= this->manager.dim_len) {
           break;
         }
-        amount += div_round(static_cast<__int128>(item.price) * dims[item.dim_ind],
+        amount += div_round(item.price * dims[item.dim_ind],
                             this->manager.dim_scales[item.dim_ind]);
         break;
       }
@@ -458,7 +458,7 @@ std::int64_t ChargeEvaluator::calc_items(const ChargeTier& tier) {
         const std::int64_t denominator =
             this->manager.dim_scales[item.dim_ind] * ChargeParameter::METER_PER_KM;
         amount +=
-            div_round(static_cast<__int128>(item.price) * dims[item.dim_ind] * this->get_distance(),
+            div_round(item.price * dims[item.dim_ind] * this->get_distance(),
                       denominator);
         break;
       }
