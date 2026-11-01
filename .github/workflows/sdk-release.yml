@@ -8,7 +8,7 @@ on:
       version:
         description: "SDK version (must match project(yun VERSION ...))"
         required: true
-        default: "0.1.0"
+        default: "0.2.0"
 
 permissions:
   contents: read
@@ -18,8 +18,44 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build yun SDK
+  version:
+    name: Resolve SDK version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve version
+        id: resolve
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${INPUT_VERSION}"
+          fi
+          export VERSION
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          text = Path("CMakeLists.txt").read_text(encoding="utf-8")
+          version = re.search(r"project\(\s*yun\s+VERSION\s+([0-9.]+)", text).group(1)
+          expected = os.environ["VERSION"]
+          assert version == expected, f"SDK version {expected} != CMake {version}"
+          print("version:", version)
+          PY
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+  build-macos:
+    name: Build SDK (macos-arm64)
+    needs: version
     runs-on: macos-15
     timeout-minutes: 45
     env:
@@ -31,54 +67,136 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Determine version
-        id: version
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="${{ inputs.version }}"
-          fi
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Verify version matches CMake
-        env:
-          SDK_VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          python - <<'PY'
-          import os, re
-          from pathlib import Path
-          version = re.search(r"project\(\s*yun\s+VERSION\s+([0-9.]+)", Path("CMakeLists.txt").read_text()).group(1)
-          expected = os.environ["SDK_VERSION"]
-          assert version == expected, f"SDK version {expected} != CMake {version}"
-          print("version:", version)
-          PY
-
       - name: Cache Conan
         uses: actions/cache@v5
         with:
           path: ~/.conan2
-          key: conan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock') }}
+          key: conan-sdk-macos-arm64-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock', 'cmake/conan.cmake') }}
           restore-keys: |
-            conan-${{ runner.os }}-${{ runner.arch }}-
+            conan-sdk-macos-arm64-
 
-      - name: Install build tools
+      - name: Install Conan
         run: |
           python -m pip install --upgrade pip
           python -m pip install "conan>=2.33,<3"
           conan profile detect --force
 
       - name: Build SDK
-        run: python scripts/build_sdk.py --version "${{ steps.version.outputs.version }}" --out-dir dist --clean
+        run: |
+          python scripts/build_sdk.py \
+            --version "${{ needs.version.outputs.version }}" \
+            --out-dir dist --clean
 
       - uses: actions/upload-artifact@v6
         with:
-          name: yun-sdk
-          path: dist/*
+          name: yun-sdk-macos-arm64
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  build-linux:
+    name: Build SDK (${{ matrix.name }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-24.04
+            container: quay.io/pypa/manylinux_2_28_x86_64
+          - name: linux-arm64
+            os: ubuntu-24.04-arm
+            container: quay.io/pypa/manylinux_2_28_aarch64
+    steps:
+      - uses: actions/checkout@v5
+
+      # manylinux 镜像已带 /opt/python，不依赖 actions/setup-python；
+      # Conan 缓存由容器内的 ~/.conan2 承担，这里不做 actions/cache（避免
+      # 容器内 node/zstd 兼容性问题），发布时从源码构建依赖可接受。
+      - name: Build SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          source /opt/rh/gcc-toolset-14/enable
+          PY=/opt/python/cp311-cp311/bin/python
+          "$PY" -m pip install --upgrade pip
+          "$PY" -m pip install "conan>=2.33,<3" "cmake>=3.24"
+          PY_BIN_DIR="$(dirname "$PY")"
+          export PATH="${PY_BIN_DIR}:${PATH}"
+          gcc --version | head -1
+          cmake --version | head -1
+          conan profile detect --force
+          "$PY" scripts/build_sdk.py \
+            --version "${{ needs.version.outputs.version }}" \
+            --out-dir dist --clean
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: yun-sdk-${{ matrix.name }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  build-windows:
+    name: Build SDK (windows-x86_64)
+    needs: version
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          architecture: x64
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install LLVM / Ninja / Conan
+        shell: pwsh
+        run: |
+          $llvm = "C:\Program Files\LLVM\bin"
+          if (-not (Test-Path "$llvm\clang-cl.exe")) {
+            choco install llvm -y --no-progress
+          }
+          if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) {
+            python -m pip install ninja
+          }
+          $llvm | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          $env:PATH = "$llvm;$env:PATH"
+          & "$llvm\clang-cl.exe" --version
+          python -m pip install --upgrade pip
+          python -m pip install "conan>=2.33,<3"
+          conan profile detect --force
+
+      - name: Cache Conan
+        uses: actions/cache@v5
+        with:
+          path: ~/.conan2
+          key: conan-sdk-windows-x86_64-${{ hashFiles('conanfile.py', 'conan_provider.cmake', 'conan.lock', 'cmake/conan.cmake') }}
+          restore-keys: |
+            conan-sdk-windows-x86_64-
+
+      - name: Build SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_sdk.py \
+            --version "${{ needs.version.outputs.version }}" \
+            --out-dir dist --clean
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: yun-sdk-windows-x86_64
+          path: dist/*.tar.gz
+          if-no-files-found: error
 
   release:
     name: Create GitHub Release
-    needs: build
+    needs: [version, build-macos, build-linux, build-windows]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -91,8 +209,19 @@ jobs:
     steps:
       - uses: actions/download-artifact@v7
         with:
-          name: yun-sdk
+          pattern: yun-sdk-*
           path: dist
+          merge-multiple: true
+
+      - name: Build checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          ls -lh
+          sha256sum -- *.tar.gz | sort -k2 > SHA256SUMS
+          cat SHA256SUMS
+
       - uses: softprops/action-gh-release@v3
         with:
           files: dist/*
