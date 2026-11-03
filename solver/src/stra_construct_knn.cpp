@@ -217,16 +217,17 @@ void select_order_construct_load(std::unordered_set<int>& candidate_load_indices
     if (seed_order_ind == -1) {
       return;
     }
-    // 从 unassigned_order_indices 移除
-    unassigned_order_indices.erase(seed_order_ind);
     // 判断seed order是否可以构造load
     const auto seed_order = sol->unassigned_orders[seed_order_ind];
-    sol->remove_unassigned_order_by_key(seed_order_ind);  // 移除未指派订单
     auto cur_orders = std::vector<const Order*>{seed_order};
     Load* load = problem->construct_load_by_order(cur_orders, sol->vehicle_resource);
     if (load->is_infeasible()) {
       delete load;
     } else {
+      // 从 unassigned_order_indices 移除
+      unassigned_order_indices.erase(seed_order_ind);
+      sol->remove_unassigned_order_by_key(seed_order_ind);  // 移除未指派订单
+      // 归档load
       candidate_load_indices.insert(static_cast<int>(sol->loads.size()));
       sol->add_load(load, cur_orders);
       return;
