@@ -58,12 +58,7 @@ std::map<std::string, std::optional<std::string>> collect_results(const std::str
 }  // namespace
 
 PYBIND11_MODULE(_core, m) {
-  m.doc() =
-      "Solver binding for the yun VRP/ALNS solver.\n"
-      "\n"
-      "Known behaviour: the ALNS stage does NOT write its best solution back to the\n"
-      "workspace, so the exported loads are the KNN construction result. The max_iter\n"
-      "setting in Strategy.lua therefore does not affect the output.";
+  m.doc() = "Solver binding for the yun VRP/ALNS solver";
 
   py::list result_keys;
   for (const auto& entry : RESULT_ENTRIES) {

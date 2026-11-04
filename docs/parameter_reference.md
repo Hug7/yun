@@ -34,9 +34,9 @@ strategy_file: Strategy
 ### pick_drop_pattern
 `pick_drop_pattern`提卸规则，该参数控制一辆车单趟的提货站点数和卸货站点数。有四个备选值:
 * `SPMD`: 单提多卸
-* `SPSD`: 单提单卸
-* `MPMD`: 多提多卸
-* `MPSD`: 多提单卸
+* `SPSD`: 单提单卸 (暂不支持)
+* `MPMD`: 多提多卸 (暂不支持)
+* `MPSD`: 多提单卸 (暂不支持)
 
 其中，`SPMD`为默认值。demo如下所示:
 
