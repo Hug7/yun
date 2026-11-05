@@ -141,7 +141,7 @@ class RepairMatrix {
    * @brief 取指定 segment 行的 top-k 可行元素
    * @return 按 delta 降序排列(back() 为最优); 不可行或候选不足时返回实际数量
    */
-  std::vector<RepairLoad*> unfold_segment_top_k(int segment_ind, int k) const;
+  [[nodiscard]] std::vector<RepairLoad*> unfold_segment_top_k(int segment_ind, int k) const;
 
   void update_load(int load_ind) const;
 
@@ -176,6 +176,12 @@ class AlnsRepairOperator {
         parallel_executor(_parallel_executor) {}
 
   virtual void execute(RepairMatrix* repair_matrix) = 0;
+
+  /**
+   * @brief 格式化算子参数, 用于求解前打印
+   * @return 形如 `a=1, b=2` 的参数文本; 无参数时返回空串
+   */
+  [[nodiscard]] virtual std::string format_parameters() const = 0;
 
   void call(Solution* sol, SegmentBuilder* segment_builder);
 };

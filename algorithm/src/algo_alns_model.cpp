@@ -23,6 +23,8 @@ AlnsModel::~AlnsModel() {
 
 Solution* AlnsModel::solve() const {
   const auto logger = this->workspace->context->logger;
+  // 求解前打印实际使用的算子及其参数
+  logger->info("{}", this->operator_manager->format_operators());
   int pre_update_best_sol_iter = 0;                                     // 上一次更新最优的迭代次数
   int last_iter = 0;                                                    // 最后一次迭代次数
   const auto start_ts = chrono_util::to_timestamp(chrono_util::now());  // 开始时间戳
@@ -83,9 +85,9 @@ Solution* AlnsModel::solve() const {
   logger->info("The alns calculation has been completed.");
   logger->info(std::format("execute iterations={}, running time={}s", last_iter, running_time_sec));
   logger->info(std::format(
-      "obj={:.2f}, cost={:.2f}, penalty={:.2f}, load count={}", this->sol_manager->best_sol->total_obj_val(),
-      this->sol_manager->best_sol->total_cost(), this->sol_manager->best_sol->total_penalty(),
-      this->sol_manager->best_sol->loads.size()));
+      "obj={:.2f}, cost={:.2f}, penalty={:.2f}, load count={}",
+      this->sol_manager->best_sol->total_obj_val(), this->sol_manager->best_sol->total_cost(),
+      this->sol_manager->best_sol->total_penalty(), this->sol_manager->best_sol->loads.size()));
   // 输出算子统计
   if (this->parameter->print_operator_statistics) {
     logger->info("{}", this->operator_manager->format_statistics());

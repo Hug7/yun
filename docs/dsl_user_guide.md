@@ -146,7 +146,8 @@ alns({
 开启`print_operator_statistics`时，整个 alns 运行结束后会打印一张 `[ruin][repair]` 二维统计表（每个组合的分数累计、使用次数、平均分）以及 ruin和repair 的单独汇总。
 统计只用于观测，不参与权重计算。
 
-ruin 或 repair 算子数组为空时，`alns` 会使用默认算子。
+ruin 或 repair 算子数组为空时，`alns` 会使用默认算子（ruin 为 `RuinRandomRemovalLoad`、`RuinRandomRemovalOrder`，repair 为 `RepairGreedy`、`RepairRegretK`，参数取各自默认值）。
+每次执行算法前，`alns` 都会打印实际使用的算子及其参数，便于确认默认兜底是否生效。
 
 数组中每个元素为`table`，必含字段`code`（算子编码字符串），可选字段`params`（`table`，算子私有参数，缺省时用算子内部默认值）。
 同一`code`可配置多组不同`params`，视为不同算子实例。

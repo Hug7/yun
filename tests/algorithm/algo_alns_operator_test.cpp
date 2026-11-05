@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <initializer_list>
 #include <memory>
+#include <sol/sol.hpp>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -34,6 +35,8 @@ class FakeRuin final : public AlnsRuinOperator {
   std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* /*sol*/) override {
     return {};
   }
+
+  [[nodiscard]] std::string format_parameters() const override { return ""; }
 };
 
 /**
@@ -44,6 +47,8 @@ class FakeRepair final : public AlnsRepairOperator {
   FakeRepair() : AlnsRepairOperator(AlnsRepairOperatorCode::RepairGreedy, nullptr, nullptr) {}
 
   void execute(RepairMatrix* /*repair_matrix*/) override {}
+
+  [[nodiscard]] std::string format_parameters() const override { return ""; }
 };
 
 /**
@@ -251,8 +256,101 @@ TEST(AlnsOperatorManagerTest, FormatStatisticsPrintsMatrixAndMarginals) {
   EXPECT_NE(text.find("ruin[1]="), std::string::npos);
   EXPECT_NE(text.find("repair[0]="), std::string::npos);
   EXPECT_NE(text.find("avg=-"), std::string::npos);  // 未命中的 cell
-  EXPECT_NE(text.find("marginal repair[0]="), std::string::npos);
-  EXPECT_NE(text.find("marginal repair[1]="), std::string::npos);
-  // 行数 = 1 标题 + 2 区块头 + 4 单元格 + 2 边缘
-  EXPECT_EQ(static_cast<int>(std::count(text.begin(), text.end(), '\n')), 8);
+  EXPECT_NE(text.find("\nmarginal ruin operators:"), std::string::npos);
+  EXPECT_NE(text.find("\nmarginal repair operators:"), std::string::npos);
+  EXPECT_NE(text.find("\n  repair[0]="), std::string::npos);
+  EXPECT_NE(text.find("\n  repair[1]="), std::string::npos);
+  // 换行数 = 1 组合区块头 + 4 单元格 + 1 ruin 边缘头 + 2 ruin + 1 repair 边缘头 + 2 repair
+  EXPECT_EQ(static_cast<int>(std::count(text.begin(), text.end(), '\n')), 11);
+}
+
+// ====== 求解前打印算子 ======
+TEST(AlnsOperatorManagerTest, FormatOperatorsPrintsCodesAndParameters) {
+  sol::state lua;
+  lua.open_libraries(sol::lib::base);
+  lua.script(R"(
+    cfg = {
+      ruin_operator_params = {
+        {
+          code = "RuinRandomRemovalLoad",
+          params = {
+            select_load_min_rate = 0.2,
+            select_load_max_rate = 0.5,
+            select_load_random_seed = 7,
+          },
+        },
+      },
+      repair_operator_params = {
+        { code = "RepairRegretK", params = { regret_k = 3 } },
+      },
+    }
+  )");
+  const sol::table cfg = lua["cfg"];
+  AlnsParameter parameter;
+  const auto manager = create_alns_operator(cfg, &parameter, nullptr, nullptr);
+
+  const std::string text = manager->format_operators();
+  EXPECT_NE(text.find("alns operators: ruin_count=1 repair_count=1"), std::string::npos);
+  EXPECT_NE(text.find("ruin[0]=RuinRandomRemovalLoad params={select_load_random_seed=7, "
+                      "select_load_min_rate=0.2, select_load_max_rate=0.5}"),
+            std::string::npos);
+  EXPECT_NE(text.find("repair[0]=RepairRegretK params={regret_k=3}"), std::string::npos);
+}
+
+// ====== 空算子兜底 ======
+TEST(AlnsOperatorManagerTest, CreateAlnsOperatorUsesDefaultsWhenOperatorArraysMissing) {
+  sol::state lua;
+  lua.open_libraries(sol::lib::base);
+  lua.script("cfg = {}");
+  const sol::table cfg = lua["cfg"];
+  AlnsParameter parameter;
+  const auto manager = create_alns_operator(cfg, &parameter, nullptr, nullptr);
+
+  ASSERT_EQ(manager->ruin_operator_count, 2);
+  ASSERT_EQ(manager->repair_operator_count, 2);
+  ASSERT_EQ(manager->ruin_operators.size(), 2);
+  ASSERT_EQ(manager->repair_operators.size(), 2);
+  EXPECT_EQ(manager->ruin_operators[0]->code, "RuinRandomRemovalLoad");
+  EXPECT_EQ(manager->ruin_operators[1]->code, "RuinRandomRemovalOrder");
+  EXPECT_EQ(manager->repair_operators[0]->code, "RepairGreedy");
+  EXPECT_EQ(manager->repair_operators[1]->code, "RepairRegretK");
+  // 权重与统计矩阵按默认算子数量初始化
+  EXPECT_EQ(manager->ruin_operator_weights.size(), 2);
+  EXPECT_EQ(manager->repair_operator_weights.size(), 2);
+  EXPECT_EQ(manager->operator_combination_stats.size(), 2);
+  EXPECT_EQ(manager->operator_combination_stats.front().size(), 2);
+  // 默认算子使用算子自身的默认参数
+  const std::string text = manager->format_operators();
+  EXPECT_NE(text.find("ruin[0]=RuinRandomRemovalLoad params={select_load_random_seed=37, "
+                      "select_load_min_rate=0.1, select_load_max_rate=0.4}"),
+            std::string::npos);
+  EXPECT_NE(text.find("ruin[1]=RuinRandomRemovalOrder params={select_order_random_seed=37, "
+                      "select_order_min_rate=0.1, select_order_max_rate=0.4}"),
+            std::string::npos);
+  EXPECT_NE(text.find("repair[0]=RepairGreedy params={random_seed=37, top_rate=0.2}"),
+            std::string::npos);
+  EXPECT_NE(text.find("repair[1]=RepairRegretK params={regret_k=2}"), std::string::npos);
+}
+
+TEST(AlnsOperatorManagerTest, CreateAlnsOperatorFallsBackPerEmptyOperatorArray) {
+  sol::state lua;
+  lua.open_libraries(sol::lib::base);
+  lua.script(R"(
+    cfg = {
+      ruin_operator_params = {},
+      repair_operator_params = {
+        { code = "RepairRegretK", params = { regret_k = 3 } },
+      },
+    }
+  )");
+  const sol::table cfg = lua["cfg"];
+  AlnsParameter parameter;
+  const auto manager = create_alns_operator(cfg, &parameter, nullptr, nullptr);
+
+  // 只有空的 ruin 数组回退到默认算子, 用户自定义的 repair 保留
+  EXPECT_EQ(manager->ruin_operator_count, 2);
+  ASSERT_EQ(manager->repair_operator_count, 1);
+  EXPECT_EQ(manager->repair_operators[0]->code, "RepairRegretK");
+  EXPECT_NE(manager->repair_operators[0]->format_parameters().find("regret_k=3"),
+            std::string::npos);
 }

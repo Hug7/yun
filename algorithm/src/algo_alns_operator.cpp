@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <format>
+#include <magic_enum/magic_enum.hpp>
 #include <stdexcept>
 #include <utility>
 
@@ -165,6 +166,24 @@ void AlnsOperatorManager::update_operator_weights(
   }
 }
 
+std::string AlnsOperatorManager::format_operators() const {
+  std::string text = std::format("alns operators: ruin_count={} repair_count={}",
+                                 this->ruin_operator_count, this->repair_operator_count);
+  text += "\nruin operators:";
+  for (int u = 0; u < this->ruin_operator_count; ++u) {
+    const auto* ruin_operator = this->ruin_operators[u];
+    text += std::format("\n  ruin[{}]={} params={{{}}}", u, ruin_operator->code,
+                        ruin_operator->format_parameters());
+  }
+  text += "\nrepair operators:";
+  for (int m = 0; m < this->repair_operator_count; ++m) {
+    const auto* repair_operator = this->repair_operators[m];
+    text += std::format("\n  repair[{}]={} params={{{}}}", m, repair_operator->code,
+                        repair_operator->format_parameters());
+  }
+  return text;
+}
+
 std::string AlnsOperatorManager::format_statistics() const {
   const auto format_avg = [](const int usage, const double score_sum) {
     return usage > 0 ? std::format("{:.3f}", score_sum / static_cast<double>(usage))
@@ -209,8 +228,8 @@ std::string AlnsOperatorManager::format_statistics() const {
       score_sum += this->operator_combination_stats[i][m].score_sum;
       usage += this->operator_combination_stats[i][m].usage;
     }
-    text += std::format("\n  repair[{}]={} weight={:.3f} usage={} score_sum={:.1f} avg={}",
-                        m, this->repair_operators[m]->code, this->repair_operator_weights[m], usage,
+    text += std::format("\n  repair[{}]={} weight={:.3f} usage={} score_sum={:.1f} avg={}", m,
+                        this->repair_operators[m]->code, this->repair_operator_weights[m], usage,
                         score_sum, format_avg(usage, score_sum));
   }
   return text;
@@ -234,14 +253,57 @@ sol::table get_operator_params(const sol::table& item) {
 }
 
 /**
+ * @brief 按编码创建并注册 ruin 算子
+ * @param alns_operator_manager alns算子管理器
+ * @param code ruin算子编码
+ * @param params 算子参数
+ * @param context solver上下文
+ */
+void create_ruin_operator(AlnsOperatorManager* alns_operator_manager,
+                          const AlnsRuinOperatorCode code, const sol::table& params,
+                          const SolverContext* context) {
+  if (code == AlnsRuinOperatorCode::RuinRandomRemovalLoad) {
+    alns_operator_manager->add_ruin_operator(new AlnsRuinRandomRemovalLoad(context, params));
+  } else if (code == AlnsRuinOperatorCode::RuinRandomRemovalOrder) {
+    alns_operator_manager->add_ruin_operator(new AlnsRuinRandomRemovalOrder(context, params));
+  } else {
+    throw std::invalid_argument("alns ruin operator code: " +
+                                std::string(magic_enum::enum_name(code)) + " is not supported!");
+  }
+}
+
+/**
+ * @brief 按编码创建并注册 repair 算子
+ * @param alns_operator_manager alns算子管理器
+ * @param code repair算子编码
+ * @param params 算子参数
+ * @param context solver上下文
+ * @param parallel_executor 并行执行器
+ */
+void create_repair_operator(AlnsOperatorManager* alns_operator_manager,
+                            const AlnsRepairOperatorCode code, const sol::table& params,
+                            const SolverContext* context, ParallelExecutor* parallel_executor) {
+  if (code == AlnsRepairOperatorCode::RepairGreedy) {
+    alns_operator_manager->add_repair_operator(
+        new AlnsRepairGreedy(context, parallel_executor, params));
+  } else if (code == AlnsRepairOperatorCode::RepairRegretK) {
+    alns_operator_manager->add_repair_operator(
+        new AlnsRepairRegretK(context, parallel_executor, params));
+  } else {
+    throw std::invalid_argument("alns repair operator code: " +
+                                std::string(magic_enum::enum_name(code)) + " is not supported!");
+  }
+}
+
+/**
  * @brief 创建 alns 的 ruin 算子
  * @param alns_operator_manager alns算子管理器
  * @param cfg lua参数集合
- * @param alns_parameter alns算法参数
- * @param workspace 工作空间
+ * @param context solver上下文
+ * @details ruin_operator_params 缺失、为空或没有有效元素时, 注册默认 ruin 算子
  */
 void create_alns_ruin_operator(AlnsOperatorManager* alns_operator_manager, const sol::table& cfg,
-                               const AlnsParameter* alns_parameter, const Workspace* workspace) {
+                               const SolverContext* context) {
   if (cfg[AlnsParameterLuaField::RUIN_OPERATOR_PARAMS].valid()) {
     const sol::table ruin_params =
         cfg[AlnsParameterLuaField::RUIN_OPERATOR_PARAMS].get<sol::table>();
@@ -264,33 +326,30 @@ void create_alns_ruin_operator(AlnsOperatorManager* alns_operator_manager, const
       }
       // 取 params（可选，缺省给空表）
       const sol::table params = get_operator_params(item);
-      // 转换ruin算子编码
-      const AlnsRuinOperatorCode alns_ruin_operator_code = convert_alns_ruin_operator_code(code);
-      // 注册ruin算子
-      if (alns_ruin_operator_code == AlnsRuinOperatorCode::RuinRandomRemovalLoad) {
-        alns_operator_manager->add_ruin_operator(
-            new AlnsRuinRandomRemovalLoad(workspace->context, params));
-      } else if (alns_ruin_operator_code == AlnsRuinOperatorCode::RuinRandomRemovalOrder) {
-        alns_operator_manager->add_ruin_operator(
-            new AlnsRuinRandomRemovalOrder(workspace->context, params));
-      } else {
-        throw std::invalid_argument("alns ruin operator code: " + code + " is not undefined!");
-      }
+      // 转换并注册ruin算子
+      create_ruin_operator(alns_operator_manager, convert_alns_ruin_operator_code(code), params,
+                           context);
     });
   }
-  // TODO ruin算子为空，使用默认算子
+  // ruin算子为空，使用默认算子
+  if (alns_operator_manager->ruin_operator_count == 0) {
+    const sol::table empty_params(cfg.lua_state(), sol::create);
+    for (const auto code : AlnsOperatorManager::default_ruin_operator_codes) {
+      create_ruin_operator(alns_operator_manager, code, empty_params, context);
+    }
+  }
 }
 
 /**
  * @brief 创建 alns 的 repair 算子
  * @param alns_operator_manager alns算子管理器
  * @param cfg lua参数集合
- * @param alns_parameter alns算法参数
- * @param workspace 工作空间
+ * @param context solver上下文
  * @param parallel_executor 并行执行器
+ * @details repair_operator_params 缺失、为空或没有有效元素时, 注册默认 repair 算子
  */
 void create_alns_repair_operator(AlnsOperatorManager* alns_operator_manager, const sol::table& cfg,
-                                 const AlnsParameter* alns_parameter, const Workspace* workspace,
+                                 const SolverContext* context,
                                  ParallelExecutor* parallel_executor) {
   if (cfg[AlnsParameterLuaField::REPAIR_OPERATOR_PARAMS].valid()) {
     const sol::table repair_params =
@@ -314,35 +373,30 @@ void create_alns_repair_operator(AlnsOperatorManager* alns_operator_manager, con
       }
       // 取 params（可选，缺省给空表）
       const sol::table params = get_operator_params(item);
-      // 转换repair算子编码
-      const AlnsRepairOperatorCode alns_repair_operator_code =
-          parse_alns_repair_operator_code(code);
-      // 注册repair算子
-      if (alns_repair_operator_code == AlnsRepairOperatorCode::RepairGreedy) {
-        alns_operator_manager->add_repair_operator(
-            new AlnsRepairGreedy(workspace->context, parallel_executor, params));
-      } else if (alns_repair_operator_code == AlnsRepairOperatorCode::RepairRegretK) {
-        alns_operator_manager->add_repair_operator(
-            new AlnsRepairRegretK(workspace->context, parallel_executor, params));
-      } else {
-        throw std::invalid_argument("alns repair operator code: " + code + " is not undefined!");
-      }
+      // 转换并注册repair算子
+      create_repair_operator(alns_operator_manager, parse_alns_repair_operator_code(code), params,
+                             context, parallel_executor);
     });
   }
-  // TODO repair算子为空，使用默认算子
+  // repair算子为空，使用默认算子
+  if (alns_operator_manager->repair_operator_count == 0) {
+    const sol::table empty_params(cfg.lua_state(), sol::create);
+    for (const auto code : AlnsOperatorManager::default_repair_operator_codes) {
+      create_repair_operator(alns_operator_manager, code, empty_params, context, parallel_executor);
+    }
+  }
 }
 }  // namespace
 
 std::unique_ptr<AlnsOperatorManager> create_alns_operator(const sol::table& cfg,
                                                           const AlnsParameter* alns_parameter,
-                                                          const Workspace* workspace,
+                                                          const SolverContext* context,
                                                           ParallelExecutor* parallel_executor) {
   auto alns_operator_manager = std::make_unique<AlnsOperatorManager>(alns_parameter);
   // 创建ruin算子
-  create_alns_ruin_operator(alns_operator_manager.get(), cfg, alns_parameter, workspace);
+  create_alns_ruin_operator(alns_operator_manager.get(), cfg, context);
   // 创建repair算子
-  create_alns_repair_operator(alns_operator_manager.get(), cfg, alns_parameter, workspace,
-                              parallel_executor);
+  create_alns_repair_operator(alns_operator_manager.get(), cfg, context, parallel_executor);
   // 初始化权重与统计矩阵
   alns_operator_manager->init_weights();
   return alns_operator_manager;

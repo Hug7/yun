@@ -6,6 +6,7 @@
 #include "algo_alns_ruin_random_removal_order.h"
 
 #include <algorithm>
+#include <format>
 #include <stdexcept>
 
 // ====== implement of AlnsRuinRandomRemovalOrder ======
@@ -43,6 +44,12 @@ AlnsRuinRandomRemovalOrder::AlnsRuinRandomRemovalOrder(const SolverContext* _con
                              ") must not exceed select_order_max_rate (" +
                              std::to_string(this->select_order_max_rate) + ")");
   }
+}
+
+std::string AlnsRuinRandomRemovalOrder::format_parameters() const {
+  return std::format(
+      "select_order_random_seed={}, select_order_min_rate={}, select_order_max_rate={}",
+      this->select_order_random_seed, this->select_order_min_rate, this->select_order_max_rate);
 }
 
 std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalOrder::execute(

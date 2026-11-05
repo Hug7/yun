@@ -8,7 +8,6 @@
 #include <memory>
 #include <sol/sol.hpp>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include "algo_alns_parameter.h"
@@ -16,7 +15,7 @@
 #include "algo_alns_ruin.h"
 #include "algo_alns_sa.h"
 #include "c_random_utils.h"
-#include "pdm_workspace.h"
+#include "pdm_context.h"
 
 /**
  * @brief alns ruin×repair 组合的统计
@@ -70,15 +69,17 @@ class AlnsOperatorManager {
  public:
   /**
    * @brief 默认的ruin算子编码集合
+   * @details 元素顺序即默认注册顺序, 保证求解前打印与轮盘下标稳定
    */
-  inline static std::unordered_set<AlnsRuinOperatorCode> default_ruin_operator_codes{
+  inline static const std::vector<AlnsRuinOperatorCode> default_ruin_operator_codes{
       AlnsRuinOperatorCode::RuinRandomRemovalLoad,
       AlnsRuinOperatorCode::RuinRandomRemovalOrder,
   };
   /**
    * @brief 默认的repair算子编码集合
+   * @details 元素顺序即默认注册顺序, 保证求解前打印与轮盘下标稳定
    */
-  inline static std::unordered_set<AlnsRepairOperatorCode> default_repair_operator_codes{
+  inline static const std::vector<AlnsRepairOperatorCode> default_repair_operator_codes{
       AlnsRepairOperatorCode::RepairGreedy,
       AlnsRepairOperatorCode::RepairRegretK,
   };
@@ -149,6 +150,11 @@ class AlnsOperatorManager {
       const std::vector<AlnsOperatorCombination::UPtr>& operator_combinations);
 
   /**
+   * @brief 格式化求解时使用的算子及其参数（不含结尾换行）
+   */
+  [[nodiscard]] std::string format_operators() const;
+
+  /**
    * @brief 格式化算子统计文本（不含结尾换行）
    */
   [[nodiscard]] std::string format_statistics() const;
@@ -158,11 +164,11 @@ class AlnsOperatorManager {
  * @brief 创建alns算子(自定义)
  * @param cfg 算子集合
  * @param alns_parameter alns参数
- * @param workspace lua中定义的alns参数
+ * @param context solver上下文
  * @param parallel_executor 线程池, 由调用方持有, repair算子借用其并行构造修复矩阵
  * @return
  */
 std::unique_ptr<AlnsOperatorManager> create_alns_operator(const sol::table& cfg,
                                                           const AlnsParameter* alns_parameter,
-                                                          const Workspace* workspace,
+                                                          const SolverContext* context,
                                                           ParallelExecutor* parallel_executor);

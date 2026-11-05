@@ -6,6 +6,7 @@
 #include "algo_alns_parameter.h"
 
 #include <algorithm>
+#include <format>
 #include <stdexcept>
 #include <thread>
 
@@ -125,9 +126,30 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
         "AlnsParameter: `annealing_factor` must be in (0, 1), or <= 0 to derive it automatically");
   }
 
-  logger->info("[DEBUG-a4f2] parsed operator_min_weight={} operator_initial_weight={}",
-                 alns_parameter->operator_min_weight, alns_parameter->operator_initial_weight);
-  // TODO check 参数
+  logger->info(
+      "{}",
+      std::format("alns parameters:\n"
+                  "  worker_count={}\n"
+                  "  max_iter={}\n"
+                  "  max_sub_iter={}\n"
+                  "  max_unimproved_iter={}\n"
+                  "  print_log_interval_iter={}\n"
+                  "  max_running_time_sec={}\n"
+                  "  operator_learning_factor={}\n"
+                  "  operator_initial_weight={}\n"
+                  "  operator_min_weight={}\n"
+                  "  print_operator_statistics={}\n"
+                  "  initial_temperature={}\n"
+                  "  min_temperature={}\n"
+                  "  annealing_factor={}\n"
+                  "  default_random_seed={}",
+                  alns_parameter->worker_count, alns_parameter->max_iter,
+                  alns_parameter->max_sub_iter, alns_parameter->max_unimproved_iter,
+                  alns_parameter->print_log_interval_iter, alns_parameter->max_running_time_sec,
+                  alns_parameter->operator_learning_factor, alns_parameter->operator_initial_weight,
+                  alns_parameter->operator_min_weight, alns_parameter->print_operator_statistics,
+                  alns_parameter->initial_temperature, alns_parameter->min_temperature,
+                  alns_parameter->annealing_factor, alns_parameter->default_random_seed));
 
   return alns_parameter;
 }

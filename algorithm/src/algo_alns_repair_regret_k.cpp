@@ -6,6 +6,7 @@
 #include "algo_alns_repair_regret_k.h"
 
 #include <algorithm>
+#include <format>
 #include <limits>
 #include <ranges>
 #include <stdexcept>
@@ -83,6 +84,10 @@ AlnsRepairRegretK::AlnsRepairRegretK(const SolverContext* _context,
     throw std::invalid_argument(this->code + ": `regret_k` must be >= 1, got " +
                                 std::to_string(this->regret_k));
   }
+}
+
+std::string AlnsRepairRegretK::format_parameters() const {
+  return std::format("regret_k={}", this->regret_k);
 }
 
 void AlnsRepairRegretK::execute(RepairMatrix* repair_matrix) {

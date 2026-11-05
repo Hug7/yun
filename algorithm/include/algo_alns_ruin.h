@@ -69,5 +69,11 @@ class AlnsRuinOperator {
 
   virtual std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) = 0;
 
+  /**
+   * @brief 格式化算子参数, 用于求解前打印
+   * @return 形如 `a=1, b=2` 的参数文本; 无参数时返回空串
+   */
+  [[nodiscard]] virtual std::string format_parameters() const = 0;
+
   void call(Solution* sol);
 };
