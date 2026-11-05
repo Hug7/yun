@@ -66,7 +66,7 @@ Solution* AlnsModel::solve() const {
     this->operator_manager->update_operator_weights(operator_combinations);
     // 打印日志
     if (iter % this->parameter->print_log_interval_iter == 0) {
-      logger->info(std::format("iter={}, best_obj={}, cur_obj={}, tmp_obj={}", iter,
+      logger->info(std::format("iter={}, best_obj={:.2f}, cur_obj={:.2f}, tmp_obj={:.2f}", iter,
                                this->sol_manager->best_sol->total_obj_val(),
                                this->sol_manager->cur_sol->total_obj_val(),
                                this->sol_manager->tmp_sol->total_obj_val()));
@@ -83,9 +83,13 @@ Solution* AlnsModel::solve() const {
   logger->info("The alns calculation has been completed.");
   logger->info(std::format("execute iterations={}, running time={}s", last_iter, running_time_sec));
   logger->info(std::format(
-      "obj={}, cost={}, penalty={}, load count={}", this->sol_manager->best_sol->total_obj_val(),
+      "obj={:.2f}, cost={:.2f}, penalty={:.2f}, load count={}", this->sol_manager->best_sol->total_obj_val(),
       this->sol_manager->best_sol->total_cost(), this->sol_manager->best_sol->total_penalty(),
       this->sol_manager->best_sol->loads.size()));
+  // 输出算子统计
+  if (this->parameter->print_operator_statistics) {
+    logger->info("{}", this->operator_manager->format_statistics());
+  }
 
   // 克隆 best solution 作为输出解, 保证 sol_manager 可以正常回收
   return this->workspace->deep_copy_sol(this->sol_manager->best_sol);

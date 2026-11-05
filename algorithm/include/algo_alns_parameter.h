@@ -24,6 +24,8 @@ class AlnsParameterLuaField {
   static constexpr const char* MAX_RUNNING_TIME_SEC = "max_running_time_sec";
   static constexpr const char* OPERATOR_LEARNING_FACTOR = "operator_learning_factor";
   static constexpr const char* OPERATOR_INITIAL_WEIGHT = "operator_initial_weight";
+  static constexpr const char* OPERATOR_MIN_WEIGHT = "operator_min_weight";
+  static constexpr const char* PRINT_OPERATOR_STATISTICS = "print_operator_statistics";
   static constexpr const char* INITIAL_TEMPERATURE = "initial_temperature";
   static constexpr const char* MIN_TEMPERATURE = "min_temperature";
   static constexpr const char* ANNEALING_FACTOR = "annealing_factor";
@@ -71,6 +73,15 @@ class AlnsParameter {
    * @brief 算子初始权重
    */
   double operator_initial_weight{100.};
+  /**
+   * @brief 算子权重下限
+   * @details 权重自适应后取 max(weight, operator_min_weight), 避免算子被永久淘汰
+   */
+  double operator_min_weight{0.005};
+  /**
+   * @brief 是否在 alns 运行结束后打印算子统计
+   */
+  bool print_operator_statistics{false};
   /**
    * @brief 初始相对温度 tau_0
    * @details 无量纲。接受概率为 exp(-delta / (tau * f0))，f0 是初始解的总目标值，

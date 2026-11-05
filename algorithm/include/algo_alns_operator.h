@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <sol/sol.hpp>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -18,15 +19,31 @@
 #include "pdm_workspace.h"
 
 /**
+ * @brief alns ruin×repair 组合的统计
+ * @details 仅用于观测, 不参与权重计算
+ */
+class AlnsOperatorStat {
+ public:
+  /**
+   * @brief 算子分数累计
+   */
+  double score_sum{0};
+  /**
+   * @brief 使用次数
+   */
+  int usage{0};
+  /**
+   * @brief 平均分, usage 为 0 时返回 0
+   */
+  [[nodiscard]] double avg() const;
+};
+
+/**
  * @brief alns 算子的组合
  */
 class AlnsOperatorCombination {
  public:
   using UPtr = std::unique_ptr<AlnsOperatorCombination>;
-  /**
-   * @brief ruin 和 repair 组合算子的索引
-   */
-  const int operator_combination_ind;
   /**
    * @brief alns ruin 算子索引
    */
@@ -40,11 +57,8 @@ class AlnsOperatorCombination {
    */
   double operator_score{0};
 
-  explicit AlnsOperatorCombination(const int _operator_combination_ind,
-                                   const int _ruin_operator_ind, const int _repair_operator_ind)
-      : operator_combination_ind(_operator_combination_ind),
-        ruin_operator_ind(_ruin_operator_ind),
-        repair_operator_ind(_repair_operator_ind) {};
+  explicit AlnsOperatorCombination(const int _ruin_operator_ind, const int _repair_operator_ind)
+      : ruin_operator_ind(_ruin_operator_ind), repair_operator_ind(_repair_operator_ind) {};
   /**
    * @brief 计算算子状态码的分数
    * @param status_code 接受解的状态码
@@ -89,13 +103,18 @@ class AlnsOperatorManager {
    */
   int repair_operator_count{0};
   /**
-   * @brief ruin和repair算子组合权重的展开 [ruin_idx][repair_idx]
+   * @brief ruin 算子权重（按实例顺序，与 ruin_operators 一一对应）
    */
-  std::vector<double> operator_combination_weights;
+  std::vector<double> ruin_operator_weights;
   /**
-   * @brief 算子组合的数量
+   * @brief repair 算子权重（按实例顺序，与 repair_operators 一一对应）
    */
-  int operator_combination_count{0};
+  std::vector<double> repair_operator_weights;
+  /**
+   * @brief ruin×repair 组合的二维统计矩阵 [ruin_idx][repair_idx]
+   * @details 整轮累计, 不参与权重更新
+   */
+  std::vector<std::vector<AlnsOperatorStat>> operator_combination_stats;
   /**
    * @brief 选取算子的随机数
    */
@@ -111,6 +130,12 @@ class AlnsOperatorManager {
 
   void add_repair_operator(AlnsRepairOperator* repair_operator);
 
+  /**
+   * @brief 初始化权重与统计矩阵
+   * @details 必须在所有算子注册完成后调用, 且 ruin/repair 算子都不能为空
+   */
+  void init_weights();
+
   [[nodiscard]] AlnsRuinOperator* ruin_operator(
       const AlnsOperatorCombination::UPtr& operator_combination) const;
 
@@ -122,6 +147,11 @@ class AlnsOperatorManager {
 
   void update_operator_weights(
       const std::vector<AlnsOperatorCombination::UPtr>& operator_combinations);
+
+  /**
+   * @brief 格式化算子统计文本（不含结尾换行）
+   */
+  [[nodiscard]] std::string format_statistics() const;
 };
 
 /**

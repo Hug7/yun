@@ -79,7 +79,7 @@ AlnsSimulatedAnnealing::AlnsSimulatedAnnealing(const AlnsParameter* alns_paramet
           "AlnsSimulatedAnnealing: init solution is null, objective scale falls back to 1.0");
     } else {
       this->logger->debug(
-          "AlnsSimulatedAnnealing: f0={:.6f} obj_scale={:.6f} tau0={:.6e} tau_min={:.6e} "
+          "AlnsSimulatedAnnealing: f0={:.2f} obj_scale={:.2f} tau0={:.6e} tau_min={:.6e} "
           "annealing_factor={:.6f}",
           init_sol->total_obj_val(), this->obj_scale, this->relative_temperature,
           this->min_relative_temperature, this->annealing_factor);

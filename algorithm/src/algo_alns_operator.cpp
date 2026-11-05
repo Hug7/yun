@@ -6,12 +6,19 @@
 #include "algo_alns_operator.h"
 
 #include <algorithm>
+#include <format>
 #include <stdexcept>
+#include <utility>
 
 #include "algo_alns_repair_greedy.h"
 #include "algo_alns_repair_regret_k.h"
 #include "algo_alns_ruin_random_removal_load.h"
 #include "algo_alns_ruin_random_removal_order.h"
+
+// ====== implement of AlnsOperatorStat ======
+double AlnsOperatorStat::avg() const {
+  return this->usage > 0 ? this->score_sum / static_cast<double>(this->usage) : 0.0;
+}
 
 // ====== implement of AlnsOperatorCombination ======
 void AlnsOperatorCombination::cal_operator_score(const AlnsSaAcceptStatusCode& status_code) {
@@ -50,6 +57,21 @@ void AlnsOperatorManager::add_repair_operator(AlnsRepairOperator* repair_operato
   ++this->repair_operator_count;
 }
 
+void AlnsOperatorManager::init_weights() {
+  if (this->ruin_operator_count <= 0) {
+    throw std::invalid_argument("AlnsOperatorManager: `ruin_operator_params` must not be empty");
+  }
+  if (this->repair_operator_count <= 0) {
+    throw std::invalid_argument("AlnsOperatorManager: `repair_operator_params` must not be empty");
+  }
+  this->ruin_operator_weights.assign(this->ruin_operator_count,
+                                     this->parameter->operator_initial_weight);
+  this->repair_operator_weights.assign(this->repair_operator_count,
+                                       this->parameter->operator_initial_weight);
+  this->operator_combination_stats.assign(
+      this->ruin_operator_count, std::vector<AlnsOperatorStat>(this->repair_operator_count));
+}
+
 AlnsRuinOperator* AlnsOperatorManager::ruin_operator(
     const AlnsOperatorCombination::UPtr& operator_combination) const {
   return this->ruin_operators[operator_combination->ruin_operator_ind];
@@ -62,26 +84,37 @@ AlnsRepairOperator* AlnsOperatorManager::repair_operator(
 
 std::vector<AlnsOperatorCombination::UPtr> AlnsOperatorManager::roulette_wheel_operator(
     const int turned_count) const {
-  // 构建轮盘
-  double total_weight = 0;                   // 总权重
-  std::vector<double> accumulation_weights;  // 累积权重
-  accumulation_weights.reserve(this->operator_combination_count);
-  for (int u = 0; u < this->operator_combination_count; ++u) {
-    total_weight += this->operator_combination_weights[u];
-    accumulation_weights.push_back(total_weight);
-  }
-  // 转动轮盘
+  // 分别构建 ruin 和 repair 的累积权重轮盘
+  const auto accumulate = [](const std::vector<double>& weights) {
+    std::vector<double> accumulation_weights;
+    accumulation_weights.reserve(weights.size());
+    double total_weight = 0;
+    for (const double weight : weights) {
+      total_weight += weight;
+      accumulation_weights.push_back(total_weight);
+    }
+    return std::pair{std::move(accumulation_weights), total_weight};
+  };
+  // 转动一次轮盘, 累积数组升序, 二分查找第一个 >= wheel_val 的位置即差距最小的那个
+  const auto draw = [this](const std::vector<double>& accumulation_weights,
+                           const double total_weight) {
+    const double wheel_val = this->select_operator_random->random_double(0, total_weight);
+    return static_cast<int>(std::distance(
+        accumulation_weights.begin(), std::ranges::lower_bound(accumulation_weights, wheel_val)));
+  };
+
+  const auto [ruin_accumulation_weights, ruin_total_weight] =
+      accumulate(this->ruin_operator_weights);
+  const auto [repair_accumulation_weights, repair_total_weight] =
+      accumulate(this->repair_operator_weights);
+
   std::vector<AlnsOperatorCombination::UPtr> operator_combinations;
   operator_combinations.reserve(turned_count);
-  const int repair_count = static_cast<int>(this->repair_operators.size());
   for (int u = 0; u < turned_count; ++u) {
-    const double wheel_val = this->select_operator_random->random_double(0, total_weight);
-    // 二分查找累积权重中第一个 >= wheel_val 的位置，累积数组升序，故它即差距最小的那个
-    const int combination_ind = static_cast<int>(std::distance(
-        accumulation_weights.begin(), std::ranges::lower_bound(accumulation_weights, wheel_val)));
-    // 展开索引还原为二维下标：[ruin_idx][repair_idx] -> ruin_ind * repair_count + repair_ind
+    // ruin 与 repair 独立抽取, 组合概率为两组边缘权重之积
     operator_combinations.emplace_back(std::make_unique<AlnsOperatorCombination>(
-        combination_ind, combination_ind / repair_count, combination_ind % repair_count));
+        draw(ruin_accumulation_weights, ruin_total_weight),
+        draw(repair_accumulation_weights, repair_total_weight)));
   }
 
   return operator_combinations;
@@ -89,27 +122,98 @@ std::vector<AlnsOperatorCombination::UPtr> AlnsOperatorManager::roulette_wheel_o
 
 void AlnsOperatorManager::update_operator_weights(
     const std::vector<AlnsOperatorCombination::UPtr>& operator_combinations) {
-  std::vector<double> accumulation_scores;
-  accumulation_scores.assign(this->operator_combination_count, 0.0);
-
-  std::vector<int> operator_combination_usages;
-  operator_combination_usages.assign(this->operator_combination_count, 0);
+  const int ruin_count = static_cast<int>(this->ruin_operator_weights.size());
+  const int repair_count = static_cast<int>(this->repair_operator_weights.size());
+  // 边缘样本池: 同一得分原样计入该 ruin 和该 repair
+  std::vector<double> ruin_scores(ruin_count, 0.0);
+  std::vector<double> repair_scores(repair_count, 0.0);
+  std::vector<int> ruin_usages(ruin_count, 0);
+  std::vector<int> repair_usages(repair_count, 0);
 
   for (const auto& operator_combination : operator_combinations) {
-    accumulation_scores[operator_combination->operator_combination_ind] +=
-        operator_combination->operator_score;
-    ++operator_combination_usages[operator_combination->operator_combination_ind];
+    const int ruin_ind = operator_combination->ruin_operator_ind;
+    const int repair_ind = operator_combination->repair_operator_ind;
+    const double score = operator_combination->operator_score;
+    // 二维统计矩阵
+    AlnsOperatorStat& stat = this->operator_combination_stats[ruin_ind][repair_ind];
+    stat.score_sum += score;
+    ++stat.usage;
+    // 两组边缘样本池
+    ruin_scores[ruin_ind] += score;
+    ++ruin_usages[ruin_ind];
+    repair_scores[repair_ind] += score;
+    ++repair_usages[repair_ind];
   }
 
-  for (int u = 0; u < this->operator_combination_count; ++u) {
-    if (operator_combination_usages[u] > 0) {
-      this->operator_combination_weights[u] =
-          (1 - this->parameter->operator_learning_factor) * this->operator_combination_weights[u];
-      this->operator_combination_weights[u] += this->parameter->operator_learning_factor *
-                                               accumulation_scores[u] /
-                                               operator_combination_usages[u];
+  const double learning_factor = this->parameter->operator_learning_factor;
+  const double min_weight = this->parameter->operator_min_weight;
+  for (int i = 0; i < ruin_count; ++i) {
+    if (ruin_usages[i] > 0) {
+      const double weight = (1 - learning_factor) * this->ruin_operator_weights[i] +
+                            learning_factor * ruin_scores[i] / static_cast<double>(ruin_usages[i]);
+      // 下限避免算子被永久淘汰
+      this->ruin_operator_weights[i] = std::max(weight, min_weight);
     }
   }
+  for (int j = 0; j < repair_count; ++j) {
+    if (repair_usages[j] > 0) {
+      const double weight =
+          (1 - learning_factor) * this->repair_operator_weights[j] +
+          learning_factor * repair_scores[j] / static_cast<double>(repair_usages[j]);
+      this->repair_operator_weights[j] = std::max(weight, min_weight);
+    }
+  }
+}
+
+std::string AlnsOperatorManager::format_statistics() const {
+  const auto format_avg = [](const int usage, const double score_sum) {
+    return usage > 0 ? std::format("{:.3f}", score_sum / static_cast<double>(usage))
+                     : std::string("-");
+  };
+  const int ruin_count = static_cast<int>(this->operator_combination_stats.size());
+  const int repair_count =
+      ruin_count > 0 ? static_cast<int>(this->operator_combination_stats.front().size()) : 0;
+
+  std::string text = std::format("alns operator statistics: ruin_count={} repair_count={}",
+                                 ruin_count, repair_count);
+  text += "\ncombination of ruin and repair operators:";
+  for (int u = 0; u < ruin_count; ++u) {
+    const auto& row = this->operator_combination_stats[u];
+    for (int m = 0; m < repair_count; ++m) {
+      const auto& stat = row[m];
+      text += std::format("\n  ruin[{}]={} repair[{}]={} usage={} score_sum={:.1f} avg={}", u,
+                          this->ruin_operators[u]->code, m, this->repair_operators[m]->code,
+                          stat.usage, stat.score_sum, format_avg(stat.usage, stat.score_sum));
+    }
+  }
+  // ruin 的边缘统计（行求和）
+  text += "\nmarginal ruin operators:";
+  for (int u = 0; u < ruin_count; ++u) {
+    const auto& row = this->operator_combination_stats[u];
+    double ruin_score_sum = 0;
+    int ruin_usage = 0;
+    for (const auto& stat : row) {
+      ruin_score_sum += stat.score_sum;
+      ruin_usage += stat.usage;
+    }
+    text += std::format("\n  ruin[{}]={} weight={:.3f} usage={} score_sum={:.1f} avg={}", u,
+                        this->ruin_operators[u]->code, this->ruin_operator_weights[u], ruin_usage,
+                        ruin_score_sum, format_avg(ruin_usage, ruin_score_sum));
+  }
+  // repair 的边缘统计（列求和）
+  text += "\nmarginal repair operators:";
+  for (int m = 0; m < repair_count; ++m) {
+    double score_sum = 0;
+    int usage = 0;
+    for (int i = 0; i < ruin_count; ++i) {
+      score_sum += this->operator_combination_stats[i][m].score_sum;
+      usage += this->operator_combination_stats[i][m].usage;
+    }
+    text += std::format("\n  repair[{}]={} weight={:.3f} usage={} score_sum={:.1f} avg={}",
+                        m, this->repair_operators[m]->code, this->repair_operator_weights[m], usage,
+                        score_sum, format_avg(usage, score_sum));
+  }
+  return text;
 }
 
 // ====== implement of create_alns_operator ======
@@ -239,10 +343,7 @@ std::unique_ptr<AlnsOperatorManager> create_alns_operator(const sol::table& cfg,
   // 创建repair算子
   create_alns_repair_operator(alns_operator_manager.get(), cfg, alns_parameter, workspace,
                               parallel_executor);
-  // 初始化权重
-  alns_operator_manager->operator_combination_count =
-      alns_operator_manager->ruin_operator_count * alns_operator_manager->repair_operator_count;
-  alns_operator_manager->operator_combination_weights.assign(
-      alns_operator_manager->operator_combination_count, alns_parameter->operator_initial_weight);
+  // 初始化权重与统计矩阵
+  alns_operator_manager->init_weights();
   return alns_operator_manager;
 }

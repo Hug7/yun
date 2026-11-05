@@ -60,8 +60,29 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
     alns_parameter->operator_initial_weight =
         static_cast<double>(cfg[AlnsParameterLuaField::OPERATOR_INITIAL_WEIGHT]);
     if (alns_parameter->operator_initial_weight < 1) {
-      throw std::invalid_argument("operator_learning_factor must be >= 1");
+      throw std::invalid_argument("AlnsParameter: `operator_initial_weight` must be >= 1");
     }
+  }
+
+  if (cfg[AlnsParameterLuaField::OPERATOR_MIN_WEIGHT].valid()) {
+    alns_parameter->operator_min_weight =
+        static_cast<double>(cfg[AlnsParameterLuaField::OPERATOR_MIN_WEIGHT]);
+    if (alns_parameter->operator_min_weight <= 0) {
+      throw std::invalid_argument("AlnsParameter: `operator_min_weight` must be > 0");
+    }
+  }
+  if (alns_parameter->operator_min_weight >= alns_parameter->operator_initial_weight) {
+    throw std::invalid_argument(
+        "AlnsParameter: `operator_min_weight` must be < `operator_initial_weight`");
+  }
+
+  if (cfg[AlnsParameterLuaField::PRINT_OPERATOR_STATISTICS].valid()) {
+    const sol::object print_operator_statistics =
+        cfg[AlnsParameterLuaField::PRINT_OPERATOR_STATISTICS];
+    if (!print_operator_statistics.is<bool>()) {
+      throw std::invalid_argument("AlnsParameter: `print_operator_statistics` must be a boolean");
+    }
+    alns_parameter->print_operator_statistics = print_operator_statistics.as<bool>();
   }
 
   if (cfg[AlnsParameterLuaField::INITIAL_TEMPERATURE].valid()) {
@@ -104,6 +125,8 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
         "AlnsParameter: `annealing_factor` must be in (0, 1), or <= 0 to derive it automatically");
   }
 
+  logger->info("[DEBUG-a4f2] parsed operator_min_weight={} operator_initial_weight={}",
+                 alns_parameter->operator_min_weight, alns_parameter->operator_initial_weight);
   // TODO check 参数
 
   return alns_parameter;
