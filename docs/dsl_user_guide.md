@@ -146,7 +146,9 @@ alns({
 开启`print_operator_statistics`时，整个 alns 运行结束后会打印一张 `[ruin][repair]` 二维统计表（每个组合的分数累计、使用次数、平均分）以及 ruin和repair 的单独汇总。
 统计只用于观测，不参与权重计算。
 
-ruin 或 repair 算子数组为空时，`alns` 会使用默认算子（ruin 为 `RuinRandomRemovalLoad`、`RuinRandomRemovalOrder`，repair 为 `RepairGreedy`、`RepairRegretK`，参数取各自默认值）。
+ruin 或 repair 算子数组为空时，`alns` 会使用默认算子（
+ruin 为 `RuinRandomRemovalLoad`、`RuinRandomRemovalOrder`、`RuinWorstRemovalOrder`，
+repair 为 `RepairGreedy`、`RepairRegretK`，参数取各自默认值）。
 每次执行算法前，`alns` 都会打印实际使用的算子及其参数，便于确认默认兜底是否生效。
 
 数组中每个元素为`table`，必含字段`code`（算子编码字符串），可选字段`params`（`table`，算子私有参数，缺省时用算子内部默认值）。
@@ -176,6 +178,20 @@ ruin_operator_params = {
 | `select_order_min_rate` | double | `0.1` | 被移除订单数占当前已分配订单数的最小比例，区间 `[0, 1]`。 |
 | `select_order_max_rate` | double | `0.4` | 被移除订单数的最大比例，区间 `[0, 1]`；必须 `>= select_order_min_rate`。 |
 | `select_order_random_seed` | int | `37` | 选择订单的随机种子。 |
+
+**RuinWorstRemovalOrder（ruin）** — 移除最差订单。
+
+按「把该订单从所属车次摘掉后，该车次目标值的下降量」排序，优先移除收益最大的订单。目标值口径与 repair 一致，
+包含硬约束罚分、软约束罚分与计费成本，因此看重的不只是距离，也包括时间窗、可用车辆与计费项的影响。
+
+排序后按 `pos = ⌊n · y^p⌋`（`y ~ U(0,1)`）随机取位：`p` 越大越集中在收益最高者，`p = 1` 等价于在候选池上均匀随机。
+
+| `params` 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `select_order_min_rate` | double | `0.1` | 被移除订单数占当前已分配订单数的最小比例，区间 `[0, 1]`。 |
+| `select_order_max_rate` | double | `0.3` | 被移除订单数的最大比例，区间 `[0, 1]`；必须 `>= select_order_min_rate`。 |
+| `select_order_random_seed` | int | `37` | 选择订单的随机种子。 |
+| `select_order_noise_exponent` | double | `3.0` | 贪心指数 `p`，必须 `>= 1`；越大越偏向收益最高的订单。 |
 
 **RepairGreedy（repair）** — 贪心修复。
 

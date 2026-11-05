@@ -15,6 +15,7 @@
 #include "algo_alns_repair_regret_k.h"
 #include "algo_alns_ruin_random_removal_load.h"
 #include "algo_alns_ruin_random_removal_order.h"
+#include "algo_alns_ruin_worst_removal_order.h"
 
 // ====== implement of AlnsOperatorStat ======
 double AlnsOperatorStat::avg() const {
@@ -266,6 +267,8 @@ void create_ruin_operator(AlnsOperatorManager* alns_operator_manager,
     alns_operator_manager->add_ruin_operator(new AlnsRuinRandomRemovalLoad(context, params));
   } else if (code == AlnsRuinOperatorCode::RuinRandomRemovalOrder) {
     alns_operator_manager->add_ruin_operator(new AlnsRuinRandomRemovalOrder(context, params));
+  } else if (code == AlnsRuinOperatorCode::RuinWorstRemovalOrder) {
+    alns_operator_manager->add_ruin_operator(new AlnsRuinWorstRemovalOrder(context, params));
   } else {
     throw std::invalid_argument("alns ruin operator code: " +
                                 std::string(magic_enum::enum_name(code)) + " is not supported!");

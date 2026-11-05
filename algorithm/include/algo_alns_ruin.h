@@ -20,6 +20,7 @@
 enum class AlnsRuinOperatorCode {
   RuinRandomRemovalLoad,
   RuinRandomRemovalOrder,
+  RuinWorstRemovalOrder,
 };
 
 constexpr AlnsRuinOperatorCode convert_alns_ruin_operator_code(const std::string& code) {
@@ -27,6 +28,8 @@ constexpr AlnsRuinOperatorCode convert_alns_ruin_operator_code(const std::string
     return AlnsRuinOperatorCode::RuinRandomRemovalLoad;
   } else if (code == "RuinRandomRemovalOrder") {
     return AlnsRuinOperatorCode::RuinRandomRemovalOrder;
+  } else if (code == "RuinWorstRemovalOrder") {
+    return AlnsRuinOperatorCode::RuinWorstRemovalOrder;
   } else {
     throw std::invalid_argument("Invalid AlnsRuinOperatorCode = " + code);
   }

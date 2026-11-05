@@ -15,6 +15,11 @@ add_executable(algo_alns_operator_test algorithm/algo_alns_operator_test.cpp)
 target_link_libraries(algo_alns_operator_test PRIVATE yun_algorithm sol2::sol2 GTest::gtest_main)
 add_test(NAME algo_alns_operator_test COMMAND algo_alns_operator_test)
 
+add_executable(algo_alns_ruin_worst_removal_test algorithm/algo_alns_ruin_worst_removal_test.cpp)
+target_link_libraries(algo_alns_ruin_worst_removal_test PRIVATE
+    yun_algorithm sol2::sol2 GTest::gtest_main)
+add_test(NAME algo_alns_ruin_worst_removal_test COMMAND algo_alns_ruin_worst_removal_test)
+
 add_executable(bd_time_window_utils_test scenario/bd_time_window_utils_test.cpp)
 target_link_libraries(bd_time_window_utils_test PRIVATE yun_scenario GTest::gtest_main)
 add_test(NAME bd_time_window_utils_test COMMAND bd_time_window_utils_test)

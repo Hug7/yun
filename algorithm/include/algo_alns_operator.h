@@ -74,6 +74,7 @@ class AlnsOperatorManager {
   inline static const std::vector<AlnsRuinOperatorCode> default_ruin_operator_codes{
       AlnsRuinOperatorCode::RuinRandomRemovalLoad,
       AlnsRuinOperatorCode::RuinRandomRemovalOrder,
+      AlnsRuinOperatorCode::RuinWorstRemovalOrder,
   };
   /**
    * @brief 默认的repair算子编码集合
