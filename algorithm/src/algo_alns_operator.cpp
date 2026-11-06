@@ -17,6 +17,18 @@
 #include "algo_alns_ruin_random_removal_order.h"
 #include "algo_alns_ruin_worst_removal_order.h"
 
+namespace {
+/**
+ * @brief Ropke & Pisinger (2006) 的算子奖励 σ 分数
+ * @details σ1: 得到新的全局最优解; σ2: 优于当前解; σ3: 被 SA 接受但劣于当前解;
+ *          σ4: 被拒绝。注意 σ3 > σ2 是 R&P 的刻意设计, 用于鼓励多样化。
+ */
+constexpr double kSigmaNewBest = 33.0;
+constexpr double kSigmaBetterThanCurrent = 9.0;
+constexpr double kSigmaAcceptedWorse = 13.0;
+constexpr double kSigmaRejected = 0.0;
+}  // namespace
+
 // ====== implement of AlnsOperatorStat ======
 double AlnsOperatorStat::avg() const {
   return this->usage > 0 ? this->score_sum / static_cast<double>(this->usage) : 0.0;
@@ -25,13 +37,13 @@ double AlnsOperatorStat::avg() const {
 // ====== implement of AlnsOperatorCombination ======
 void AlnsOperatorCombination::cal_operator_score(const AlnsSaAcceptStatusCode& status_code) {
   if (status_code == AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION) {
-    this->operator_score = 5;
+    this->operator_score = kSigmaNewBest;
   } else if (status_code == AlnsSaAcceptStatusCode::DOMINATE_CURRENT_SOLUTION) {
-    this->operator_score = 3;
+    this->operator_score = kSigmaBetterThanCurrent;
   } else if (status_code == AlnsSaAcceptStatusCode::PROBABILITY_ACCEPT) {
-    this->operator_score = 1;
+    this->operator_score = kSigmaAcceptedWorse;
   } else if (status_code == AlnsSaAcceptStatusCode::REJECT) {
-    this->operator_score = 0;
+    this->operator_score = kSigmaRejected;
   }
 }
 
@@ -72,6 +84,12 @@ void AlnsOperatorManager::init_weights() {
                                        this->parameter->operator_initial_weight);
   this->operator_combination_stats.assign(
       this->ruin_operator_count, std::vector<AlnsOperatorStat>(this->repair_operator_count));
+  // segment 累计池
+  this->segment_ruin_score_sums.assign(this->ruin_operator_count, 0.0);
+  this->segment_repair_score_sums.assign(this->repair_operator_count, 0.0);
+  this->segment_ruin_usages.assign(this->ruin_operator_count, 0);
+  this->segment_repair_usages.assign(this->repair_operator_count, 0);
+  this->segment_iter_count = 0;
 }
 
 AlnsRuinOperator* AlnsOperatorManager::ruin_operator(
@@ -124,14 +142,7 @@ std::vector<AlnsOperatorCombination::UPtr> AlnsOperatorManager::roulette_wheel_o
 
 void AlnsOperatorManager::update_operator_weights(
     const std::vector<AlnsOperatorCombination::UPtr>& operator_combinations) {
-  const int ruin_count = static_cast<int>(this->ruin_operator_weights.size());
-  const int repair_count = static_cast<int>(this->repair_operator_weights.size());
-  // 边缘样本池: 同一得分原样计入该 ruin 和该 repair
-  std::vector<double> ruin_scores(ruin_count, 0.0);
-  std::vector<double> repair_scores(repair_count, 0.0);
-  std::vector<int> ruin_usages(ruin_count, 0);
-  std::vector<int> repair_usages(repair_count, 0);
-
+  // 1) 累计: 二维观测统计整轮不清零; 边缘得分与使用次数按 segment 累计
   for (const auto& operator_combination : operator_combinations) {
     const int ruin_ind = operator_combination->ruin_operator_ind;
     const int repair_ind = operator_combination->repair_operator_ind;
@@ -140,31 +151,45 @@ void AlnsOperatorManager::update_operator_weights(
     AlnsOperatorStat& stat = this->operator_combination_stats[ruin_ind][repair_ind];
     stat.score_sum += score;
     ++stat.usage;
-    // 两组边缘样本池
-    ruin_scores[ruin_ind] += score;
-    ++ruin_usages[ruin_ind];
-    repair_scores[repair_ind] += score;
-    ++repair_usages[repair_ind];
+    // 当前 segment 的两组边缘样本池
+    this->segment_ruin_score_sums[ruin_ind] += score;
+    ++this->segment_ruin_usages[ruin_ind];
+    this->segment_repair_score_sums[repair_ind] += score;
+    ++this->segment_repair_usages[repair_ind];
   }
 
-  const double learning_factor = this->parameter->operator_learning_factor;
+  // 2) 未到 segment 边界时只累计, 不更新权重
+  ++this->segment_iter_count;
+  if (this->segment_iter_count < this->parameter->operator_weight_update_interval_iter) {
+    return;
+  }
+
+  // 3) 段末用池化均值按反应因子更新
+  const double reaction_factor = this->parameter->operator_learning_factor;
   const double min_weight = this->parameter->operator_min_weight;
-  for (int i = 0; i < ruin_count; ++i) {
-    if (ruin_usages[i] > 0) {
-      const double weight = (1 - learning_factor) * this->ruin_operator_weights[i] +
-                            learning_factor * ruin_scores[i] / static_cast<double>(ruin_usages[i]);
-      // 下限避免算子被永久淘汰
-      this->ruin_operator_weights[i] = std::max(weight, min_weight);
+  const auto update_weights = [reaction_factor, min_weight](const std::vector<double>& score_sums,
+                                                            const std::vector<int>& usages,
+                                                            std::vector<double>& weights) {
+    for (int i = 0; i < static_cast<int>(weights.size()); ++i) {
+      if (usages[i] > 0) {
+        const double mean_score = score_sums[i] / static_cast<double>(usages[i]);
+        const double weight = (1.0 - reaction_factor) * weights[i] + reaction_factor * mean_score;
+        // 下限避免算子被永久淘汰
+        weights[i] = std::max(weight, min_weight);
+      }
     }
-  }
-  for (int j = 0; j < repair_count; ++j) {
-    if (repair_usages[j] > 0) {
-      const double weight =
-          (1 - learning_factor) * this->repair_operator_weights[j] +
-          learning_factor * repair_scores[j] / static_cast<double>(repair_usages[j]);
-      this->repair_operator_weights[j] = std::max(weight, min_weight);
-    }
-  }
+  };
+  update_weights(this->segment_ruin_score_sums, this->segment_ruin_usages,
+                 this->ruin_operator_weights);
+  update_weights(this->segment_repair_score_sums, this->segment_repair_usages,
+                 this->repair_operator_weights);
+
+  // 4) 重置 segment 累计池, 开始下一个 segment
+  std::fill(this->segment_ruin_score_sums.begin(), this->segment_ruin_score_sums.end(), 0.0);
+  std::fill(this->segment_repair_score_sums.begin(), this->segment_repair_score_sums.end(), 0.0);
+  std::fill(this->segment_ruin_usages.begin(), this->segment_ruin_usages.end(), 0);
+  std::fill(this->segment_repair_usages.begin(), this->segment_repair_usages.end(), 0);
+  this->segment_iter_count = 0;
 }
 
 std::string AlnsOperatorManager::format_operators() const {

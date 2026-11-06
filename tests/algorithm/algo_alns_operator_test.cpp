@@ -21,8 +21,8 @@
 
 namespace {
 
-constexpr double kInitialWeight = 100.0;
-constexpr double kMinWeight = 0.005;
+constexpr double kInitialWeight = 1.0;
+constexpr double kMinWeight = 0.05;
 
 /**
  * @brief ruin 算子测试替身
@@ -56,10 +56,11 @@ class FakeRepair final : public AlnsRepairOperator {
  */
 class OperatorManagerFixture {
  public:
-  explicit OperatorManagerFixture(const double learning_factor) {
+  explicit OperatorManagerFixture(const double learning_factor, const int update_interval = 1) {
     this->parameter.operator_learning_factor = learning_factor;
     this->parameter.operator_initial_weight = kInitialWeight;
     this->parameter.operator_min_weight = kMinWeight;
+    this->parameter.operator_weight_update_interval_iter = update_interval;
     this->manager = std::make_unique<AlnsOperatorManager>(&this->parameter);
   }
 
@@ -135,6 +136,15 @@ TEST(AlnsOperatorManagerTest, InitWeightsRejectsEmptyOperatorSets) {
   EXPECT_THROW(no_ruin_fixture.operator_manager().init_weights(), std::invalid_argument);
 }
 
+// ====== 参数默认值 ======
+TEST(AlnsParameterTest, WeightDefaultsUseRopkePisingerScale) {
+  AlnsParameter parameter;
+  EXPECT_DOUBLE_EQ(parameter.operator_initial_weight, 1.0);
+  EXPECT_DOUBLE_EQ(parameter.operator_learning_factor, 0.35);
+  EXPECT_DOUBLE_EQ(parameter.operator_min_weight, 0.05);
+  EXPECT_EQ(parameter.operator_weight_update_interval_iter, 5);
+}
+
 // ====== 轮盘 ======
 TEST(AlnsOperatorManagerTest, RouletteProducesIndicesInsideRange) {
   OperatorManagerFixture fixture(0.5);
@@ -149,6 +159,24 @@ TEST(AlnsOperatorManagerTest, RouletteProducesIndicesInsideRange) {
     EXPECT_GE(operator_combination->repair_operator_ind, 0);
     EXPECT_LT(operator_combination->repair_operator_ind, 3);
   }
+}
+
+// ====== Ropke-Pisinger σ 分数 ======
+TEST(AlnsOperatorManagerTest, CalOperatorScoreUsesRopkePisingerSigma) {
+  AlnsOperatorCombination combination(0, 0);
+
+  combination.cal_operator_score(AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION);
+  EXPECT_DOUBLE_EQ(combination.operator_score, 33.0);
+
+  combination.cal_operator_score(AlnsSaAcceptStatusCode::DOMINATE_CURRENT_SOLUTION);
+  EXPECT_DOUBLE_EQ(combination.operator_score, 9.0);
+
+  // σ3 > σ2: 接受劣解比优于当前解奖励更高, 用于鼓励多样化
+  combination.cal_operator_score(AlnsSaAcceptStatusCode::PROBABILITY_ACCEPT);
+  EXPECT_DOUBLE_EQ(combination.operator_score, 13.0);
+
+  combination.cal_operator_score(AlnsSaAcceptStatusCode::REJECT);
+  EXPECT_DOUBLE_EQ(combination.operator_score, 0.0);
 }
 
 // ====== 池化 EWMA ======
@@ -170,6 +198,29 @@ TEST(AlnsOperatorManagerTest, UpdateWeightsUsesPooledMarginalScores) {
   EXPECT_DOUBLE_EQ(manager.ruin_operator_weights[1], 0.5 * kInitialWeight + 0.5 * 1);
   EXPECT_DOUBLE_EQ(manager.repair_operator_weights[0], 0.5 * kInitialWeight + 0.5 * 3);
   EXPECT_DOUBLE_EQ(manager.repair_operator_weights[1], 0.5 * kInitialWeight + 0.5 * 3);
+}
+
+TEST(AlnsOperatorManagerTest, UpdateWeightsWaitsForSegmentBoundary) {
+  OperatorManagerFixture fixture(0.5, 3);
+  fixture.add_operators(1, 1);
+  fixture.operator_manager().init_weights();
+
+  // 前两次只累计, 权重保持初值
+  fixture.operator_manager().update_operator_weights(make_combinations({{0, 0, 33}}));
+  fixture.operator_manager().update_operator_weights(make_combinations({{0, 0, 33}}));
+  EXPECT_DOUBLE_EQ(fixture.operator_manager().ruin_operator_weights[0], kInitialWeight);
+
+  // 第三次到达段边界, 按 segment 内池化均值 33 更新
+  fixture.operator_manager().update_operator_weights(make_combinations({{0, 0, 33}}));
+  EXPECT_DOUBLE_EQ(fixture.operator_manager().ruin_operator_weights[0],
+                   0.5 * kInitialWeight + 0.5 * 33);
+  EXPECT_DOUBLE_EQ(fixture.operator_manager().repair_operator_weights[0],
+                   0.5 * kInitialWeight + 0.5 * 33);
+
+  // 段末清零, 下一次仍只累计
+  fixture.operator_manager().update_operator_weights(make_combinations({{0, 0, 0}}));
+  EXPECT_DOUBLE_EQ(fixture.operator_manager().ruin_operator_weights[0],
+                   0.5 * kInitialWeight + 0.5 * 33);
 }
 
 TEST(AlnsOperatorManagerTest, UpdateWeightsKeepsUnusedOperators) {

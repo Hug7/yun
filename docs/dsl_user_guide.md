@@ -125,9 +125,10 @@ alns({
 | `max_stagnate_iter` | int | `20` | 最优解超过`最大停滞迭代次数`没有更新，则触发重置当前解，取值范围>=1。 |
 | `print_log_interval_iter` | int | `10` | 打印日志的间隔迭代次数，取值范围>=1。 |
 | `max_running_time_sec` | int | `600` | 最大运行时长（秒），到时终止搜索，取值范围>=1。 |
-| `operator_learning_factor` | double | `0.35` | 算子权重自适应学习因子。必须满足 `0 < x < 1`，否则抛异常。 |
-| `operator_initial_weight` | double | `100.0` | 算子初始权重。ruin 与 repair 两组权重都从该值起步。必须 `>= 1`，否则抛异常。 |
-| `operator_min_weight` | double | `0.005` | 算子权重下限。权重自适应后取 `max(weight, operator_min_weight)`，避免算子被永久淘汰。必须 `> 0` 且小于 `operator_initial_weight`，否则抛异常。 |
+| `operator_learning_factor` | double | `0.35` | 算子权重的反应因子 ρ（Ropke-Pisinger）。每个 segment 结束时按 `w ← (1-ρ)·w + ρ·π/θ` 更新一次。必须满足 `0 < x < 1`，否则抛异常。 |
+| `operator_initial_weight` | double | `1.0` | 算子初始权重。ruin 与 repair 两组权重都从该值起步，与 σ 分数同量级。必须 `> 0`，否则抛异常。 |
+| `operator_min_weight` | double | `0.05` | 算子权重下限。权重更新后取 `max(weight, operator_min_weight)`，避免算子被永久淘汰。必须 `> 0` 且小于 `operator_initial_weight`，否则抛异常。 |
+| `operator_weight_update_interval_iter` | int | `5` | 算子权重的更新间隔（外层迭代数）。每个 segment 内累计各算子的得分与使用次数，段末统一更新；必须 `0 < x <= 20`，否则抛异常。 |
 | `initial_temperature` | double | `2.0e-2` | 初始**相对**温度 τ₀（无量纲）。接受概率为 `exp(-Δf / (τ·f0))`，`f0` 是初始解的总目标值，故该值不随算例目标值量级变化；建议 `1e-3 ~ 2e-1`，大于 `1` 会告警。`initial_temperature`必须大于 `min_temperature`否则抛异常。 |
 | `min_temperature` | double | `2.0e-5` | 最小相对温度 τ_end（无量纲），温度取到该值后不再下降。 |
 | `annealing_factor` | double | `0.0` | 冷却系数 α，需满足 `0 < α < 1`；置为 `<= 0` 时由 `α = (τ_end / τ₀) ^ (1 / max_iter)` 自动推导，保证最后一轮恰好降到 τ_end。 |
@@ -142,7 +143,19 @@ alns({
 
 `ruin`（破坏）与`repair`（修复）算子各以数组形式配置。算法分别为两组算子维护一维权重（都由`operator_initial_weight`初始化），
 每轮迭代先按 ruin 权重、再按 repair 权重各转一次轮盘，抽出一个组合执行；某个组合被抽中的概率是该 ruin 与 repair 权重之积。
-执行结果按`operator_learning_factor`做指数滑动平均，更新到对应的 ruin 与 repair 权重上，并限制在`operator_min_weight`以上，避免算子被永久淘汰。
+每个 segment（`operator_weight_update_interval_iter` 轮）内按算子累计得分与使用次数求均值，段末按反应因子
+`operator_learning_factor` 更新到对应的 ruin 与 repair 权重上，并限制在`operator_min_weight`以上，避免算子被永久淘汰。
+
+算子得分采用 Ropke-Pisinger 的 σ 分数：
+
+| 判定结果 | 分数 |
+| --- | --- |
+| 得到新的全局最优解 | `33` |
+| 优于当前解 | `9` |
+| 被概率接受但劣于当前解 | `13` |
+| 被拒绝 | `0` |
+
+其中「被概率接受」的奖励高于「优于当前解」是刻意设计，用于鼓励多样化；绝对尺度与权重初值 `1.0`、反应因子 `0.1` 配套。
 
 开启`print_operator_statistics`时，整个 alns 运行结束后会打印一张 `[ruin][repair]` 二维统计表（每个组合的分数累计、使用次数、平均分）以及 ruin和repair 的单独汇总。
 统计只用于观测，不参与权重计算。

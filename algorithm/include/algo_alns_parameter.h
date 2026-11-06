@@ -26,6 +26,8 @@ class AlnsParameterLuaField {
   static constexpr const char* OPERATOR_LEARNING_FACTOR = "operator_learning_factor";
   static constexpr const char* OPERATOR_INITIAL_WEIGHT = "operator_initial_weight";
   static constexpr const char* OPERATOR_MIN_WEIGHT = "operator_min_weight";
+  static constexpr const char* OPERATOR_WEIGHT_UPDATE_INTERVAL_ITER =
+      "operator_weight_update_interval_iter";
   static constexpr const char* PRINT_OPERATOR_STATISTICS = "print_operator_statistics";
   static constexpr const char* INITIAL_TEMPERATURE = "initial_temperature";
   static constexpr const char* MIN_TEMPERATURE = "min_temperature";
@@ -73,18 +75,28 @@ class AlnsParameter {
    */
   std::int64_t max_running_time_sec{600};
   /**
-   * @brief 算子学习因子
+   * @brief 算子权重的反应因子 ρ (Ropke-Pisinger)
+   * @details 按 `operator_weight_update_interval_iter` 分段更新:
+   *          w_i <- (1 - ρ) * w_i + ρ * (π_i / θ_i)
    */
   double operator_learning_factor{0.35};
   /**
    * @brief 算子初始权重
+   * @details 与 σ 分数同量级, 避免初值在前若干轮主导算子选择
    */
-  double operator_initial_weight{100.};
+  double operator_initial_weight{1.0};
   /**
    * @brief 算子权重下限
    * @details 权重自适应后取 max(weight, operator_min_weight), 避免算子被永久淘汰
    */
-  double operator_min_weight{0.005};
+  double operator_min_weight{0.05};
+  /**
+   * @brief 算子权重的更新间隔 (外层迭代数)
+   * @details 每个 segment 内累计各算子的得分与使用次数, 达到该轮数后统一更新一次权重。
+   *          默认 5 是相对 max_iter=100~200 的短程搜索标定的: 间隔过大会让劣质算子
+   *          在前若干个 segment 仍分到过多预算
+   */
+  int operator_weight_update_interval_iter{5};
   /**
    * @brief 是否在 alns 运行结束后打印算子统计
    */

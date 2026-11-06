@@ -85,8 +85,8 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
   if (cfg[AlnsParameterLuaField::OPERATOR_INITIAL_WEIGHT].valid()) {
     alns_parameter->operator_initial_weight =
         static_cast<double>(cfg[AlnsParameterLuaField::OPERATOR_INITIAL_WEIGHT]);
-    if (alns_parameter->operator_initial_weight < 1) {
-      throw std::invalid_argument("AlnsParameter: `operator_initial_weight` must be >= 1");
+    if (alns_parameter->operator_initial_weight <= 0) {
+      throw std::invalid_argument("AlnsParameter: `operator_initial_weight` must be > 0");
     }
   }
 
@@ -100,6 +100,16 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
   if (alns_parameter->operator_min_weight >= alns_parameter->operator_initial_weight) {
     throw std::invalid_argument(
         "AlnsParameter: `operator_min_weight` must be < `operator_initial_weight`");
+  }
+
+  if (cfg[AlnsParameterLuaField::OPERATOR_WEIGHT_UPDATE_INTERVAL_ITER].valid()) {
+    alns_parameter->operator_weight_update_interval_iter =
+        static_cast<int>(cfg[AlnsParameterLuaField::OPERATOR_WEIGHT_UPDATE_INTERVAL_ITER]);
+    if (alns_parameter->operator_weight_update_interval_iter <= 0 ||
+        alns_parameter->operator_weight_update_interval_iter > 20) {
+      throw std::invalid_argument(
+          "AlnsParameter: `operator_weight_update_interval_iter` must be > 0 and < 20");
+    }
   }
 
   if (cfg[AlnsParameterLuaField::PRINT_OPERATOR_STATISTICS].valid()) {
@@ -164,6 +174,7 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
                   "  operator_learning_factor={}\n"
                   "  operator_initial_weight={}\n"
                   "  operator_min_weight={}\n"
+                  "  operator_weight_update_interval_iter={}\n"
                   "  print_operator_statistics={}\n"
                   "  initial_temperature={}\n"
                   "  min_temperature={}\n"
@@ -174,6 +185,7 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
                   alns_parameter->max_stagnate_iter, alns_parameter->print_log_interval_iter,
                   alns_parameter->max_running_time_sec, alns_parameter->operator_learning_factor,
                   alns_parameter->operator_initial_weight, alns_parameter->operator_min_weight,
+                  alns_parameter->operator_weight_update_interval_iter,
                   alns_parameter->print_operator_statistics, alns_parameter->initial_temperature,
                   alns_parameter->min_temperature, alns_parameter->annealing_factor,
                   alns_parameter->default_random_seed));

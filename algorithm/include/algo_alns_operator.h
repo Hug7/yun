@@ -118,6 +118,27 @@ class AlnsOperatorManager {
    */
   std::vector<std::vector<AlnsOperatorStat>> operator_combination_stats;
   /**
+   * @brief 当前 segment 内 ruin 算子的得分累计（按实例顺序）
+   * @details 段末用于计算池化均值并更新权重, 更新后清零
+   */
+  std::vector<double> segment_ruin_score_sums;
+  /**
+   * @brief 当前 segment 内 repair 算子的得分累计（按实例顺序）
+   */
+  std::vector<double> segment_repair_score_sums;
+  /**
+   * @brief 当前 segment 内 ruin 算子的使用次数（按实例顺序）
+   */
+  std::vector<int> segment_ruin_usages;
+  /**
+   * @brief 当前 segment 内 repair 算子的使用次数（按实例顺序）
+   */
+  std::vector<int> segment_repair_usages;
+  /**
+   * @brief 当前 segment 已累计的外层迭代数
+   */
+  int segment_iter_count{0};
+  /**
    * @brief 选取算子的随机数
    */
   RandomUtils* select_operator_random;
