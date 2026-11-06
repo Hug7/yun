@@ -20,6 +20,7 @@ class AlnsParameterLuaField {
   static constexpr const char* MAX_ITER = "max_iter";
   static constexpr const char* MAX_SUB_ITER = "max_sub_iter";
   static constexpr const char* MAX_UNIMPROVED_ITER = "max_unimproved_iter";
+  static constexpr const char* MAX_STAGNATE_ITER = "max_stagnate_iter";
   static constexpr const char* PRINT_LOG_INTERVAL_ITER = "print_log_interval_iter";
   static constexpr const char* MAX_RUNNING_TIME_SEC = "max_running_time_sec";
   static constexpr const char* OPERATOR_LEARNING_FACTOR = "operator_learning_factor";
@@ -57,6 +58,11 @@ class AlnsParameter {
    * @brief 最大无改进次数
    */
   int max_unimproved_iter{100};
+  /**
+   * @brief 最大停滞迭代次数
+   * @details 最优解超过`最大停滞迭代次数`没有更新，则触发重置current solution和temp solution
+   */
+  int max_stagnate_iter{20};
   /**
    * @brief 打印日志的间隔代数
    */

@@ -26,14 +26,12 @@ Solution* AlnsModel::solve() const {
   // 求解前打印实际使用的算子及其参数
   logger->info("{}", this->operator_manager->format_operators());
   int pre_update_best_sol_iter = 0;                                     // 上一次更新最优的迭代次数
+  int stagnate_iter = 0;                                                // 最优解停滞的迭代次数
   int last_iter = 0;                                                    // 最后一次迭代次数
   const auto start_ts = chrono_util::to_timestamp(chrono_util::now());  // 开始时间戳
 
   for (int iter = 1; iter <= this->parameter->max_iter; ++iter) {
     last_iter = iter;
-    // // 重置 cur_sol
-    // this->sol_manager->reset_cur_sol();
-    // this->sol_manager->reset_tmp_sol();
     // 转动轮盘 max_sub_iter 次
     auto operator_combinations =
         this->operator_manager->roulette_wheel_operator(this->parameter->max_sub_iter);
@@ -51,7 +49,14 @@ Solution* AlnsModel::solve() const {
       // 更新-上一次更新最优的迭代次数
       if (status_code == AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION) {
         pre_update_best_sol_iter = iter;
+        stagnate_iter = iter;
       }
+    }
+    // 重置 current solution，停滞迭代次数超过`max_stagnate_iter`次
+    if (stagnate_iter - pre_update_best_sol_iter > parameter->max_stagnate_iter) {
+      stagnate_iter = iter;
+      this->sol_manager->reset_cur_sol();
+      this->sol_manager->reset_tmp_sol();
     }
     // 判断是否超时
     auto cur_ts = chrono_util::to_timestamp(chrono_util::now());  // 当前时间戳

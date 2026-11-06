@@ -119,11 +119,12 @@ alns({
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `worker_count` | int | `-1` | 开启执行器的并行数。每次`alns`调用都会新建并销毁并行执行器。 |
-| `max_iter` | int | `200` | 最大迭代次数（外层 ALNS 主循环）。 |
-| `max_sub_iter` | int | `10` | 最大子迭代次数。 |
-| `max_unimproved_iter` | int | `100` | 连续无改进次数达到该值时提前终止搜索。 |
-| `print_log_interval_iter` | int | `10` | 打印日志的间隔迭代次数。 |
-| `max_running_time_sec` | int | `600` | 最大运行时长（秒），到时终止搜索。 |
+| `max_iter` | int | `200` | 最大迭代次数（外层 ALNS 主循环），取值范围[1,10000]。 |
+| `max_sub_iter` | int | `10` | 最大子迭代次数，取值范围[1,40]。 |
+| `max_unimproved_iter` | int | `100` | 连续无改进次数达到该值时提前终止搜索，取值范围>=1。 |
+| `max_stagnate_iter` | int | `20` | 最优解超过`最大停滞迭代次数`没有更新，则触发重置当前解，取值范围>=1。 |
+| `print_log_interval_iter` | int | `10` | 打印日志的间隔迭代次数，取值范围>=1。 |
+| `max_running_time_sec` | int | `600` | 最大运行时长（秒），到时终止搜索，取值范围>=1。 |
 | `operator_learning_factor` | double | `0.35` | 算子权重自适应学习因子。必须满足 `0 < x < 1`，否则抛异常。 |
 | `operator_initial_weight` | double | `100.0` | 算子初始权重。ruin 与 repair 两组权重都从该值起步。必须 `>= 1`，否则抛异常。 |
 | `operator_min_weight` | double | `0.005` | 算子权重下限。权重自适应后取 `max(weight, operator_min_weight)`，避免算子被永久淘汰。必须 `> 0` 且小于 `operator_initial_weight`，否则抛异常。 |
