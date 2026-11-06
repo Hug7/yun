@@ -306,18 +306,19 @@ TEST(AlnsOperatorManagerTest, CreateAlnsOperatorUsesDefaultsWhenOperatorArraysMi
   AlnsParameter parameter;
   const auto manager = create_alns_operator(cfg, &parameter, nullptr, nullptr);
 
-  ASSERT_EQ(manager->ruin_operator_count, 2);
+  ASSERT_EQ(manager->ruin_operator_count, 3);
   ASSERT_EQ(manager->repair_operator_count, 2);
-  ASSERT_EQ(manager->ruin_operators.size(), 2);
+  ASSERT_EQ(manager->ruin_operators.size(), 3);
   ASSERT_EQ(manager->repair_operators.size(), 2);
   EXPECT_EQ(manager->ruin_operators[0]->code, "RuinRandomRemovalLoad");
   EXPECT_EQ(manager->ruin_operators[1]->code, "RuinRandomRemovalOrder");
+  EXPECT_EQ(manager->ruin_operators[2]->code, "RuinWorstRemovalOrder");
   EXPECT_EQ(manager->repair_operators[0]->code, "RepairGreedy");
   EXPECT_EQ(manager->repair_operators[1]->code, "RepairRegretK");
   // 权重与统计矩阵按默认算子数量初始化
-  EXPECT_EQ(manager->ruin_operator_weights.size(), 2);
+  EXPECT_EQ(manager->ruin_operator_weights.size(), 3);
   EXPECT_EQ(manager->repair_operator_weights.size(), 2);
-  EXPECT_EQ(manager->operator_combination_stats.size(), 2);
+  EXPECT_EQ(manager->operator_combination_stats.size(), 3);
   EXPECT_EQ(manager->operator_combination_stats.front().size(), 2);
   // 默认算子使用算子自身的默认参数
   const std::string text = manager->format_operators();
@@ -326,6 +327,10 @@ TEST(AlnsOperatorManagerTest, CreateAlnsOperatorUsesDefaultsWhenOperatorArraysMi
             std::string::npos);
   EXPECT_NE(text.find("ruin[1]=RuinRandomRemovalOrder params={select_order_random_seed=37, "
                       "select_order_min_rate=0.1, select_order_max_rate=0.4}"),
+            std::string::npos);
+  EXPECT_NE(text.find("ruin[2]=RuinWorstRemovalOrder params={select_order_random_seed=37, "
+                      "select_order_min_rate=0.1, select_order_max_rate=0.3, "
+                      "select_order_noise_exponent=3}"),
             std::string::npos);
   EXPECT_NE(text.find("repair[0]=RepairGreedy params={random_seed=37, top_rate=0.2}"),
             std::string::npos);
@@ -348,7 +353,9 @@ TEST(AlnsOperatorManagerTest, CreateAlnsOperatorFallsBackPerEmptyOperatorArray) 
   const auto manager = create_alns_operator(cfg, &parameter, nullptr, nullptr);
 
   // 只有空的 ruin 数组回退到默认算子, 用户自定义的 repair 保留
-  EXPECT_EQ(manager->ruin_operator_count, 2);
+  EXPECT_EQ(manager->ruin_operator_count, 3);
+  EXPECT_EQ(manager->ruin_operator_weights.size(), 3);
+  EXPECT_EQ(manager->ruin_operators[2]->code, "RuinWorstRemovalOrder");
   ASSERT_EQ(manager->repair_operator_count, 1);
   EXPECT_EQ(manager->repair_operators[0]->code, "RepairRegretK");
   EXPECT_NE(manager->repair_operators[0]->format_parameters().find("regret_k=3"),
