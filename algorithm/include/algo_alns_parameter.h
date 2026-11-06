@@ -44,6 +44,7 @@ class AlnsParameter {
  public:
   /**
    * @brief 并行数
+   * @details -1 表示自动使用默认硬件并发; 0 与其他负数非法
    */
   int worker_count{-1};
   /**

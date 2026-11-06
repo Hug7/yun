@@ -17,6 +17,9 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
 
   if (cfg[AlnsParameterLuaField::WORKER_COUNT].valid()) {
     const int worker_count = static_cast<int>(cfg[AlnsParameterLuaField::WORKER_COUNT]);
+    if (worker_count == 0 || worker_count < -1) {
+      throw std::invalid_argument("AlnsParameter: `worker_count` must be -1 (auto) or > 0");
+    }
     const int n = std::max(1, static_cast<int>(std::thread::hardware_concurrency()));
     if (worker_count >= n) {
       const int fallback_worker_count = std::max(1, n - 1);
