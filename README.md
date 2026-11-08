@@ -251,7 +251,7 @@ GitHub Release 提供：
 本地构建（在目标平台上执行）：
 
 ```bash
-python3.11 scripts/build_sdk.py --version 0.2.0 --out-dir dist/sdk --clean
+python3.11 scripts/build_sdk.py --version 0.3.0 --out-dir dist/sdk --clean
 ```
 
 产物在 `dist/sdk/`（tarball + 同名 `.sha256`）。SDK 构建脚本需要 Python 3.9+ 和 Conan，但 SDK 产物本身与 Python 版本无关。

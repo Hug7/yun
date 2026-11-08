@@ -51,8 +51,8 @@ LICENSE
 解压 tarball 后，把 SDK 根目录加入 `CMAKE_PREFIX_PATH`（或在 `find_package` 里用 `HINTS`）：
 
 ```cmake
-list(APPEND CMAKE_PREFIX_PATH "/path/to/yun-sdk-0.2.0-linux-x86_64")
-find_package(yun 0.2 CONFIG REQUIRED)
+list(APPEND CMAKE_PREFIX_PATH "/path/to/yun-sdk-0.3.0-linux-x86_64")
+find_package(yun 0.3 CONFIG REQUIRED)
 
 add_executable(demo main.cpp)
 target_link_libraries(demo PRIVATE yun::sdk)
@@ -97,14 +97,14 @@ cmake --build build/core --parallel
 脚本必须在目标平台上执行；它用 CMake + Conan 编译 `yun_solver`，读取 CMake 生成的归档/头文件清单，然后合并静态库、生成 CMake package 并打包。
 
 ```bash
-python3.11 scripts/build_sdk.py --version 0.2.0 --out-dir dist/sdk --clean
+python3.11 scripts/build_sdk.py --version 0.3.0 --out-dir dist/sdk --clean
 ```
 
 产物：
 
 ```text
-dist/sdk/yun-sdk-0.2.0-<platform>.tar.gz
-dist/sdk/yun-sdk-0.2.0-<platform>.tar.gz.sha256
+dist/sdk/yun-sdk-0.3.0-<platform>.tar.gz
+dist/sdk/yun-sdk-0.3.0-<platform>.tar.gz.sha256
 ```
 
 ### 4.1 Linux（manylinux_2_28）
@@ -128,7 +128,7 @@ docker run --rm \
     "$PY" -m pip install -q "conan>=2.33,<3" "cmake>=3.24"
     export PATH="$(dirname "$PY"):$PATH"
     conan profile detect --force
-    "$PY" scripts/build_sdk.py --version 0.2.0 --out-dir /out --clean
+    "$PY" scripts/build_sdk.py --version 0.3.0 --out-dir /out --clean
   '
 ```
 
@@ -139,7 +139,7 @@ arm64 用 `quay.io/pypa/manylinux_2_28_aarch64`，并在 arm64 Linux 上运行�
 在 VS 2022 开发者环境（`ilammy/msvc-dev-cmd` 或 “x64 Native Tools Command Prompt”）中，确保 `clang-cl`、`llvm-lib`、`ninja`、CMake、Conan 可用：
 
 ```bat
-python scripts\build_sdk.py --version 0.2.0 --out-dir dist --clean
+python scripts\build_sdk.py --version 0.3.0 --out-dir dist --clean
 ```
 
 ## 5. 发布流程
@@ -153,22 +153,23 @@ python scripts\build_sdk.py --version 0.2.0 --out-dir dist --clean
 手动演练：
 
 ```text
-Actions → SDK Release → Run workflow → version=0.2.0
+Actions → SDK Release → Run workflow → version=0.3.0
 ```
 
 只构建 artifact，不创建 Release。正式发布用 tag：
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 `release` job 使用 `release` environment（可配置 Required reviewers 做人工审批）。
 
 ## 6. 版本与 ABI
 
-- SDK 版本跟随 `project(yun VERSION ...)`；本轮为 `0.2.0`。
+- SDK 版本跟随 `project(yun VERSION ...)`；本轮为 `0.3.0`。
 - `yunConfigVersion.cmake` 使用 same-minor 兼容策略：0.x 下 minor 是 ABI 断点，patch 版本视为兼容。
+- `0.3.0` 相对 `0.2.0` 属于 minor 升级，ABI 不兼容：消费方需重新构建，并把 `find_package(yun ...)` 的请求版本改到 `0.3`。
 - 不要覆盖已发布版本的 SDK 资产；C++ 变化时升版本重新发布。
 - 消费方（如 `yunpyopt`）应固定 `yun-sdk-version.txt`，并用 `SHA256SUMS` 校验下载。
 
