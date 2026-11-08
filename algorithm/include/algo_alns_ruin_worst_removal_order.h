@@ -71,5 +71,4 @@ class AlnsRuinWorstRemovalOrder : public AlnsRuinOperator {
   [[nodiscard]] std::string format_parameters() const override;
 
   std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) override;
-
 };
