@@ -20,6 +20,7 @@
 enum class AlnsRuinOperatorCode {
   RuinRandomRemovalLoad,
   RuinRandomRemovalOrder,
+  RuinWorstRemovalOrder,
 };
 
 constexpr AlnsRuinOperatorCode convert_alns_ruin_operator_code(const std::string& code) {
@@ -27,6 +28,8 @@ constexpr AlnsRuinOperatorCode convert_alns_ruin_operator_code(const std::string
     return AlnsRuinOperatorCode::RuinRandomRemovalLoad;
   } else if (code == "RuinRandomRemovalOrder") {
     return AlnsRuinOperatorCode::RuinRandomRemovalOrder;
+  } else if (code == "RuinWorstRemovalOrder") {
+    return AlnsRuinOperatorCode::RuinWorstRemovalOrder;
   } else {
     throw std::invalid_argument("Invalid AlnsRuinOperatorCode = " + code);
   }
@@ -68,6 +71,12 @@ class AlnsRuinOperator {
   virtual ~AlnsRuinOperator() = default;
 
   virtual std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) = 0;
+
+  /**
+   * @brief 格式化算子参数, 用于求解前打印
+   * @return 形如 `a=1, b=2` 的参数文本; 无参数时返回空串
+   */
+  [[nodiscard]] virtual std::string format_parameters() const = 0;
 
   void call(Solution* sol);
 };

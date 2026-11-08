@@ -45,4 +45,6 @@ class AlnsRuinRandomRemovalLoad : public AlnsRuinOperator {
   explicit AlnsRuinRandomRemovalLoad(const SolverContext* _context, const sol::table& cfg);
 
   std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) override;
+
+  [[nodiscard]] std::string format_parameters() const override;
 };

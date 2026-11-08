@@ -6,6 +6,7 @@
 #include "algo_alns_parameter.h"
 
 #include <algorithm>
+#include <format>
 #include <stdexcept>
 #include <thread>
 
@@ -16,6 +17,9 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
 
   if (cfg[AlnsParameterLuaField::WORKER_COUNT].valid()) {
     const int worker_count = static_cast<int>(cfg[AlnsParameterLuaField::WORKER_COUNT]);
+    if (worker_count == 0 || worker_count < -1) {
+      throw std::invalid_argument("AlnsParameter: `worker_count` must be -1 (auto) or > 0");
+    }
     const int n = std::max(1, static_cast<int>(std::thread::hardware_concurrency()));
     if (worker_count >= n) {
       const int fallback_worker_count = std::max(1, n - 1);
@@ -31,21 +35,43 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
   }
   if (cfg[AlnsParameterLuaField::MAX_ITER].valid()) {
     alns_parameter->max_iter = static_cast<int>(cfg[AlnsParameterLuaField::MAX_ITER]);
+    if (alns_parameter->max_iter <= 0 || alns_parameter->max_iter > 10000) {
+      throw std::invalid_argument("AlnsParameter: `max_iter` must be > 0 and <= 10000");
+    }
   }
   if (cfg[AlnsParameterLuaField::MAX_SUB_ITER].valid()) {
     alns_parameter->max_sub_iter = static_cast<int>(cfg[AlnsParameterLuaField::MAX_SUB_ITER]);
+    if (alns_parameter->max_sub_iter <= 0 || alns_parameter->max_sub_iter > 40) {
+      throw std::invalid_argument("AlnsParameter: `max_sub_iter` must be > 0 and <= 40");
+    }
   }
   if (cfg[AlnsParameterLuaField::MAX_UNIMPROVED_ITER].valid()) {
     alns_parameter->max_unimproved_iter =
         static_cast<int>(cfg[AlnsParameterLuaField::MAX_UNIMPROVED_ITER]);
+    if (alns_parameter->max_unimproved_iter <= 0) {
+      throw std::invalid_argument("AlnsParameter: `max_unimproved_iter` must be > 0");
+    }
+  }
+  if (cfg[AlnsParameterLuaField::MAX_STAGNATE_ITER].valid()) {
+    alns_parameter->max_stagnate_iter =
+        static_cast<int>(cfg[AlnsParameterLuaField::MAX_STAGNATE_ITER]);
+    if (alns_parameter->max_stagnate_iter <= 0) {
+      throw std::invalid_argument("AlnsParameter: `max_stagnate_iter` must be > 0");
+    }
   }
   if (cfg[AlnsParameterLuaField::PRINT_LOG_INTERVAL_ITER].valid()) {
     alns_parameter->print_log_interval_iter =
         static_cast<int>(cfg[AlnsParameterLuaField::PRINT_LOG_INTERVAL_ITER]);
+    if (alns_parameter->print_log_interval_iter <= 0) {
+      throw std::invalid_argument("AlnsParameter: `print_log_interval_iter` must be > 0");
+    }
   }
   if (cfg[AlnsParameterLuaField::MAX_RUNNING_TIME_SEC].valid()) {
     alns_parameter->max_running_time_sec =
         static_cast<int>(cfg[AlnsParameterLuaField::MAX_RUNNING_TIME_SEC]);
+    if (alns_parameter->max_running_time_sec <= 0) {
+      throw std::invalid_argument("AlnsParameter: `max_running_time_sec` must be > 0");
+    }
   }
   if (cfg[AlnsParameterLuaField::OPERATOR_LEARNING_FACTOR].valid()) {
     alns_parameter->operator_learning_factor =
@@ -59,9 +85,40 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
   if (cfg[AlnsParameterLuaField::OPERATOR_INITIAL_WEIGHT].valid()) {
     alns_parameter->operator_initial_weight =
         static_cast<double>(cfg[AlnsParameterLuaField::OPERATOR_INITIAL_WEIGHT]);
-    if (alns_parameter->operator_initial_weight < 1) {
-      throw std::invalid_argument("operator_learning_factor must be >= 1");
+    if (alns_parameter->operator_initial_weight <= 0) {
+      throw std::invalid_argument("AlnsParameter: `operator_initial_weight` must be > 0");
     }
+  }
+
+  if (cfg[AlnsParameterLuaField::OPERATOR_MIN_WEIGHT].valid()) {
+    alns_parameter->operator_min_weight =
+        static_cast<double>(cfg[AlnsParameterLuaField::OPERATOR_MIN_WEIGHT]);
+    if (alns_parameter->operator_min_weight <= 0) {
+      throw std::invalid_argument("AlnsParameter: `operator_min_weight` must be > 0");
+    }
+  }
+  if (alns_parameter->operator_min_weight >= alns_parameter->operator_initial_weight) {
+    throw std::invalid_argument(
+        "AlnsParameter: `operator_min_weight` must be < `operator_initial_weight`");
+  }
+
+  if (cfg[AlnsParameterLuaField::OPERATOR_WEIGHT_UPDATE_INTERVAL_ITER].valid()) {
+    alns_parameter->operator_weight_update_interval_iter =
+        static_cast<int>(cfg[AlnsParameterLuaField::OPERATOR_WEIGHT_UPDATE_INTERVAL_ITER]);
+    if (alns_parameter->operator_weight_update_interval_iter <= 0 ||
+        alns_parameter->operator_weight_update_interval_iter > 20) {
+      throw std::invalid_argument(
+          "AlnsParameter: `operator_weight_update_interval_iter` must be > 0 and < 20");
+    }
+  }
+
+  if (cfg[AlnsParameterLuaField::PRINT_OPERATOR_STATISTICS].valid()) {
+    const sol::object print_operator_statistics =
+        cfg[AlnsParameterLuaField::PRINT_OPERATOR_STATISTICS];
+    if (!print_operator_statistics.is<bool>()) {
+      throw std::invalid_argument("AlnsParameter: `print_operator_statistics` must be a boolean");
+    }
+    alns_parameter->print_operator_statistics = print_operator_statistics.as<bool>();
   }
 
   if (cfg[AlnsParameterLuaField::INITIAL_TEMPERATURE].valid()) {
@@ -104,7 +161,34 @@ std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
         "AlnsParameter: `annealing_factor` must be in (0, 1), or <= 0 to derive it automatically");
   }
 
-  // TODO check 参数
+  logger->info(
+      "{}",
+      std::format("alns parameters:\n"
+                  "  worker_count={}\n"
+                  "  max_iter={}\n"
+                  "  max_sub_iter={}\n"
+                  "  max_unimproved_iter={}\n"
+                  "  max_stagnate_iter={}\n"
+                  "  print_log_interval_iter={}\n"
+                  "  max_running_time_sec={}\n"
+                  "  operator_learning_factor={}\n"
+                  "  operator_initial_weight={}\n"
+                  "  operator_min_weight={}\n"
+                  "  operator_weight_update_interval_iter={}\n"
+                  "  print_operator_statistics={}\n"
+                  "  initial_temperature={}\n"
+                  "  min_temperature={}\n"
+                  "  annealing_factor={}\n"
+                  "  default_random_seed={}",
+                  alns_parameter->worker_count, alns_parameter->max_iter,
+                  alns_parameter->max_sub_iter, alns_parameter->max_unimproved_iter,
+                  alns_parameter->max_stagnate_iter, alns_parameter->print_log_interval_iter,
+                  alns_parameter->max_running_time_sec, alns_parameter->operator_learning_factor,
+                  alns_parameter->operator_initial_weight, alns_parameter->operator_min_weight,
+                  alns_parameter->operator_weight_update_interval_iter,
+                  alns_parameter->print_operator_statistics, alns_parameter->initial_temperature,
+                  alns_parameter->min_temperature, alns_parameter->annealing_factor,
+                  alns_parameter->default_random_seed));
 
   return alns_parameter;
 }

@@ -34,4 +34,6 @@ class AlnsRepairRegretK : public AlnsRepairOperator {
                              const sol::table& cfg);
 
   void execute(RepairMatrix* repair_matrix) override;
+
+  [[nodiscard]] std::string format_parameters() const override;
 };

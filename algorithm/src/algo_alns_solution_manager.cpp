@@ -44,6 +44,9 @@ AlnsSaAcceptStatusCode AlnsSolutionManager::update_sol() {
   } else if (status_code == AlnsSaAcceptStatusCode::DOMINATE_CURRENT_SOLUTION) {
     delete this->cur_sol;
     this->cur_sol = this->workspace->deep_copy_sol(this->tmp_sol);
+  } else if (status_code == AlnsSaAcceptStatusCode::PROBABILITY_ACCEPT) {
+    delete this->cur_sol;
+    this->cur_sol = this->workspace->deep_copy_sol(this->tmp_sol);
   } else if (status_code == AlnsSaAcceptStatusCode::REJECT) {
     delete this->tmp_sol;
     this->tmp_sol = this->workspace->deep_copy_sol(this->cur_sol);

@@ -22,7 +22,7 @@ class ParallelExecutor {
  public:
   /**
    * @brief 构造并启动 worker
-   * @param worker_count worker 数; <=0 时退化为 libfork 的默认(硬件并发数)
+   * @param worker_count worker 数; -1 表示自动(硬件并发数 - 1), 0 与其他负数非法
    */
   explicit ParallelExecutor(int worker_count);
 

@@ -6,6 +6,7 @@
 #include "algo_alns_repair_greedy.h"
 
 #include <algorithm>
+#include <format>
 #include <stdexcept>
 
 #include "c_numerical_utils.h"
@@ -26,6 +27,10 @@ AlnsRepairGreedy::AlnsRepairGreedy(const SolverContext* _context,
     }
   }
 };
+
+std::string AlnsRepairGreedy::format_parameters() const {
+  return std::format("random_seed={}, top_rate={}", this->random_seed, this->top_rate);
+}
 
 void AlnsRepairGreedy::execute(RepairMatrix* repair_matrix) {
   const size_t raw_idle_segment_count = repair_matrix->idle_segment_indices.size();

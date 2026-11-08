@@ -94,11 +94,24 @@ std::size_t default_worker_count() {
   const unsigned int hardware_threads = std::thread::hardware_concurrency();
   return hardware_threads > 1 ? static_cast<std::size_t>(hardware_threads - 1) : 1;
 }
+
+/**
+ * @brief 校验 worker_count 并换算成池的 worker 数
+ * @details -1 是"自动"哨兵, 取硬件并发数 - 1; 0 与其他负数视为配置错误
+ */
+std::size_t resolve_worker_count(const int worker_count) {
+  if (worker_count == -1) {
+    return default_worker_count();
+  }
+  if (worker_count <= 0) {
+    throw std::invalid_argument("ParallelExecutor: worker_count must be -1 (auto) or > 0");
+  }
+  return static_cast<std::size_t>(worker_count);
+}
 }  // namespace
 
 ParallelExecutor::ParallelExecutor(const int worker_count)
-    : pool(std::make_unique<lf::lazy_pool>(worker_count > 0 ? static_cast<std::size_t>(worker_count)
-                                                            : default_worker_count())),
+    : pool(std::make_unique<lf::lazy_pool>(resolve_worker_count(worker_count))),
       worker_count_(worker_count) {}
 
 ParallelExecutor::~ParallelExecutor() = default;
@@ -108,9 +121,13 @@ void ParallelExecutor::run(const int task_count, LoadContext* load_context,
   if (task_count <= 0) {
     return;
   }
-  // 分片数取 min(任务数, worker 数 + 提交方): 每片一个写缓冲,
+  // 分片数取 min(任务数, 有效 worker 数 + 1): 每片一个写缓冲,
   // 片内以原子计数器动态领取
-  const int chunk_count = std::min(task_count, std::max(this->worker_count_, 1) + 1);
+  // worker_count_ 未显式设置时为 -1, 此处必须换算成默认硬件并发,
+  // 否则 -1 会被 max 成 1, 分片数退化为 2
+  const int worker_count =
+      this->worker_count_ > 0 ? this->worker_count_ : static_cast<int>(default_worker_count());
+  const int chunk_count = std::min(task_count, worker_count + 1);
   std::vector<std::unique_ptr<CacheStoreBuffer>> store_buffers;
   store_buffers.reserve(chunk_count);
   for (int c = 0; c < chunk_count; ++c) {

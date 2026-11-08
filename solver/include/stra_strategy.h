@@ -41,7 +41,7 @@ class StrategyManager {
   std::unique_ptr<ParallelExecutor> parallel_executor;
   /**
    * @brief 并行数
-   * @details 为 -1 时 worker_count 为设备的最大线程数。
+   * @details 为 -1 时使用默认硬件并发(硬件线程数 - 1)。
    * 可修改修改后会重建新的执行器，减少重复创建和释放
    */
   int parallel_worker_count{-1};

@@ -6,6 +6,7 @@
 #include "algo_alns_ruin_random_removal_load.h"
 
 #include <algorithm>
+#include <format>
 #include <stdexcept>
 
 // ====== implement of AlnsRuinRandomRemovalLoad ======
@@ -43,6 +44,12 @@ AlnsRuinRandomRemovalLoad::AlnsRuinRandomRemovalLoad(const SolverContext* _conte
                              ") must not exceed select_load_max_rate (" +
                              std::to_string(this->select_load_max_rate) + ")");
   }
+}
+
+std::string AlnsRuinRandomRemovalLoad::format_parameters() const {
+  return std::format("select_load_random_seed={}, select_load_min_rate={}, select_load_max_rate={}",
+                     this->select_load_random_seed, this->select_load_min_rate,
+                     this->select_load_max_rate);
 }
 
 std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalLoad::execute(

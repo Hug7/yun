@@ -101,7 +101,7 @@ alns({
 alns({
   max_iter = 500,
   max_unimproved_iter = 200,
-  tasks = 4,
+  worker_count = 4,
   ruin_operator_params = {
     { code = "RuinRandomRemovalLoad", params = { select_load_min_rate = 0.1, select_load_max_rate = 0.3 } },
     { code = "RuinRandomRemovalLoad", params = { select_load_min_rate = 0.4, select_load_max_rate = 0.6 } },
@@ -118,18 +118,22 @@ alns({
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `worker_count` | int | `-1` | 开启执行器的并行数。每次`alns`调用都会新建并销毁并行执行器。 |
-| `max_iter` | int | `200` | 最大迭代次数（外层 ALNS 主循环）。 |
-| `max_sub_iter` | int | `10` | 最大子迭代次数。 |
-| `max_unimproved_iter` | int | `100` | 连续无改进次数达到该值时提前终止搜索。 |
-| `print_log_interval_iter` | int | `10` | 打印日志的间隔迭代次数。 |
-| `max_running_time_sec` | int | `600` | 最大运行时长（秒），到时终止搜索。 |
-| `operator_learning_factor` | double | `0.35` | 算子权重自适应学习因子。必须满足 `0 < x < 1`，否则抛异常。 |
-| `operator_initial_weight` | double | `100.0` | 算子组合初始权重。必须 `>= 1`，否则抛异常。 |
-| `initial_temperature` | double | `2.0e-2` | 初始**相对**温度 τ₀（无量纲）。接受概率为 `exp(-Δf / (τ·f0))`，`f0` 是初始解的总目标值，故该值不随算例目标值量级变化；建议 `1e-3 ~ 1e-1`，大于 `1` 会告警。 |
+| `worker_count` | int | `-1` | 开启执行器的并行数。`-1` 表示自动使用默认硬件并发，其余取值必须为正整数，`0` 与其他负数会抛异常。 |
+| `max_iter` | int | `200` | 最大迭代次数（外层 ALNS 主循环），取值范围[1,10000]。 |
+| `max_sub_iter` | int | `10` | 最大子迭代次数，取值范围[1,40]。 |
+| `max_unimproved_iter` | int | `100` | 连续无改进次数达到该值时提前终止搜索，取值范围>=1。 |
+| `max_stagnate_iter` | int | `20` | 最优解超过`最大停滞迭代次数`没有更新，则触发重置当前解，取值范围>=1。 |
+| `print_log_interval_iter` | int | `10` | 打印日志的间隔迭代次数，取值范围>=1。 |
+| `max_running_time_sec` | int | `600` | 最大运行时长（秒），到时终止搜索，取值范围>=1。 |
+| `operator_learning_factor` | double | `0.35` | 算子权重的反应因子 ρ（Ropke-Pisinger）。每个 segment 结束时按 `w ← (1-ρ)·w + ρ·π/θ` 更新一次。必须满足 `0 < x < 1`，否则抛异常。 |
+| `operator_initial_weight` | double | `1.0` | 算子初始权重。ruin 与 repair 两组权重都从该值起步，与 σ 分数同量级。必须 `> 0`，否则抛异常。 |
+| `operator_min_weight` | double | `0.05` | 算子权重下限。权重更新后取 `max(weight, operator_min_weight)`，避免算子被永久淘汰。必须 `> 0` 且小于 `operator_initial_weight`，否则抛异常。 |
+| `operator_weight_update_interval_iter` | int | `5` | 算子权重的更新间隔（外层迭代数）。每个 segment 内累计各算子的得分与使用次数，段末统一更新；必须 `0 < x <= 20`，否则抛异常。 |
+| `initial_temperature` | double | `2.0e-2` | 初始**相对**温度 τ₀（无量纲）。接受概率为 `exp(-Δf / (τ·f0))`，`f0` 是初始解的总目标值，故该值不随算例目标值量级变化；建议 `1e-3 ~ 2e-1`，大于 `1` 会告警。`initial_temperature`必须大于 `min_temperature`否则抛异常。 |
 | `min_temperature` | double | `2.0e-5` | 最小相对温度 τ_end（无量纲），温度取到该值后不再下降。 |
 | `annealing_factor` | double | `0.0` | 冷却系数 α，需满足 `0 < α < 1`；置为 `<= 0` 时由 `α = (τ_end / τ₀) ^ (1 / max_iter)` 自动推导，保证最后一轮恰好降到 τ_end。 |
 | `default_random_seed` | int | `37` | 默认随机种子。 |
+| `print_operator_statistics` | bool | `false` | 运行结束后是否打印 ruin×repair 二维算子统计。 |
 | `ruin_operator_params` | table | 无 | ruin 算子配置数组，详见下文。 |
 | `repair_operator_params` | table | 无 | repair 算子配置数组，详见下文。 |
 
@@ -137,9 +141,32 @@ alns({
 
 #### ruin / repair 算子
 
-`ruin`（破坏）与`repair`（修复）算子各以数组形式配置，算法会将所有 ruin 与 repair 算子做**笛卡尔积**展开为算子组合，每个组合按`operator_initial_weight`初始化权重，并在搜索过程中依据`operator_learning_factor`自适应调整。
+`ruin`（破坏）与`repair`（修复）算子各以数组形式配置。算法分别为两组算子维护一维权重（都由`operator_initial_weight`初始化），
+每轮迭代先按 ruin 权重、再按 repair 权重各转一次轮盘，抽出一个组合执行；某个组合被抽中的概率是该 ruin 与 repair 权重之积。
+每个 segment（`operator_weight_update_interval_iter` 轮）内按算子累计得分与使用次数求均值，段末按反应因子
+`operator_learning_factor` 更新到对应的 ruin 与 repair 权重上，并限制在`operator_min_weight`以上，避免算子被永久淘汰。
 
-数组中每个元素为`table`，必含字段`code`（算子编码字符串），可选字段`params`（`table`，算子私有参数，缺省时用算子内部默认值）。同一`code`可配置多组不同`params`，视为不同算子实例。
+算子得分采用 Ropke-Pisinger 的 σ 分数：
+
+| 判定结果 | 分数 |
+| --- | --- |
+| 得到新的全局最优解 | `33` |
+| 优于当前解 | `9` |
+| 被概率接受但劣于当前解 | `13` |
+| 被拒绝 | `0` |
+
+其中「被概率接受」的奖励高于「优于当前解」是刻意设计，用于鼓励多样化；绝对尺度与权重初值 `1.0`、反应因子 `0.1` 配套。
+
+开启`print_operator_statistics`时，整个 alns 运行结束后会打印一张 `[ruin][repair]` 二维统计表（每个组合的分数累计、使用次数、平均分）以及 ruin和repair 的单独汇总。
+统计只用于观测，不参与权重计算。
+
+ruin 或 repair 算子数组为空时，`alns` 会使用默认算子（
+ruin 为 `RuinRandomRemovalLoad`、`RuinRandomRemovalOrder`、`RuinWorstRemovalOrder`，
+repair 为 `RepairGreedy`、`RepairRegretK`，参数取各自默认值）。
+每次执行算法前，`alns` 都会打印实际使用的算子及其参数，便于确认默认兜底是否生效。
+
+数组中每个元素为`table`，必含字段`code`（算子编码字符串），可选字段`params`（`table`，算子私有参数，缺省时用算子内部默认值）。
+同一`code`可配置多组不同`params`，视为不同算子实例。
 
 ```lua
 ruin_operator_params = {
@@ -165,6 +192,20 @@ ruin_operator_params = {
 | `select_order_min_rate` | double | `0.1` | 被移除订单数占当前已分配订单数的最小比例，区间 `[0, 1]`。 |
 | `select_order_max_rate` | double | `0.4` | 被移除订单数的最大比例，区间 `[0, 1]`；必须 `>= select_order_min_rate`。 |
 | `select_order_random_seed` | int | `37` | 选择订单的随机种子。 |
+
+**RuinWorstRemovalOrder（ruin）** — 移除最差订单。
+
+按「把该订单从所属车次摘掉后，该车次目标值的下降量」排序，优先移除收益最大的订单。目标值口径与 repair 一致，
+包含硬约束罚分、软约束罚分与计费成本，因此看重的不只是距离，也包括时间窗、可用车辆与计费项的影响。
+
+排序后按 `pos = ⌊n · y^p⌋`（`y ~ U(0,1)`）随机取位：`p` 越大越集中在收益最高者，`p = 1` 等价于在候选池上均匀随机。
+
+| `params` 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `select_order_min_rate` | double | `0.1` | 被移除订单数占当前已分配订单数的最小比例，区间 `[0, 1]`。 |
+| `select_order_max_rate` | double | `0.3` | 被移除订单数的最大比例，区间 `[0, 1]`；必须 `>= select_order_min_rate`。 |
+| `select_order_random_seed` | int | `37` | 选择订单的随机种子。 |
+| `select_order_noise_exponent` | double | `3.0` | 贪心指数 `p`，必须 `>= 1`；越大越偏向收益最高的订单。 |
 
 **RepairGreedy（repair）** — 贪心修复。
 

@@ -6,23 +6,44 @@
 #include "algo_alns_operator.h"
 
 #include <algorithm>
+#include <format>
+#include <magic_enum/magic_enum.hpp>
 #include <stdexcept>
+#include <utility>
 
 #include "algo_alns_repair_greedy.h"
 #include "algo_alns_repair_regret_k.h"
 #include "algo_alns_ruin_random_removal_load.h"
 #include "algo_alns_ruin_random_removal_order.h"
+#include "algo_alns_ruin_worst_removal_order.h"
+
+namespace {
+/**
+ * @brief Ropke & Pisinger (2006) 的算子奖励 σ 分数
+ * @details σ1: 得到新的全局最优解; σ2: 优于当前解; σ3: 被 SA 接受但劣于当前解;
+ *          σ4: 被拒绝。注意 σ3 > σ2 是 R&P 的刻意设计, 用于鼓励多样化。
+ */
+constexpr double kSigmaNewBest = 33.0;
+constexpr double kSigmaBetterThanCurrent = 9.0;
+constexpr double kSigmaAcceptedWorse = 13.0;
+constexpr double kSigmaRejected = 0.0;
+}  // namespace
+
+// ====== implement of AlnsOperatorStat ======
+double AlnsOperatorStat::avg() const {
+  return this->usage > 0 ? this->score_sum / static_cast<double>(this->usage) : 0.0;
+}
 
 // ====== implement of AlnsOperatorCombination ======
 void AlnsOperatorCombination::cal_operator_score(const AlnsSaAcceptStatusCode& status_code) {
   if (status_code == AlnsSaAcceptStatusCode::DOMINATE_BEST_SOLUTION) {
-    this->operator_score = 5;
+    this->operator_score = kSigmaNewBest;
   } else if (status_code == AlnsSaAcceptStatusCode::DOMINATE_CURRENT_SOLUTION) {
-    this->operator_score = 3;
+    this->operator_score = kSigmaBetterThanCurrent;
   } else if (status_code == AlnsSaAcceptStatusCode::PROBABILITY_ACCEPT) {
-    this->operator_score = 1;
+    this->operator_score = kSigmaAcceptedWorse;
   } else if (status_code == AlnsSaAcceptStatusCode::REJECT) {
-    this->operator_score = 0;
+    this->operator_score = kSigmaRejected;
   }
 }
 
@@ -50,6 +71,27 @@ void AlnsOperatorManager::add_repair_operator(AlnsRepairOperator* repair_operato
   ++this->repair_operator_count;
 }
 
+void AlnsOperatorManager::init_weights() {
+  if (this->ruin_operator_count <= 0) {
+    throw std::invalid_argument("AlnsOperatorManager: `ruin_operator_params` must not be empty");
+  }
+  if (this->repair_operator_count <= 0) {
+    throw std::invalid_argument("AlnsOperatorManager: `repair_operator_params` must not be empty");
+  }
+  this->ruin_operator_weights.assign(this->ruin_operator_count,
+                                     this->parameter->operator_initial_weight);
+  this->repair_operator_weights.assign(this->repair_operator_count,
+                                       this->parameter->operator_initial_weight);
+  this->operator_combination_stats.assign(
+      this->ruin_operator_count, std::vector<AlnsOperatorStat>(this->repair_operator_count));
+  // segment 累计池
+  this->segment_ruin_score_sums.assign(this->ruin_operator_count, 0.0);
+  this->segment_repair_score_sums.assign(this->repair_operator_count, 0.0);
+  this->segment_ruin_usages.assign(this->ruin_operator_count, 0);
+  this->segment_repair_usages.assign(this->repair_operator_count, 0);
+  this->segment_iter_count = 0;
+}
+
 AlnsRuinOperator* AlnsOperatorManager::ruin_operator(
     const AlnsOperatorCombination::UPtr& operator_combination) const {
   return this->ruin_operators[operator_combination->ruin_operator_ind];
@@ -62,26 +104,37 @@ AlnsRepairOperator* AlnsOperatorManager::repair_operator(
 
 std::vector<AlnsOperatorCombination::UPtr> AlnsOperatorManager::roulette_wheel_operator(
     const int turned_count) const {
-  // 构建轮盘
-  double total_weight = 0;                   // 总权重
-  std::vector<double> accumulation_weights;  // 累积权重
-  accumulation_weights.reserve(this->operator_combination_count);
-  for (int u = 0; u < this->operator_combination_count; ++u) {
-    total_weight += this->operator_combination_weights[u];
-    accumulation_weights.push_back(total_weight);
-  }
-  // 转动轮盘
+  // 分别构建 ruin 和 repair 的累积权重轮盘
+  const auto accumulate = [](const std::vector<double>& weights) {
+    std::vector<double> accumulation_weights;
+    accumulation_weights.reserve(weights.size());
+    double total_weight = 0;
+    for (const double weight : weights) {
+      total_weight += weight;
+      accumulation_weights.push_back(total_weight);
+    }
+    return std::pair{std::move(accumulation_weights), total_weight};
+  };
+  // 转动一次轮盘, 累积数组升序, 二分查找第一个 >= wheel_val 的位置即差距最小的那个
+  const auto draw = [this](const std::vector<double>& accumulation_weights,
+                           const double total_weight) {
+    const double wheel_val = this->select_operator_random->random_double(0, total_weight);
+    return static_cast<int>(std::distance(
+        accumulation_weights.begin(), std::ranges::lower_bound(accumulation_weights, wheel_val)));
+  };
+
+  const auto [ruin_accumulation_weights, ruin_total_weight] =
+      accumulate(this->ruin_operator_weights);
+  const auto [repair_accumulation_weights, repair_total_weight] =
+      accumulate(this->repair_operator_weights);
+
   std::vector<AlnsOperatorCombination::UPtr> operator_combinations;
   operator_combinations.reserve(turned_count);
-  const int repair_count = static_cast<int>(this->repair_operators.size());
   for (int u = 0; u < turned_count; ++u) {
-    const double wheel_val = this->select_operator_random->random_double(0, total_weight);
-    // 二分查找累积权重中第一个 >= wheel_val 的位置，累积数组升序，故它即差距最小的那个
-    const int combination_ind = static_cast<int>(std::distance(
-        accumulation_weights.begin(), std::ranges::lower_bound(accumulation_weights, wheel_val)));
-    // 展开索引还原为二维下标：[ruin_idx][repair_idx] -> ruin_ind * repair_count + repair_ind
+    // ruin 与 repair 独立抽取, 组合概率为两组边缘权重之积
     operator_combinations.emplace_back(std::make_unique<AlnsOperatorCombination>(
-        combination_ind, combination_ind / repair_count, combination_ind % repair_count));
+        draw(ruin_accumulation_weights, ruin_total_weight),
+        draw(repair_accumulation_weights, repair_total_weight)));
   }
 
   return operator_combinations;
@@ -89,27 +142,123 @@ std::vector<AlnsOperatorCombination::UPtr> AlnsOperatorManager::roulette_wheel_o
 
 void AlnsOperatorManager::update_operator_weights(
     const std::vector<AlnsOperatorCombination::UPtr>& operator_combinations) {
-  std::vector<double> accumulation_scores;
-  accumulation_scores.assign(this->operator_combination_count, 0.0);
-
-  std::vector<int> operator_combination_usages;
-  operator_combination_usages.assign(this->operator_combination_count, 0);
-
+  // 1) 累计: 二维观测统计整轮不清零; 边缘得分与使用次数按 segment 累计
   for (const auto& operator_combination : operator_combinations) {
-    accumulation_scores[operator_combination->operator_combination_ind] +=
-        operator_combination->operator_score;
-    ++operator_combination_usages[operator_combination->operator_combination_ind];
+    const int ruin_ind = operator_combination->ruin_operator_ind;
+    const int repair_ind = operator_combination->repair_operator_ind;
+    const double score = operator_combination->operator_score;
+    // 二维统计矩阵
+    AlnsOperatorStat& stat = this->operator_combination_stats[ruin_ind][repair_ind];
+    stat.score_sum += score;
+    ++stat.usage;
+    // 当前 segment 的两组边缘样本池
+    this->segment_ruin_score_sums[ruin_ind] += score;
+    ++this->segment_ruin_usages[ruin_ind];
+    this->segment_repair_score_sums[repair_ind] += score;
+    ++this->segment_repair_usages[repair_ind];
   }
 
-  for (int u = 0; u < this->operator_combination_count; ++u) {
-    if (operator_combination_usages[u] > 0) {
-      this->operator_combination_weights[u] =
-          (1 - this->parameter->operator_learning_factor) * this->operator_combination_weights[u];
-      this->operator_combination_weights[u] += this->parameter->operator_learning_factor *
-                                               accumulation_scores[u] /
-                                               operator_combination_usages[u];
+  // 2) 未到 segment 边界时只累计, 不更新权重
+  ++this->segment_iter_count;
+  if (this->segment_iter_count < this->parameter->operator_weight_update_interval_iter) {
+    return;
+  }
+
+  // 3) 段末用池化均值按反应因子更新
+  const double reaction_factor = this->parameter->operator_learning_factor;
+  const double min_weight = this->parameter->operator_min_weight;
+  const auto update_weights = [reaction_factor, min_weight](const std::vector<double>& score_sums,
+                                                            const std::vector<int>& usages,
+                                                            std::vector<double>& weights) {
+    for (int i = 0; i < static_cast<int>(weights.size()); ++i) {
+      if (usages[i] > 0) {
+        const double mean_score = score_sums[i] / static_cast<double>(usages[i]);
+        const double weight = (1.0 - reaction_factor) * weights[i] + reaction_factor * mean_score;
+        // 下限避免算子被永久淘汰
+        weights[i] = std::max(weight, min_weight);
+      }
+    }
+  };
+  update_weights(this->segment_ruin_score_sums, this->segment_ruin_usages,
+                 this->ruin_operator_weights);
+  update_weights(this->segment_repair_score_sums, this->segment_repair_usages,
+                 this->repair_operator_weights);
+
+  // 4) 重置 segment 累计池, 开始下一个 segment
+  std::fill(this->segment_ruin_score_sums.begin(), this->segment_ruin_score_sums.end(), 0.0);
+  std::fill(this->segment_repair_score_sums.begin(), this->segment_repair_score_sums.end(), 0.0);
+  std::fill(this->segment_ruin_usages.begin(), this->segment_ruin_usages.end(), 0);
+  std::fill(this->segment_repair_usages.begin(), this->segment_repair_usages.end(), 0);
+  this->segment_iter_count = 0;
+}
+
+std::string AlnsOperatorManager::format_operators() const {
+  std::string text = std::format("alns operators: ruin_count={} repair_count={}",
+                                 this->ruin_operator_count, this->repair_operator_count);
+  text += "\nruin operators:";
+  for (int u = 0; u < this->ruin_operator_count; ++u) {
+    const auto* ruin_operator = this->ruin_operators[u];
+    text += std::format("\n  ruin[{}]={} params={{{}}}", u, ruin_operator->code,
+                        ruin_operator->format_parameters());
+  }
+  text += "\nrepair operators:";
+  for (int m = 0; m < this->repair_operator_count; ++m) {
+    const auto* repair_operator = this->repair_operators[m];
+    text += std::format("\n  repair[{}]={} params={{{}}}", m, repair_operator->code,
+                        repair_operator->format_parameters());
+  }
+  return text;
+}
+
+std::string AlnsOperatorManager::format_statistics() const {
+  const auto format_avg = [](const int usage, const double score_sum) {
+    return usage > 0 ? std::format("{:.3f}", score_sum / static_cast<double>(usage))
+                     : std::string("-");
+  };
+  const int ruin_count = static_cast<int>(this->operator_combination_stats.size());
+  const int repair_count =
+      ruin_count > 0 ? static_cast<int>(this->operator_combination_stats.front().size()) : 0;
+
+  std::string text = std::format("alns operator statistics: ruin_count={} repair_count={}",
+                                 ruin_count, repair_count);
+  text += "\ncombination of ruin and repair operators:";
+  for (int u = 0; u < ruin_count; ++u) {
+    const auto& row = this->operator_combination_stats[u];
+    for (int m = 0; m < repair_count; ++m) {
+      const auto& stat = row[m];
+      text += std::format("\n  ruin[{}]={} repair[{}]={} usage={} score_sum={:.1f} avg={}", u,
+                          this->ruin_operators[u]->code, m, this->repair_operators[m]->code,
+                          stat.usage, stat.score_sum, format_avg(stat.usage, stat.score_sum));
     }
   }
+  // ruin 的边缘统计（行求和）
+  text += "\nmarginal ruin operators:";
+  for (int u = 0; u < ruin_count; ++u) {
+    const auto& row = this->operator_combination_stats[u];
+    double ruin_score_sum = 0;
+    int ruin_usage = 0;
+    for (const auto& stat : row) {
+      ruin_score_sum += stat.score_sum;
+      ruin_usage += stat.usage;
+    }
+    text += std::format("\n  ruin[{}]={} weight={:.3f} usage={} score_sum={:.1f} avg={}", u,
+                        this->ruin_operators[u]->code, this->ruin_operator_weights[u], ruin_usage,
+                        ruin_score_sum, format_avg(ruin_usage, ruin_score_sum));
+  }
+  // repair 的边缘统计（列求和）
+  text += "\nmarginal repair operators:";
+  for (int m = 0; m < repair_count; ++m) {
+    double score_sum = 0;
+    int usage = 0;
+    for (int i = 0; i < ruin_count; ++i) {
+      score_sum += this->operator_combination_stats[i][m].score_sum;
+      usage += this->operator_combination_stats[i][m].usage;
+    }
+    text += std::format("\n  repair[{}]={} weight={:.3f} usage={} score_sum={:.1f} avg={}", m,
+                        this->repair_operators[m]->code, this->repair_operator_weights[m], usage,
+                        score_sum, format_avg(usage, score_sum));
+  }
+  return text;
 }
 
 // ====== implement of create_alns_operator ======
@@ -130,14 +279,59 @@ sol::table get_operator_params(const sol::table& item) {
 }
 
 /**
+ * @brief 按编码创建并注册 ruin 算子
+ * @param alns_operator_manager alns算子管理器
+ * @param code ruin算子编码
+ * @param params 算子参数
+ * @param context solver上下文
+ */
+void create_ruin_operator(AlnsOperatorManager* alns_operator_manager,
+                          const AlnsRuinOperatorCode code, const sol::table& params,
+                          const SolverContext* context) {
+  if (code == AlnsRuinOperatorCode::RuinRandomRemovalLoad) {
+    alns_operator_manager->add_ruin_operator(new AlnsRuinRandomRemovalLoad(context, params));
+  } else if (code == AlnsRuinOperatorCode::RuinRandomRemovalOrder) {
+    alns_operator_manager->add_ruin_operator(new AlnsRuinRandomRemovalOrder(context, params));
+  } else if (code == AlnsRuinOperatorCode::RuinWorstRemovalOrder) {
+    alns_operator_manager->add_ruin_operator(new AlnsRuinWorstRemovalOrder(context, params));
+  } else {
+    throw std::invalid_argument("alns ruin operator code: " +
+                                std::string(magic_enum::enum_name(code)) + " is not supported!");
+  }
+}
+
+/**
+ * @brief 按编码创建并注册 repair 算子
+ * @param alns_operator_manager alns算子管理器
+ * @param code repair算子编码
+ * @param params 算子参数
+ * @param context solver上下文
+ * @param parallel_executor 并行执行器
+ */
+void create_repair_operator(AlnsOperatorManager* alns_operator_manager,
+                            const AlnsRepairOperatorCode code, const sol::table& params,
+                            const SolverContext* context, ParallelExecutor* parallel_executor) {
+  if (code == AlnsRepairOperatorCode::RepairGreedy) {
+    alns_operator_manager->add_repair_operator(
+        new AlnsRepairGreedy(context, parallel_executor, params));
+  } else if (code == AlnsRepairOperatorCode::RepairRegretK) {
+    alns_operator_manager->add_repair_operator(
+        new AlnsRepairRegretK(context, parallel_executor, params));
+  } else {
+    throw std::invalid_argument("alns repair operator code: " +
+                                std::string(magic_enum::enum_name(code)) + " is not supported!");
+  }
+}
+
+/**
  * @brief 创建 alns 的 ruin 算子
  * @param alns_operator_manager alns算子管理器
  * @param cfg lua参数集合
- * @param alns_parameter alns算法参数
- * @param workspace 工作空间
+ * @param context solver上下文
+ * @details ruin_operator_params 缺失、为空或没有有效元素时, 注册默认 ruin 算子
  */
 void create_alns_ruin_operator(AlnsOperatorManager* alns_operator_manager, const sol::table& cfg,
-                               const AlnsParameter* alns_parameter, const Workspace* workspace) {
+                               const SolverContext* context) {
   if (cfg[AlnsParameterLuaField::RUIN_OPERATOR_PARAMS].valid()) {
     const sol::table ruin_params =
         cfg[AlnsParameterLuaField::RUIN_OPERATOR_PARAMS].get<sol::table>();
@@ -160,33 +354,30 @@ void create_alns_ruin_operator(AlnsOperatorManager* alns_operator_manager, const
       }
       // 取 params（可选，缺省给空表）
       const sol::table params = get_operator_params(item);
-      // 转换ruin算子编码
-      const AlnsRuinOperatorCode alns_ruin_operator_code = convert_alns_ruin_operator_code(code);
-      // 注册ruin算子
-      if (alns_ruin_operator_code == AlnsRuinOperatorCode::RuinRandomRemovalLoad) {
-        alns_operator_manager->add_ruin_operator(
-            new AlnsRuinRandomRemovalLoad(workspace->context, params));
-      } else if (alns_ruin_operator_code == AlnsRuinOperatorCode::RuinRandomRemovalOrder) {
-        alns_operator_manager->add_ruin_operator(
-            new AlnsRuinRandomRemovalOrder(workspace->context, params));
-      } else {
-        throw std::invalid_argument("alns ruin operator code: " + code + " is not undefined!");
-      }
+      // 转换并注册ruin算子
+      create_ruin_operator(alns_operator_manager, convert_alns_ruin_operator_code(code), params,
+                           context);
     });
   }
-  // TODO ruin算子为空，使用默认算子
+  // ruin算子为空，使用默认算子
+  if (alns_operator_manager->ruin_operator_count == 0) {
+    const sol::table empty_params(cfg.lua_state(), sol::create);
+    for (const auto code : AlnsOperatorManager::default_ruin_operator_codes) {
+      create_ruin_operator(alns_operator_manager, code, empty_params, context);
+    }
+  }
 }
 
 /**
  * @brief 创建 alns 的 repair 算子
  * @param alns_operator_manager alns算子管理器
  * @param cfg lua参数集合
- * @param alns_parameter alns算法参数
- * @param workspace 工作空间
+ * @param context solver上下文
  * @param parallel_executor 并行执行器
+ * @details repair_operator_params 缺失、为空或没有有效元素时, 注册默认 repair 算子
  */
 void create_alns_repair_operator(AlnsOperatorManager* alns_operator_manager, const sol::table& cfg,
-                                 const AlnsParameter* alns_parameter, const Workspace* workspace,
+                                 const SolverContext* context,
                                  ParallelExecutor* parallel_executor) {
   if (cfg[AlnsParameterLuaField::REPAIR_OPERATOR_PARAMS].valid()) {
     const sol::table repair_params =
@@ -210,39 +401,31 @@ void create_alns_repair_operator(AlnsOperatorManager* alns_operator_manager, con
       }
       // 取 params（可选，缺省给空表）
       const sol::table params = get_operator_params(item);
-      // 转换repair算子编码
-      const AlnsRepairOperatorCode alns_repair_operator_code =
-          parse_alns_repair_operator_code(code);
-      // 注册repair算子
-      if (alns_repair_operator_code == AlnsRepairOperatorCode::RepairGreedy) {
-        alns_operator_manager->add_repair_operator(
-            new AlnsRepairGreedy(workspace->context, parallel_executor, params));
-      } else if (alns_repair_operator_code == AlnsRepairOperatorCode::RepairRegretK) {
-        alns_operator_manager->add_repair_operator(
-            new AlnsRepairRegretK(workspace->context, parallel_executor, params));
-      } else {
-        throw std::invalid_argument("alns repair operator code: " + code + " is not undefined!");
-      }
+      // 转换并注册repair算子
+      create_repair_operator(alns_operator_manager, parse_alns_repair_operator_code(code), params,
+                             context, parallel_executor);
     });
   }
-  // TODO repair算子为空，使用默认算子
+  // repair算子为空，使用默认算子
+  if (alns_operator_manager->repair_operator_count == 0) {
+    const sol::table empty_params(cfg.lua_state(), sol::create);
+    for (const auto code : AlnsOperatorManager::default_repair_operator_codes) {
+      create_repair_operator(alns_operator_manager, code, empty_params, context, parallel_executor);
+    }
+  }
 }
 }  // namespace
 
 std::unique_ptr<AlnsOperatorManager> create_alns_operator(const sol::table& cfg,
                                                           const AlnsParameter* alns_parameter,
-                                                          const Workspace* workspace,
+                                                          const SolverContext* context,
                                                           ParallelExecutor* parallel_executor) {
   auto alns_operator_manager = std::make_unique<AlnsOperatorManager>(alns_parameter);
   // 创建ruin算子
-  create_alns_ruin_operator(alns_operator_manager.get(), cfg, alns_parameter, workspace);
+  create_alns_ruin_operator(alns_operator_manager.get(), cfg, context);
   // 创建repair算子
-  create_alns_repair_operator(alns_operator_manager.get(), cfg, alns_parameter, workspace,
-                              parallel_executor);
-  // 初始化权重
-  alns_operator_manager->operator_combination_count =
-      alns_operator_manager->ruin_operator_count * alns_operator_manager->repair_operator_count;
-  alns_operator_manager->operator_combination_weights.assign(
-      alns_operator_manager->operator_combination_count, alns_parameter->operator_initial_weight);
+  create_alns_repair_operator(alns_operator_manager.get(), cfg, context, parallel_executor);
+  // 初始化权重与统计矩阵
+  alns_operator_manager->init_weights();
   return alns_operator_manager;
 }
