@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 3.24)
 cmake_policy(SET CMP0091 NEW)
 
-project(yun VERSION 0.3.0 LANGUAGES C CXX)
+# ── 版本：根目录 VERSION（见 docs/versioning.md）────────
+file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/VERSION" YUN_VERSION LIMIT_COUNT 1)
+string(STRIP "${YUN_VERSION}" YUN_VERSION)
+if(NOT YUN_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "VERSION 内容非法（应为 X.Y.Z）: '${YUN_VERSION}'")
+endif()
+
+project(yun VERSION ${YUN_VERSION} LANGUAGES C CXX)
+
+message(STATUS "yun version: ${YUN_VERSION}")
 
 export(PACKAGE yun)
 

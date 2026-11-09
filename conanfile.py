@@ -5,12 +5,21 @@ Releases (see ``scripts/build_sdk.py``); this recipe does not build or
 package the project.
 """
 
+from pathlib import Path
+
 from conan import ConanFile
+
+
+def _project_version() -> str:
+    version_file = Path(__file__).resolve().parent / "VERSION"
+    if not version_file.is_file():
+        raise RuntimeError(f"缺少版本文件: {version_file}")
+    return version_file.read_text(encoding="utf-8").strip()
 
 
 class YunConan(ConanFile):
     name = "yun"
-    version = "0.3.0"
+    version = _project_version()
     settings = "os", "compiler", "build_type", "arch"
     generators = "CMakeDeps", "CMakeToolchain"
 

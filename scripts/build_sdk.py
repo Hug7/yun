@@ -70,11 +70,14 @@ def _require_tool(name: str, hint: str) -> str:
 
 
 def _project_version() -> str:
-    text = (YUN_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
-    match = re.search(r"project\(\s*yun\s+VERSION\s+([0-9.]+)", text)
-    if not match:
-        raise SystemExit("无法从 CMakeLists.txt 读取 project(yun VERSION ...)")
-    return match.group(1)
+    version_file = YUN_ROOT / "VERSION"
+    try:
+        version = version_file.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        raise SystemExit(f"找不到版本文件: {version_file}") from None
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        raise SystemExit(f"VERSION 内容非法（应为 X.Y.Z）: {version!r}")
+    return version
 
 
 def _platform_tag() -> str:
@@ -327,7 +330,9 @@ def _make_tar(sdk_root: Path, out_dir: Path, version: str, tag: str) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description="构建 yun 预编译 SDK")
     parser.add_argument(
-        "--version", default=None, help="SDK 版本（默认取 CMake project 版本）"
+        "--version",
+        default=None,
+        help="SDK 版本（默认且必须等于仓库根目录 VERSION）",
     )
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--build-dir", type=Path, default=DEFAULT_BUILD_DIR)
@@ -337,7 +342,12 @@ def main() -> None:
     args = parser.parse_args()
 
     tag = _platform_tag()
-    version = args.version or _project_version()
+    version = _project_version()
+    if args.version is not None and args.version != version:
+        raise SystemExit(
+            f"--version {args.version} 与 VERSION {version} 不一致；"
+            "请修改根目录 VERSION（见 docs/versioning.md）"
+        )
 
     cmake = _require_tool("cmake", "brew install cmake / apt install cmake")
     conan = _require_tool("conan", "python -m pip install 'conan>=2.33,<3'")
