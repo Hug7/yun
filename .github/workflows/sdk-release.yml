@@ -4,11 +4,6 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      version:
-        description: "SDK version (must match project(yun VERSION ...))"
-        required: true
-        default: "0.3.0"
 
 permissions:
   contents: read
@@ -30,27 +25,20 @@ jobs:
       - name: Resolve version
         id: resolve
         shell: bash
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="${INPUT_VERSION}"
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::VERSION 内容非法（应为 X.Y.Z）: ${VERSION}"
+            exit 1
           fi
-          export VERSION
-          python3 - <<'PY'
-          import os
-          import re
-          from pathlib import Path
-
-          text = Path("CMakeLists.txt").read_text(encoding="utf-8")
-          version = re.search(r"project\(\s*yun\s+VERSION\s+([0-9.]+)", text).group(1)
-          expected = os.environ["VERSION"]
-          assert version == expected, f"SDK version {expected} != CMake {version}"
-          print("version:", version)
-          PY
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+            if [[ "${TAG_VERSION}" != "${VERSION}" ]]; then
+              echo "::error::tag v${TAG_VERSION} 与 VERSION ${VERSION} 不一致"
+              exit 1
+            fi
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
   build-macos:

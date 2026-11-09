@@ -251,10 +251,10 @@ GitHub Release 提供：
 本地构建（在目标平台上执行）：
 
 ```bash
-python3.11 scripts/build_sdk.py --version 0.3.0 --out-dir dist/sdk --clean
+python3.11 scripts/build_sdk.py --out-dir dist/sdk --clean
 ```
 
-产物在 `dist/sdk/`（tarball + 同名 `.sha256`）。SDK 构建脚本需要 Python 3.9+ 和 Conan，但 SDK 产物本身与 Python 版本无关。
+版本取自仓库根目录 `VERSION`，`--version` 只在需要显式校验时使用且必须与之一致。产物在 `dist/sdk/`（tarball + 同名 `.sha256`）。SDK 构建脚本需要 Python 3.9+ 和 Conan，但 SDK 产物本身与 Python 版本无关。
 
 消费方通过 CMake package 使用：
 
@@ -273,10 +273,15 @@ Linux 消费方需使用 GCC 13.2+，且运行时 libstdc++ 需匹配 GCC 14；W
 
 ### 6. 附件
 
-* 测试用例和demo见项目: [yun-cases](https://github.com/Hug7/yun-cases)
+* 测试用例、性能测试和demo见项目: [yun-cases](https://github.com/Hug7/yun-cases)
 
 
-开发前请先阅读 [质量门禁](docs/quality_gates.md)。
+开发前请先阅读:
+
+- [质量门禁](docs/quality_gates.md)；
+- 版本号来源与发布流程见 [版本管理](docs/versioning.md)；
+- 文档/配置的入库规则见[仓库约定](docs/repository_conventions.md)；
+- 变更记录见 [CHANGELOG.md](CHANGELOG.md)；
 
 ### 7. Continuing
 

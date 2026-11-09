@@ -1,3 +1,8 @@
+# 统一行尾：文本文件在仓库与检出时一律 LF，避免 macOS / Linux / Windows 之间
+# 出现整文件 diff，以及 clang-format、ruff 的噪音。
+* text=auto eol=lf
+
+# 显式声明（可读性；与上面的默认行为一致）
 *.csv text eol=lf
 *.json text eol=lf
 *.lua text eol=lf
@@ -5,3 +10,25 @@
 *.yml text eol=lf
 *.cmake text eol=lf
 *.in text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+
+# 二进制：禁止行尾转换与文本 diff
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar.gz binary
+*.whl binary
+*.a binary
+*.lib binary
+*.so binary
+*.dylib binary
+*.pyd binary
+*.dll binary
+*.exe binary

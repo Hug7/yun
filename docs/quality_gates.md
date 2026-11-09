@@ -4,6 +4,7 @@
 |---|---|---|---|
 | C++ 格式 | clang-format | 22.1.8 | `Lint (ubuntu)` |
 | Python lint/格式 | ruff | 0.15.20 | `Lint (ubuntu)` |
+| 版本一致性 | `scripts/version.py check` | - | `Lint (ubuntu)` |
 | workflow 语法 | actionlint | 1.7.8 | `Lint (ubuntu)` |
 | 单测 + 功能测试 | ctest / yun-cases v0.1.0 | - | `Build & Test (macOS arm64 AppleClang)`、`Build & Test (Linux x86_64 GCC 14)`、`Build & Test (Linux arm64 GCC 14)`、`Build & Test (Windows x64 clang-cl)`、`Build & Test (Windows arm64 clang-cl)`（实验性） |
 | 内存错误 | AddressSanitizer | Xcode 自带 / GCC 14 | `ASan (macOS arm64)`、`ASan (Linux x86_64 GCC 14)`、`ASan (Linux arm64 GCC 14)` |
@@ -22,6 +23,9 @@ git ls-files -z '*.h' '*.cpp' | xargs -0 clang-format --dry-run --Werror
 # Python
 ruff check conanfile.py scripts/
 ruff format --check conanfile.py scripts/
+
+# 版本一致性（读 VERSION，校验 conanfile/CMake/workflow/文档）
+python scripts/version.py check
 
 # 单测 + 功能测试
 cmake --build build/ci --parallel
