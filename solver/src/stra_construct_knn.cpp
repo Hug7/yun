@@ -267,9 +267,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
     }
 
     std::vector<int> archived_load_indices;
-    int best_rank = std::numeric_limits<int>::max();
-    int best_rank_for_load_ind = -1;
-    int best_rank_for_order_ind = -1;
+    KnnCandidatePicker candidate_picker;
     for (const int& candidate_load_ind : candidate_load_indices) {
       const auto cur_load = sol->loads[candidate_load_ind];
       bool cur_load_can_insert = false;
@@ -279,7 +277,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
           auto cur_load_last_delivery_order = cur_load->last_node->prev->last->order;
           if (knn_graph[cur_order->ind].contains(cur_load_last_delivery_order->ind)) {
             const int cur_rank = knn_graph[cur_order->ind][cur_load_last_delivery_order->ind];
-            if (cur_rank > best_rank) {
+            if (candidate_picker.worse_than_best(cur_rank)) {
               continue;
             }
             // 尝试能否将 cur_order 插入到 cur_load 的最后
@@ -291,11 +289,9 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
               problem->tmp_select_best_vehicle(tmp_load, sol->vehicle_resource);
               if (tmp_load->is_feasible()) {
                 cur_load_can_insert = true;
-                if (cur_rank < best_rank) {
-                  best_rank = cur_rank;
-                  best_rank_for_load_ind = candidate_load_ind;
-                  best_rank_for_order_ind = cur_order->ind;
-                }
+                candidate_picker.offer({.rank = cur_rank,
+                                        .order_ind = cur_order->ind,
+                                        .load_ind = candidate_load_ind});
               }
             }
             // release tmp_load
@@ -307,19 +303,20 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
         archived_load_indices.push_back(candidate_load_ind);
       }
     }
-    if (best_rank_for_order_ind == -1) {
+    if (!candidate_picker.has_value()) {
       // 所有unassigned order不能插入，将candidate load放入solution中
       candidate_load_indices.clear();
       // 所有unassigned order不能插入，选择订单构造车次添加到候选车次中
       select_order_construct_load(candidate_load_indices, unassigned_order_indices, sol, problem);
     } else {
       // 将选中的order插入到指定的load
-      auto cur_order = sol->unassigned_orders[best_rank_for_order_ind];
+      const int best_order_ind = candidate_picker.best().order_ind;
+      auto cur_order = sol->unassigned_orders[best_order_ind];
       // 将选中的order从unassigned_orders中移除
-      unassigned_order_indices.erase(best_rank_for_order_ind);
-      sol->remove_unassigned_order_by_key(best_rank_for_order_ind);
+      unassigned_order_indices.erase(best_order_ind);
+      sol->remove_unassigned_order_by_key(best_order_ind);
       // 选择最优车辆
-      auto cur_load = sol->loads[best_rank_for_load_ind];
+      auto cur_load = sol->loads[candidate_picker.best().load_ind];
       problem->pd_pattern->insert_last_delivery(cur_load, cur_order);
       problem->eval_load(cur_load);
       sol->release_vehicle_resource(cur_load);
