@@ -6,13 +6,18 @@
 #pragma once
 
 #include <memory>
-#include <sol/sol.hpp>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "algo_alns_parameter.h"
 #include "algo_alns_repair.h"
+#include "algo_alns_repair_greedy.h"
+#include "algo_alns_repair_regret_k.h"
 #include "algo_alns_ruin.h"
+#include "algo_alns_ruin_random_removal_load.h"
+#include "algo_alns_ruin_random_removal_order.h"
+#include "algo_alns_ruin_worst_removal_order.h"
 #include "algo_alns_sa.h"
 #include "c_random_utils.h"
 #include "pdm_context.h"
@@ -67,23 +72,6 @@ class AlnsOperatorCombination {
 
 class AlnsOperatorManager {
  public:
-  /**
-   * @brief 默认的ruin算子编码集合
-   * @details 元素顺序即默认注册顺序, 保证求解前打印与轮盘下标稳定
-   */
-  inline static const std::vector<AlnsRuinOperatorCode> default_ruin_operator_codes{
-      AlnsRuinOperatorCode::RuinRandomRemovalLoad,
-      AlnsRuinOperatorCode::RuinRandomRemovalOrder,
-      AlnsRuinOperatorCode::RuinWorstRemovalOrder,
-  };
-  /**
-   * @brief 默认的repair算子编码集合
-   * @details 元素顺序即默认注册顺序, 保证求解前打印与轮盘下标稳定
-   */
-  inline static const std::vector<AlnsRepairOperatorCode> default_repair_operator_codes{
-      AlnsRepairOperatorCode::RepairGreedy,
-      AlnsRepairOperatorCode::RepairRegretK,
-  };
   /**
    * @brief alns 的算法参数
    */
@@ -183,14 +171,29 @@ class AlnsOperatorManager {
 };
 
 /**
+ * @brief alns ruin 算子的结构化参数
+ * @details variant 的每个分支对应一种 ruin 算子, 由策略层完成 Lua→POD 的转换
+ */
+using AlnsRuinOperatorParam =
+    std::variant<AlnsRuinRandomRemovalLoadParam, AlnsRuinRandomRemovalOrderParam,
+                 AlnsRuinWorstRemovalOrderParam>;
+
+/**
+ * @brief alns repair 算子的结构化参数
+ */
+using AlnsRepairOperatorParam = std::variant<AlnsRepairGreedyParam, AlnsRepairRegretKParam>;
+
+/**
  * @brief 创建alns算子(自定义)
- * @param cfg 算子集合
+ * @param ruin_operator_params ruin算子的结构化参数, 为空时注册默认ruin算子
+ * @param repair_operator_params repair算子的结构化参数, 为空时注册默认repair算子
  * @param alns_parameter alns参数
  * @param context solver上下文
  * @param parallel_executor 线程池, 由调用方持有, repair算子借用其并行构造修复矩阵
  * @return
  */
-std::unique_ptr<AlnsOperatorManager> create_alns_operator(const sol::table& cfg,
-                                                          const AlnsParameter* alns_parameter,
-                                                          const SolverContext* context,
-                                                          ParallelExecutor* parallel_executor);
+std::unique_ptr<AlnsOperatorManager> create_alns_operator(
+    const std::vector<AlnsRuinOperatorParam>& ruin_operator_params,
+    const std::vector<AlnsRepairOperatorParam>& repair_operator_params,
+    const AlnsParameter* alns_parameter, const SolverContext* context,
+    ParallelExecutor* parallel_executor);

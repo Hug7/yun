@@ -91,46 +91,32 @@ std::vector<std::size_t> select_worst_removal_indices(const std::vector<double>&
 }
 
 // ====== implement of AlnsRuinWorstRemovalOrder ======
-AlnsRuinWorstRemovalOrder::AlnsRuinWorstRemovalOrder(const SolverContext* _context,
-                                                     const sol::table& cfg)
-    : AlnsRuinOperator(AlnsRuinOperatorCode::RuinWorstRemovalOrder, _context) {
-  if (cfg[AlnsRuinWorstRemovalOrderLuaField::SELECT_ORDER_MIN_RATE].valid()) {
-    this->select_order_min_rate =
-        static_cast<double>(cfg[AlnsRuinWorstRemovalOrderLuaField::SELECT_ORDER_MIN_RATE]);
-  }
-  if (cfg[AlnsRuinWorstRemovalOrderLuaField::SELECT_ORDER_MAX_RATE].valid()) {
-    this->select_order_max_rate =
-        static_cast<double>(cfg[AlnsRuinWorstRemovalOrderLuaField::SELECT_ORDER_MAX_RATE]);
-  }
-  if (cfg[AlnsRuinWorstRemovalOrderLuaField::SELECT_ORDER_RANDOM_SEED].valid()) {
-    this->select_order_random_seed =
-        static_cast<int>(cfg[AlnsRuinWorstRemovalOrderLuaField::SELECT_ORDER_RANDOM_SEED]);
-  }
-  if (cfg[AlnsRuinWorstRemovalOrderLuaField::SELECT_ORDER_NOISE_EXPONENT].valid()) {
-    this->select_order_noise_exponent =
-        static_cast<double>(cfg[AlnsRuinWorstRemovalOrderLuaField::SELECT_ORDER_NOISE_EXPONENT]);
-  }
-  this->select_order_random = std::make_unique<RandomUtils>(this->select_order_random_seed);
+AlnsRuinWorstRemovalOrder::AlnsRuinWorstRemovalOrder(
+    const SolverContext* _context, const AlnsRuinWorstRemovalOrderParam& _parameter)
+    : AlnsRuinOperator(AlnsRuinOperatorCode::RuinWorstRemovalOrder, _context),
+      parameter(_parameter) {
+  this->select_order_random =
+      std::make_unique<RandomUtils>(this->parameter.select_order_random_seed);
 
   // 校验参数
-  if (this->select_order_min_rate < 0.0 || this->select_order_min_rate > 1.0) {
+  if (this->parameter.select_order_min_rate < 0.0 || this->parameter.select_order_min_rate > 1.0) {
     throw std::invalid_argument(this->code + ": `select_order_min_rate` must be in [0, 1], got " +
-                                std::to_string(this->select_order_min_rate));
+                                std::to_string(this->parameter.select_order_min_rate));
   }
-  if (this->select_order_max_rate < 0.0 || this->select_order_max_rate > 1.0) {
+  if (this->parameter.select_order_max_rate < 0.0 || this->parameter.select_order_max_rate > 1.0) {
     throw std::invalid_argument(this->code + ": `select_order_max_rate` must be in [0, 1], got " +
-                                std::to_string(this->select_order_max_rate));
+                                std::to_string(this->parameter.select_order_max_rate));
   }
-  if (this->select_order_min_rate > this->select_order_max_rate) {
+  if (this->parameter.select_order_min_rate > this->parameter.select_order_max_rate) {
     throw std::invalid_argument(this->code + ": `select_order_min_rate` (" +
-                                std::to_string(this->select_order_min_rate) +
+                                std::to_string(this->parameter.select_order_min_rate) +
                                 ") must not exceed `select_order_max_rate` (" +
-                                std::to_string(this->select_order_max_rate) + ")");
+                                std::to_string(this->parameter.select_order_max_rate) + ")");
   }
   // p < 1 会把选择偏向收益最低者, 与"最差移除"语义相反
-  if (this->select_order_noise_exponent < 1.0) {
+  if (this->parameter.select_order_noise_exponent < 1.0) {
     throw std::invalid_argument(this->code + ": `select_order_noise_exponent` must be >= 1, got " +
-                                std::to_string(this->select_order_noise_exponent));
+                                std::to_string(this->parameter.select_order_noise_exponent));
   }
 }
 
@@ -138,8 +124,8 @@ std::string AlnsRuinWorstRemovalOrder::format_parameters() const {
   return std::format(
       "select_order_random_seed={}, select_order_min_rate={}, select_order_max_rate={}, "
       "select_order_noise_exponent={}",
-      this->select_order_random_seed, this->select_order_min_rate, this->select_order_max_rate,
-      this->select_order_noise_exponent);
+      this->parameter.select_order_random_seed, this->parameter.select_order_min_rate,
+      this->parameter.select_order_max_rate, this->parameter.select_order_noise_exponent);
 }
 
 std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinWorstRemovalOrder::execute(
@@ -271,11 +257,11 @@ std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinWorstRemovalOrder::e
   }
 
   // 移除数量按已分配订单总数取比例, 再截断到有效候选数
-  const int select_count =
-      std::max(1, this->select_order_random->random_int(order_count, this->select_order_min_rate,
-                                                        this->select_order_max_rate));
+  const int select_count = std::max(
+      1, this->select_order_random->random_int(order_count, this->parameter.select_order_min_rate,
+                                               this->parameter.select_order_max_rate));
   const std::vector<std::size_t> selected = select_worst_removal_indices(
-      gains, select_count, this->select_order_noise_exponent, *this->select_order_random);
+      gains, select_count, this->parameter.select_order_noise_exponent, *this->select_order_random);
 
   for (const std::size_t local_ind : selected) {
     const WorstCandidate& candidate = candidates[local_ind];

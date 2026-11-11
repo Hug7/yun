@@ -5,34 +5,17 @@
 
 #pragma once
 
-#include <sol/sol.hpp>
-
 #include "algo_alns_ruin.h"
 #include "c_random_utils.h"
 
 /**
- * @brief alns ruin算子`RuinRandomRemovalLoad`的参数在lua中的字段集合
+ * @brief alns ruin算子`RuinRandomRemovalLoad`的参数
  */
-class AlnsRuinRandomRemovalLoadLuaField {
- public:
-  static constexpr const char* SELECT_LOAD_RANDOM_SEED = "select_load_random_seed";
-  static constexpr const char* SELECT_LOAD_MIN_RATE = "select_load_min_rate";
-  static constexpr const char* SELECT_LOAD_MAX_RATE = "select_load_max_rate";
-};
-
-/**
- * @brief alns ruin算子随机移除load
- */
-class AlnsRuinRandomRemovalLoad : public AlnsRuinOperator {
- public:
+struct AlnsRuinRandomRemovalLoadParam {
   /**
    * @brief 随机种子
    */
   int select_load_random_seed{37};
-  /**
-   * @brief 随机数
-   */
-  RandomUtils::UPtr select_load_random;
   /**
    * @brief 选择load数的最小比例
    */
@@ -41,8 +24,24 @@ class AlnsRuinRandomRemovalLoad : public AlnsRuinOperator {
    * @brief 选择load数的最大比例
    */
   double select_load_max_rate{0.4};
+};
 
-  explicit AlnsRuinRandomRemovalLoad(const SolverContext* _context, const sol::table& cfg);
+/**
+ * @brief alns ruin算子随机移除load
+ */
+class AlnsRuinRandomRemovalLoad : public AlnsRuinOperator {
+ public:
+  /**
+   * @brief 结构化参数
+   */
+  const AlnsRuinRandomRemovalLoadParam parameter;
+  /**
+   * @brief 随机数
+   */
+  RandomUtils::UPtr select_load_random;
+
+  explicit AlnsRuinRandomRemovalLoad(const SolverContext* _context,
+                                     const AlnsRuinRandomRemovalLoadParam& _parameter);
 
   std::unordered_map<int, AlnsRuinLoadActivity::UPtr> execute(Solution* sol) override;
 

@@ -5,39 +5,7 @@
 
 #pragma once
 
-#include <spdlog/spdlog.h>
-
 #include <cstdint>
-#include <memory>
-#include <sol/sol.hpp>
-
-/**
- * @brief ALNS 算法的参数在lua中的字段集合
- */
-class AlnsParameterLuaField {
- public:
-  static constexpr const char* WORKER_COUNT = "worker_count";
-  static constexpr const char* MAX_ITER = "max_iter";
-  static constexpr const char* MAX_SUB_ITER = "max_sub_iter";
-  static constexpr const char* MAX_UNIMPROVED_ITER = "max_unimproved_iter";
-  static constexpr const char* MAX_STAGNATE_ITER = "max_stagnate_iter";
-  static constexpr const char* PRINT_LOG_INTERVAL_ITER = "print_log_interval_iter";
-  static constexpr const char* MAX_RUNNING_TIME_SEC = "max_running_time_sec";
-  static constexpr const char* OPERATOR_LEARNING_FACTOR = "operator_learning_factor";
-  static constexpr const char* OPERATOR_INITIAL_WEIGHT = "operator_initial_weight";
-  static constexpr const char* OPERATOR_MIN_WEIGHT = "operator_min_weight";
-  static constexpr const char* OPERATOR_WEIGHT_UPDATE_INTERVAL_ITER =
-      "operator_weight_update_interval_iter";
-  static constexpr const char* PRINT_OPERATOR_STATISTICS = "print_operator_statistics";
-  static constexpr const char* INITIAL_TEMPERATURE = "initial_temperature";
-  static constexpr const char* MIN_TEMPERATURE = "min_temperature";
-  static constexpr const char* ANNEALING_FACTOR = "annealing_factor";
-  static constexpr const char* DEFAULT_RANDOM_SEED = "default_random_seed";
-  static constexpr const char* RUIN_OPERATOR_PARAMS = "ruin_operator_params";
-  static constexpr const char* REPAIR_OPERATOR_PARAMS = "repair_operator_params";
-  static constexpr const char* OPERATOR_CODE = "code";
-  static constexpr const char* OPERATOR_PARAMS = "params";
-};
 
 /**
  * @brief ALNS 算法的参数
@@ -128,12 +96,3 @@ class AlnsParameter {
 
   ~AlnsParameter() = default;
 };
-
-/**
- * @brief 解析alns参数
- * @param cfg lua中定义的alns参数
- * @param logger logger
- * @return
- */
-std::unique_ptr<AlnsParameter> parse_alns_parameter(const sol::table& cfg,
-                                                    const std::shared_ptr<spdlog::logger>& logger);

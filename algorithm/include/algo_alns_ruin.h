@@ -6,10 +6,8 @@
 #pragma once
 
 #include <magic_enum/magic_enum.hpp>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 
 #include "pdm_context.h"
 #include "pdm_solution.h"
@@ -22,18 +20,6 @@ enum class AlnsRuinOperatorCode {
   RuinRandomRemovalOrder,
   RuinWorstRemovalOrder,
 };
-
-constexpr AlnsRuinOperatorCode convert_alns_ruin_operator_code(const std::string& code) {
-  if (code == "RuinRandomRemovalLoad") {
-    return AlnsRuinOperatorCode::RuinRandomRemovalLoad;
-  } else if (code == "RuinRandomRemovalOrder") {
-    return AlnsRuinOperatorCode::RuinRandomRemovalOrder;
-  } else if (code == "RuinWorstRemovalOrder") {
-    return AlnsRuinOperatorCode::RuinWorstRemovalOrder;
-  } else {
-    throw std::invalid_argument("Invalid AlnsRuinOperatorCode = " + code);
-  }
-}
 
 class AlnsRuinLoadActivity {
  public:

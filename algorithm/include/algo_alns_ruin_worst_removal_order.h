@@ -6,22 +6,10 @@
 #pragma once
 
 #include <cstddef>
-#include <sol/sol.hpp>
 #include <vector>
 
 #include "algo_alns_ruin.h"
 #include "c_random_utils.h"
-
-/**
- * @brief alns ruin算子`RuinWorstRemovalOrder`的参数在lua中的字段集合
- */
-class AlnsRuinWorstRemovalOrderLuaField {
- public:
-  static constexpr const char* SELECT_ORDER_RANDOM_SEED = "select_order_random_seed";
-  static constexpr const char* SELECT_ORDER_MIN_RATE = "select_order_min_rate";
-  static constexpr const char* SELECT_ORDER_MAX_RATE = "select_order_max_rate";
-  static constexpr const char* SELECT_ORDER_NOISE_EXPONENT = "select_order_noise_exponent";
-};
 
 /**
  * @brief 从收益数组中挑选 `count` 个收益最大的候选
@@ -39,19 +27,13 @@ std::vector<std::size_t> select_worst_removal_indices(const std::vector<double>&
                                                       RandomUtils& random);
 
 /**
- * @brief alns ruin算子最差订单移除
- * @details 按「把该 order 从所属 load 摘掉后目标值的下降量」排序, 随机化地优先移除最贵的订单
+ * @brief alns ruin算子`RuinWorstRemovalOrder`的参数
  */
-class AlnsRuinWorstRemovalOrder : public AlnsRuinOperator {
- public:
+struct AlnsRuinWorstRemovalOrderParam {
   /**
    * @brief 随机种子
    */
   int select_order_random_seed{37};
-  /**
-   * @brief 随机数
-   */
-  RandomUtils::UPtr select_order_random;
   /**
    * @brief 选择订单数的最小比例
    */
@@ -65,8 +47,25 @@ class AlnsRuinWorstRemovalOrder : public AlnsRuinOperator {
    * @details 1 表示均匀随机, 越大越集中在收益最高的订单上
    */
   double select_order_noise_exponent{3.0};
+};
 
-  explicit AlnsRuinWorstRemovalOrder(const SolverContext* _context, const sol::table& cfg);
+/**
+ * @brief alns ruin算子最差订单移除
+ * @details 按「把该 order 从所属 load 摘掉后目标值的下降量」排序, 随机化地优先移除最贵的订单
+ */
+class AlnsRuinWorstRemovalOrder : public AlnsRuinOperator {
+ public:
+  /**
+   * @brief 结构化参数
+   */
+  const AlnsRuinWorstRemovalOrderParam parameter;
+  /**
+   * @brief 随机数
+   */
+  RandomUtils::UPtr select_order_random;
+
+  explicit AlnsRuinWorstRemovalOrder(const SolverContext* _context,
+                                     const AlnsRuinWorstRemovalOrderParam& _parameter);
 
   [[nodiscard]] std::string format_parameters() const override;
 

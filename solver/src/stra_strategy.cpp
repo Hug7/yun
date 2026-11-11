@@ -12,8 +12,8 @@
 
 #include "algo_alns_model.h"
 #include "algo_alns_operator.h"
-#include "algo_alns_parameter.h"
 #include "pdm_func_timing.h"
+#include "stra_alns_config.h"
 #include "stra_construct.h"
 #include "visual_manager.h"
 
@@ -73,8 +73,10 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
   /**
    * Lua 侧配置示例：
    * ruin_operator_params = {
-   *   { code = "RuinRandomRemovalLoad", params = { min_rate = 0.1, max_rate = 0.3 } },
-   *   { code = "RuinRandomRemovalLoad", params = { min_rate = 0.4, max_rate = 0.6 } },
+   *   { code = "RuinRandomRemovalLoad",
+   *     params = { select_load_min_rate = 0.1, select_load_max_rate = 0.3 } },
+   *   { code = "RuinRandomRemovalLoad",
+   *     params = { select_load_min_rate = 0.4, select_load_max_rate = 0.6 } },
    * -- 同算子不同参数 { code = "RuinRandomRemovalLoad" }  -- params
    * 可缺省，算子内部用默认值
    * }
@@ -82,16 +84,17 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
   this->lua.set_function(StrategyKey::ALNS, [workspace, this](const sol::table& cfg) {
     // 统计alns函数计时
     auto alns_func_timing = std::make_unique<FuncTiming>(StrategyKey::ALNS);
-    // 解析alns参数
-    const auto alns_parameter = parse_alns_parameter(cfg, workspace->context->logger);
+    // lua 参数一次性转换成结构化参数
+    const auto alns_config = parse_alns_strategy_config(cfg, workspace->context->logger);
     // 获取执行器
-    const auto parallel_executor = this->get_parallel_executor(alns_parameter->worker_count);
-    // 解析alns算子
+    const auto parallel_executor = this->get_parallel_executor(alns_config.parameter->worker_count);
+    // 创建alns算子
     const auto operator_manager =
-        create_alns_operator(cfg, alns_parameter.get(), workspace->context, parallel_executor);
+        create_alns_operator(alns_config.ruin_operator_params, alns_config.repair_operator_params,
+                             alns_config.parameter.get(), workspace->context, parallel_executor);
     // 构建alns model
     const auto alns_model =
-        std::make_unique<AlnsModel>(workspace, alns_parameter.get(), operator_manager.get());
+        std::make_unique<AlnsModel>(workspace, alns_config.parameter.get(), operator_manager.get());
     // 求解
     Solution* res_sol = alns_model->solve();
     // 将结果 res_sol 替换

@@ -8,17 +8,22 @@ add_executable(vrp_exec vrp_main.cpp)
 target_link_libraries(vrp_exec PRIVATE yun_solver)
 
 add_executable(algo_alns_sa_test algorithm/algo_alns_sa_test.cpp)
-target_link_libraries(algo_alns_sa_test PRIVATE yun_algorithm sol2::sol2 GTest::gtest_main)
+target_link_libraries(algo_alns_sa_test PRIVATE yun_algorithm GTest::gtest_main)
 add_test(NAME algo_alns_sa_test COMMAND algo_alns_sa_test)
 
 add_executable(algo_alns_operator_test algorithm/algo_alns_operator_test.cpp)
-target_link_libraries(algo_alns_operator_test PRIVATE yun_algorithm sol2::sol2 GTest::gtest_main)
+target_link_libraries(algo_alns_operator_test PRIVATE yun_algorithm GTest::gtest_main)
 add_test(NAME algo_alns_operator_test COMMAND algo_alns_operator_test)
 
 add_executable(algo_alns_ruin_worst_removal_test algorithm/algo_alns_ruin_worst_removal_test.cpp)
 target_link_libraries(algo_alns_ruin_worst_removal_test PRIVATE
-    yun_algorithm sol2::sol2 GTest::gtest_main)
+    yun_algorithm GTest::gtest_main)
 add_test(NAME algo_alns_ruin_worst_removal_test COMMAND algo_alns_ruin_worst_removal_test)
+
+add_executable(stra_alns_config_test solver/stra_alns_config_test.cpp)
+target_link_libraries(stra_alns_config_test PRIVATE
+    yun_solver sol2::sol2 GTest::gtest_main)
+add_test(NAME stra_alns_config_test COMMAND stra_alns_config_test)
 
 add_executable(bd_time_window_utils_test scenario/bd_time_window_utils_test.cpp)
 target_link_libraries(bd_time_window_utils_test PRIVATE yun_scenario GTest::gtest_main)

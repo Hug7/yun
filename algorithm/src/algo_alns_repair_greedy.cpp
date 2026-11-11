@@ -13,23 +13,20 @@
 
 // ====== implement of AlnsRepairGreedy ======
 AlnsRepairGreedy::AlnsRepairGreedy(const SolverContext* _context,
-                                   ParallelExecutor* _parallel_executor, const sol::table& cfg)
-    : AlnsRepairOperator(AlnsRepairOperatorCode::RepairGreedy, _context, _parallel_executor) {
-  if (cfg[AlnsRepairGreedyLuaField::RANDOM_SEED].valid()) {
-    this->random_seed = static_cast<int>(cfg[AlnsRepairGreedyLuaField::RANDOM_SEED]);
-  }
-  this->random = std::make_unique<RandomUtils>(this->random_seed);
+                                   ParallelExecutor* _parallel_executor,
+                                   const AlnsRepairGreedyParam& _parameter)
+    : AlnsRepairOperator(AlnsRepairOperatorCode::RepairGreedy, _context, _parallel_executor),
+      parameter(_parameter) {
+  this->random = std::make_unique<RandomUtils>(this->parameter.random_seed);
 
-  if (cfg[AlnsRepairGreedyLuaField::TOP_RATE].valid()) {
-    this->top_rate = static_cast<double>(cfg[AlnsRepairGreedyLuaField::TOP_RATE]);
-    if (this->top_rate < 0 || this->top_rate > 1.0) {
-      throw std::invalid_argument(this->code + ": `top_rate` must be between 0 and 1.");
-    }
+  if (this->parameter.top_rate < 0 || this->parameter.top_rate > 1.0) {
+    throw std::invalid_argument(this->code + ": `top_rate` must be between 0 and 1.");
   }
-};
+}
 
 std::string AlnsRepairGreedy::format_parameters() const {
-  return std::format("random_seed={}, top_rate={}", this->random_seed, this->top_rate);
+  return std::format("random_seed={}, top_rate={}", this->parameter.random_seed,
+                     this->parameter.top_rate);
 }
 
 void AlnsRepairGreedy::execute(RepairMatrix* repair_matrix) {
@@ -39,7 +36,8 @@ void AlnsRepairGreedy::execute(RepairMatrix* repair_matrix) {
     const int matrix_cell_count = repair_matrix->unfold_matrix_cell_count();
     if (matrix_cell_count > 0) {
       // 获取 top-k 的值
-      const int top_k = std::max(NumUtil::double_to_int(matrix_cell_count * this->top_rate), 1);
+      const int top_k =
+          std::max(NumUtil::double_to_int(matrix_cell_count * this->parameter.top_rate), 1);
       // 获取 repair matrix 的 top-k 元素
       auto repair_loads = repair_matrix->unfold_matrix_top_k(top_k);
       // 在 top-k 元素中选取一个
