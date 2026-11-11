@@ -25,6 +25,11 @@ target_link_libraries(stra_alns_config_test PRIVATE
     yun_solver sol2::sol2 GTest::gtest_main)
 add_test(NAME stra_alns_config_test COMMAND stra_alns_config_test)
 
+add_executable(stra_construct_config_test solver/stra_construct_config_test.cpp)
+target_link_libraries(stra_construct_config_test PRIVATE
+    yun_solver sol2::sol2 GTest::gtest_main)
+add_test(NAME stra_construct_config_test COMMAND stra_construct_config_test)
+
 add_executable(bd_time_window_utils_test scenario/bd_time_window_utils_test.cpp)
 target_link_libraries(bd_time_window_utils_test PRIVATE yun_scenario GTest::gtest_main)
 add_test(NAME bd_time_window_utils_test COMMAND bd_time_window_utils_test)

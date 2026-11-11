@@ -138,8 +138,7 @@ ctest --test-dir build/ci --output-on-failure
 5. **执行策略**：调用 Lua 全局函数 `solve()`。C++ 当前向脚本暴露以下能力：
     - `log_info`、`log_debug`、`log_warn`、`log_error`：写入请求日志。
     - `snapshot(target_dir)`：把当前 Workspace 快照写入本次输出目录下的子目录。
-    - `KnnParameter`：构造 KNN 参数对象。
-    - `construct_knn()` 或 `construct_knn(KnnParameter)`：执行 K 近邻构造启发式。
+    - `construct_knn()` 或 `construct_knn(cfg)`：执行 K 近邻构造启发式；`cfg` 支持 `neighbor_count` 字段。
     - `alns()`：执行 alns 算法优化路由。
 6. **导出最终结果**：Lua 脚本正常结束后，读取 Workspace 的 `loads_view()` 和 `unassigned_orders_view()`，转换为可视化对象并写入 JSON。
 

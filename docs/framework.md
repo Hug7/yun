@@ -59,9 +59,11 @@ flowchart LR
 
 - **策略层 `solver/`**：唯一读取 Lua 配置的地方。`stra_alns_config` 负责把 `alns { ... }`
   配置转换成结构化参数（`AlnsStrategyConfig`、各算子的 `*Param`），包括键名、类型读取、
-  算子 `code` 分发与缺省字段补齐。
+  算子 `code` 分发与缺省字段补齐；`stra_construct_config` 负责把 `construct_knn` 的参数表
+  转换成 `KnnParameter`。
 - **算法层 `algorithm/`**：只接收 POD 参数，不依赖 `sol2` / `lua`；参数之间的语义校验
-  （如比例区间、`min <= max`、`noise_exponent >= 1`）留在算子构造函数里。
+  （如比例区间、`min <= max`、`noise_exponent >= 1`）留在算子构造函数里。初始解构造
+  （如 KNN）同样属于算法层，策略层只负责 Lua→POD 转换与调用。
 
 新增算子参数时：在算子头文件定义 `*Param`，加入 `AlnsRuinOperatorParam` /
 `AlnsRepairOperatorParam` variant，并在 `solver/src/stra_alns_config.cpp` 补上对应的

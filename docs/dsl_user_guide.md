@@ -35,26 +35,13 @@ K-Nearest Neighbor(`knn`)启发式构造算法。
 -- 使用默认近邻数 8
 construct_knn()
 
--- 等价于使用默认值
-construct_knn(KnnParameter())
-
 -- 指定近邻数
-construct_knn(KnnParameter(12))
+construct_knn({ neighbor_count = 12 })
 ```
 
-`construct_knn`的参数必须是`KnnParameter`对象；不传参数或传入`nil`时使用默认参数。
+`construct_knn`的参数必须是`table`；不传参数、传入`nil`或空表时使用默认参数。
 
-#### KnnParameter
-
-`KnnParameter`用于设置`construct_knn`的近邻数量：
-
-```lua
-local parameter = KnnParameter()
-parameter.neighbor_count = 12
-construct_knn(parameter)
-```
-
-也可以直接调用`KnnParameter(neighbor_count)`进行初始化。
+#### 参数
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |

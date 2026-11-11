@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "algo_construct.h"
 #include "bdm_dist_matrix.h"
 #include "bdm_location.h"
 #include "c_rang_utils.h"
@@ -17,7 +18,6 @@
 #include "pdm_order.h"
 #include "prob_load_editor.h"
 #include "prob_problem.h"
-#include "stra_construct.h"
 
 namespace {
 
@@ -240,6 +240,10 @@ void select_order_construct_load(std::unordered_set<int>& candidate_load_indices
 
 // ====== implement of k_nearest_neighbor ======
 void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParameter& parameter) {
+  if (parameter.neighbor_count <= 0) {
+    throw std::runtime_error("nearest_neighbor parameter must be greater than zero");
+  }
+
   const SolverContext* context = workspace->context;
   context->logger->info("execute knn, neighbor_count={}", parameter.neighbor_count);
 

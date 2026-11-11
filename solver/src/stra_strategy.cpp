@@ -12,9 +12,10 @@
 
 #include "algo_alns_model.h"
 #include "algo_alns_operator.h"
+#include "algo_construct.h"
 #include "pdm_func_timing.h"
 #include "stra_alns_config.h"
-#include "stra_construct.h"
+#include "stra_construct_config.h"
 #include "visual_manager.h"
 
 // ====== implement of StrategyManager::Private ======
@@ -48,21 +49,11 @@ void StrategyManager::register_common_func(Workspace* workspace) {
 
 void StrategyManager::register_construct_heuristic_func(Workspace* workspace) {
   // 注册-knn
-  // --knn参数
-  constexpr auto constructors = sol::constructors<KnnParameter(), KnnParameter(int)>();
-  this->lua.new_usertype<KnnParameter>("KnnParameter", constructors, sol::call_constructor,
-                                       constructors, "neighbor_count",
-                                       &KnnParameter::neighbor_count);
-  // --knn方法
+  // --knn参数由 lua table 一次性转换成结构化参数
   this->lua.set_function(StrategyKey::CONSTRUCT_KNN, [workspace](const sol::object& knn_parameter) {
     // 统计knn函数计时
     auto knn_func_timing = std::make_unique<FuncTiming>(StrategyKey::CONSTRUCT_KNN);
-    if (!knn_parameter.valid()) {
-      // 入参为KnnParameter，不传参或传nil时用结构体里的默认值
-      ConstructHeuristic::k_nearest_neighbor(workspace, KnnParameter());
-    } else {
-      ConstructHeuristic::k_nearest_neighbor(workspace, knn_parameter.as<KnnParameter>());
-    }
+    ConstructHeuristic::k_nearest_neighbor(workspace, parse_construct_knn_parameter(knn_parameter));
     // 归档knn函数计时
     workspace->add_func_timing(std::move(knn_func_timing));
   });
