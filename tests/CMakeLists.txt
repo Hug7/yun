@@ -36,6 +36,10 @@ add_executable(pdm_node_test problem/pdm_node_test.cpp)
 target_link_libraries(pdm_node_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME pdm_node_test COMMAND pdm_node_test)
 
+add_executable(prob_pattern_spmd_test problem/prob_pattern_spmd_test.cpp)
+target_link_libraries(prob_pattern_spmd_test PRIVATE yun_problem GTest::gtest_main)
+add_test(NAME prob_pattern_spmd_test COMMAND prob_pattern_spmd_test)
+
 add_executable(visual_manager_test problem/visual_manager_test.cpp)
 target_link_libraries(visual_manager_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME visual_manager_test COMMAND visual_manager_test)

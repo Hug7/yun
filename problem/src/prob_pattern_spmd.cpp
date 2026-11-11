@@ -120,6 +120,47 @@ std::vector<Activity*> PatternSPMD::insert_segment_at(Load* load, const Segment*
   return inserted;
 }
 
+std::int64_t PatternSPMD::estimate_drop_delta_dist(const DistMatrix& dist_matrix,
+                                                   const Node* anchor,
+                                                   const Location* first_drop_loc,
+                                                   const Location* last_drop_loc) {
+  // 纯排序启发式: 不模拟合并, 直接把 segment 当成夹在 anchor 与 successor 之间的整块,
+  // 只取两端连接边 (anchor, 首 drop) 与 (尾 drop, successor)。
+  const Node* successor = anchor->next.get();
+  return dist_matrix.get_dist(anchor->loc->ind, first_drop_loc->ind) +
+         dist_matrix.get_dist(last_drop_loc->ind, successor->loc->ind) -
+         dist_matrix.get_dist(anchor->loc->ind, successor->loc->ind);
+}
+
+std::vector<std::int64_t> PatternSPMD::estimate_insert_delta_dists(
+    Load* load, const Segment* segment, const std::vector<InsertSlot>& slots) const {
+  const int slot_len = static_cast<int>(slots.size());
+  std::vector<std::int64_t> delta_dists(slot_len, 0);
+  if (slot_len == 0 || segment->orders.empty()) {
+    return delta_dists;
+  }
+
+  const Location* first_drop_loc = segment->orders.front()->drop_loc;
+  const Location* last_drop_loc = segment->orders.back()->drop_loc;
+
+  // 预先收集每个插入位的 anchor(插在其后): ind 个原 drop node 之后, ind=0 即最后一个 drop node 之后
+  const int drop_node_count = load->get_drop_node_count();
+  std::vector<const Node*> anchors(static_cast<std::size_t>(drop_node_count) + 1, nullptr);
+  const Node* node = load->last_node->prev;
+  for (const Node*& anchor : anchors) {
+    anchor = node;
+    node = node->prev;
+  }
+
+  const DistMatrix& dist_matrix = *load->vehicle->get_dist_matrix();
+  for (int u = 0; u < slot_len; ++u) {
+    delta_dists[u] =
+        estimate_drop_delta_dist(dist_matrix, anchors[slots[u].ind], first_drop_loc, last_drop_loc);
+  }
+
+  return delta_dists;
+}
+
 LoadSPMD* PatternSPMD::create_load(LoadContext* context) const { return new LoadSPMD(context); }
 
 LoadSPMD* PatternSPMD::deep_copy_load(const Load* other) const { return new LoadSPMD(other); }

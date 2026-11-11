@@ -5,12 +5,26 @@
 
 #include "prob_problem.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 
-#include "cc_charge.h"
+#include "c_rang_utils.h"
 #include "pdm_order.h"
 #include "prob_policy.h"
+
+namespace {
+
+/**
+ * @brief 试插可行解数量达到槽位数的比例后提前停止搜索
+ * @details 槽位已按 delta dist 升序排列, 先试连接处距离变化最小的位置; 可行解凑够该比例即认为样本足够
+ */
+constexpr double INSERT_FEASIBLE_STOP_RATIO = 0.2;
+
+}  // namespace
 
 // ====== implement of Problem ======
 Problem::Problem(const Scenario* scenario, Parameter* parameter)
@@ -217,17 +231,32 @@ Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
   const Vehicle* ori_vehicle = load->vehicle;
   const std::vector<InsertSlot> slots =
       this->pd_pattern->enumerate_insert_slots(load.get(), segment);
+  const int slot_len = static_cast<int>(slots.size());
+  if (slot_len == 0) {
+    return nullptr;
+  }
+
+  // 先按插入位置估算两端连接处的距离变化, 再按 delta dist 升序试插: 变化越小的位置越可能成为最优解
+  const std::vector<std::int64_t> delta_dists =
+      this->pd_pattern->estimate_insert_delta_dists(load.get(), segment, slots);
+  std::vector<int> slot_order = RangeUtils::range_vector(slot_len);
+  std::ranges::stable_sort(slot_order, [&delta_dists](const int a, const int b) {
+    // 同 Δdist 时保持 enumerate_insert_slots 的原始顺序
+    return delta_dists[a] < delta_dists[b];
+  });
+  const int stop_feasible_count =
+      std::max(1, static_cast<int>(std::ceil(slot_len * INSERT_FEASIBLE_STOP_RATIO)));
 
   const Vehicle* best_vehicle = nullptr;
   double best_obj_val = std::numeric_limits<double>::max();
   int best_slot_ind = -1;
-  const int slot_len = static_cast<int>(slots.size());
+  int feasible_count = 0;
 
-  for (int u = 0; u < slot_len; u++) {
+  for (const int slot_ind : slot_order) {
     // 车型每轮重置: 否则上一轮选出的车型会泄漏到本轮, 结果依赖枚举顺序
     load->reset_route_profile();
     const std::vector<Activity*> inserted =
-        this->pd_pattern->insert_segment_at(load.get(), segment, slots[u]);
+        this->pd_pattern->insert_segment_at(load.get(), segment, slots[slot_ind]);
     if (inserted.empty()) {
       continue;
     }
@@ -238,16 +267,19 @@ Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
     }
     // 同分时优先保留原车型
     if (load->is_feasible()) {
-      const double obj_val = load->constr_profile->obj_val;
+      ++feasible_count;
       if (load->constr_profile->obj_val < best_obj_val) {
         best_vehicle = load->vehicle;
-        best_obj_val = obj_val;
-        best_slot_ind = u;
+        best_obj_val = load->constr_profile->obj_val;
+        best_slot_ind = slot_ind;
       }
     }
     // 回滚链表结构; travel_dist/travel_time/ptws 不必恢复, 每次 eval 都会全量重算
     load->remove_activities(inserted);
     load->change_vehicle(ori_vehicle);
+    if (feasible_count >= stop_feasible_count) {
+      break;
+    }
   }
 
   if (best_vehicle == nullptr) {
