@@ -15,6 +15,7 @@
 #include "c_rang_utils.h"
 #include "pdm_load.h"
 #include "pdm_order.h"
+#include "prob_load_editor.h"
 #include "prob_problem.h"
 #include "stra_construct.h"
 
@@ -205,11 +206,11 @@ std::unordered_map<int, std::unordered_map<int, int>> construct_knn_graph(
  * @param candidate_load_indices 候选 load indices
  * @param unassigned_order_indices 待指派的 order indices
  * @param sol solution
- * @param problem problem
+ * @param load_editor 车次编辑器
  */
 void select_order_construct_load(std::unordered_set<int>& candidate_load_indices,
                                  std::unordered_set<int>& unassigned_order_indices, Solution* sol,
-                                 const Problem* problem) {
+                                 const LoadEditor* load_editor) {
   // 选择一个order构造新的load
   const size_t unassigned_order_len = unassigned_order_indices.size();
   for (size_t u = 0; u < unassigned_order_len; ++u) {
@@ -220,7 +221,7 @@ void select_order_construct_load(std::unordered_set<int>& candidate_load_indices
     // 判断seed order是否可以构造load
     const auto seed_order = sol->unassigned_orders[seed_order_ind];
     auto cur_orders = std::vector<const Order*>{seed_order};
-    Load* load = problem->construct_load_by_order(cur_orders, sol->vehicle_resource);
+    Load* load = load_editor->build(cur_orders, *sol->vehicle_resource);
     if (load->is_infeasible()) {
       delete load;
     } else {
@@ -286,7 +287,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
             if (problem->pd_pattern->insert_last_delivery(tmp_load, cur_order)) {
               problem->eval_load(tmp_load);
               // 找到合适的车
-              problem->tmp_select_best_vehicle(tmp_load, sol->vehicle_resource);
+              context->load_editor->select_best_vehicle(tmp_load, *sol->vehicle_resource);
               if (tmp_load->is_feasible()) {
                 cur_load_can_insert = true;
                 candidate_picker.offer({.rank = cur_rank,
@@ -307,7 +308,8 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
       // 所有unassigned order不能插入，将candidate load放入solution中
       candidate_load_indices.clear();
       // 所有unassigned order不能插入，选择订单构造车次添加到候选车次中
-      select_order_construct_load(candidate_load_indices, unassigned_order_indices, sol, problem);
+      select_order_construct_load(candidate_load_indices, unassigned_order_indices, sol,
+                                  context->load_editor);
     } else {
       // 将选中的order插入到指定的load
       const int best_order_ind = candidate_picker.best().order_ind;
@@ -320,7 +322,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
       problem->pd_pattern->insert_last_delivery(cur_load, cur_order);
       problem->eval_load(cur_load);
       sol->release_vehicle_resource(cur_load);
-      problem->tmp_select_best_vehicle(cur_load, sol->vehicle_resource);
+      context->load_editor->select_best_vehicle(cur_load, *sol->vehicle_resource);
       sol->occupy_vehicle_resource(cur_load);
       // 将所有unassigned orders不能插入的candidate load归档
       for (int archived_load_ind : archived_load_indices) {

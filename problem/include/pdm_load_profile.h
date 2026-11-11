@@ -136,5 +136,5 @@ class LoadConstrProfile {
 
   void update_obj_val();
 
-  bool dominate(LoadConstrProfile::UPtr& other);
+  [[nodiscard]] bool dominate(const LoadConstrProfile::UPtr& other) const;
 };

@@ -5,26 +5,10 @@
 
 #include "prob_problem.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <limits>
 #include <memory>
 #include <stdexcept>
 
-#include "c_rang_utils.h"
-#include "pdm_order.h"
 #include "prob_policy.h"
-
-namespace {
-
-/**
- * @brief 试插可行解数量达到槽位数的比例后提前停止搜索
- * @details 槽位已按 delta dist 升序排列, 先试连接处距离变化最小的位置; 可行解凑够该比例即认为样本足够
- */
-constexpr double INSERT_FEASIBLE_STOP_RATIO = 0.2;
-
-}  // namespace
 
 // ====== implement of Problem ======
 Problem::Problem(const Scenario* scenario, Parameter* parameter)
@@ -59,8 +43,19 @@ Problem::~Problem() {
 }
 
 void Problem::eval_load(Load* load) const {
-  // todo 是否需要重置待讨论
-  const LoadConstrProfile::UPtr& constr_profile = load->constr_profile;
+  if (load->constr_profile == nullptr) {
+    load->constr_profile = std::make_unique<LoadConstrProfile>();
+  }
+  this->eval_into(load, load->constr_profile);
+}
+
+LoadConstrProfile::UPtr Problem::evaluate(Load* load) const {
+  auto constr_profile = std::make_unique<LoadConstrProfile>();
+  this->eval_into(load, constr_profile);
+  return constr_profile;
+}
+
+void Problem::eval_into(Load* load, const LoadConstrProfile::UPtr& constr_profile) const {
   constr_profile->reset();
 
   this->hc_manager->eval_constrs(load, constr_profile);
@@ -68,235 +63,7 @@ void Problem::eval_load(Load* load) const {
   this->cc_manager->eval_constrs(load, constr_profile);
 
   this->sc_manager->eval_constrs(load, constr_profile);
-  // update obj val
-  constr_profile->update_obj_val();
-}
-
-LoadConstrProfile::UPtr Problem::tmp_eval_load(Load* load) const {
-  LoadConstrProfile::UPtr constr_profile = std::make_unique<LoadConstrProfile>();
-  this->hc_manager->eval_constrs(load, constr_profile);
-  if (constr_profile->infeasible) {
-    return constr_profile;
-  }
-
-  this->cc_manager->eval_constrs(load, constr_profile);
-  if (constr_profile->infeasible) {
-    return constr_profile;
-  }
-
-  this->sc_manager->eval_constrs(load, constr_profile);
 
   // update obj val
   constr_profile->update_obj_val();
-
-  return constr_profile;
-}
-
-void Problem::tmp_select_best_vehicle(Load* load, VehicleResource::UPtr& vehicle_resource) const {
-  const Vehicle* best_vehicle = load->vehicle;
-  double best_obj_val = std::numeric_limits<double>::max();
-  if (load->is_feasible()) {
-    best_obj_val = load->constr_profile->obj_val;
-  }
-  for (const auto& vehicle_usage : vehicle_resource->vehicle_usages) {
-    if (vehicle_usage->vehicle == best_vehicle) {
-      continue;
-    }
-    if (vehicle_usage->has_available_vehicle()) {
-      load->change_vehicle(vehicle_usage->vehicle);
-      this->eval_load(load);
-      if (load->is_feasible() && load->constr_profile->obj_val < best_obj_val) {
-        best_vehicle = vehicle_usage->vehicle;
-        best_obj_val = load->constr_profile->obj_val;
-      }
-    }
-  }
-  // 切换最优车型
-  load->change_vehicle(best_vehicle);
-  this->eval_load(load);
-}
-
-InfeasibleCargoOrder::UPtr Problem::check_feasibility(CargoOrder* cargo_order) const {
-  // construct order
-  auto cargo_orders = std::vector<CargoOrder*>({cargo_order});
-  const std::unique_ptr<Order> order(
-      OrderFactory::creat_tmp_order(cargo_orders, parameter->plan_datetime_range, scenario));
-  auto orders = std::vector<const Order*>({order.get()});
-
-  // 预检用临时 Order 构造 Load 并求值, 该 Order 在本函数末尾释放。若把其时间窗键(指向临时
-  // Order 的指针)写入共享冻结表, Order 释放后键即悬空 -> 后续 lookup 比较时 use-after-free。
-  // 因此挂一个函数局部的丢弃式写缓冲: 重算只落本缓冲、永不归档, 函数返回即释放, 不污染冻结表。
-  CacheStoreBuffer precheck_tw_buffer;
-
-  auto infeasible_cargo_order = std::make_unique<InfeasibleCargoOrder>(cargo_orders);
-
-  // try all vehicles
-  const auto& vehicles = scenario->carrier_manager->vehicles;
-  bool has_feasible_flag = false;
-  for (auto& vehicle : vehicles) {
-    // check vehicle resource
-    if (vehicle->unusable()) {
-      infeasible_cargo_order->record_vehicle_infeasible_reasons(
-          InfeasibleReasonCollection::VEHICLE_RESOURCE, vehicle);
-      continue;
-    }
-    std::unique_ptr<Load> cur_load(
-        this->construct_load_by_order(orders, vehicle, &precheck_tw_buffer));
-    // check feasibility
-    if (cur_load->constr_profile->is_infeasible()) {
-      auto& cur_constr_profile = cur_load->constr_profile;
-      // record hard constr scores
-      for (auto& hard_score : cur_constr_profile->hard_constr_scores) {
-        infeasible_cargo_order->record_hard_score(hard_score, vehicle);
-      }
-      // record cost constr scores
-      for (auto& cost_score : cur_constr_profile->cost_constr_scores) {
-        infeasible_cargo_order->record_cost_score(cost_score, vehicle);
-      }
-    } else {
-      has_feasible_flag = true;
-    }
-    cur_load.reset();
-    if (has_feasible_flag) {
-      break;
-    }
-  }
-  if (has_feasible_flag) {
-    // 有可行解，则返回空指针
-    return nullptr;
-  }
-
-  return infeasible_cargo_order;
-}
-
-Load* Problem::construct_load_by_order(std::vector<const Order*>& orders,
-                                       VehicleResource::UPtr& vehicle_resource) const {
-  Load* load = this->pd_pattern->create_load(this->load_context);
-  for (const auto order : orders) {
-    this->pd_pattern->insert_last_delivery(load, order);
-  }
-  // try using different vehicle
-  LoadConstrProfile::UPtr best_profile = nullptr;
-  const Vehicle* best_vehicle = nullptr;
-  for (const auto& vehicle_usage : vehicle_resource->vehicle_usages) {
-    // check vehicle resource
-    if (!vehicle_usage->has_available_vehicle()) {
-      continue;
-    }
-    // change vehicle
-    load->change_vehicle(vehicle_usage->vehicle);
-    // temporary evaluate of load
-    auto cur_constr_profile = this->tmp_eval_load(load);
-    if (cur_constr_profile->is_infeasible()) {
-      continue;
-    }
-    if (best_vehicle == nullptr || cur_constr_profile->dominate(best_profile)) {
-      best_profile = std::move(cur_constr_profile);
-      best_vehicle = vehicle_usage->vehicle;
-    }
-  }
-  // 没有任何可行车辆时不能切换车辆，直接标记不可行交由调用方处理
-  if (best_vehicle == nullptr) {
-    load->constr_profile->set_infeasible();
-    return load;
-  }
-  // change vehicle
-  load->change_vehicle(best_vehicle);
-  this->eval_load(load);
-
-  return load;
-}
-
-Load* Problem::construct_load_by_order(std::vector<const Order*>& orders, Vehicle* vehicle,
-                                       CacheStoreBuffer* store_buffer) const {
-  Load* load = this->pd_pattern->create_load(this->load_context);
-  // 局部丢弃式写缓冲: 调用方传入非空时, 本 Load 的时间窗重算只落该缓冲、不污染共享冻结表
-  load->store_buffer = store_buffer;
-  for (const auto order : orders) {
-    this->pd_pattern->insert_last_delivery(load, order);
-  }
-  load->change_vehicle(vehicle);
-  this->eval_load(load);
-  load->store_buffer = nullptr;
-  return load;
-}
-
-Load* Problem::greedy_insert_segment_to_load(Load* ori_load, Segment* segment,
-                                             VehicleResource::UPtr& vehicle_resource,
-                                             CacheStoreBuffer* store_buffer) const {
-  // 只拷贝一次: 后续所有试插都在这份副本上进行, 每次试插后回滚
-  std::unique_ptr<Load> load(this->pd_pattern->deep_copy_load(ori_load));
-  // 挂载任务私有写缓冲: 副本内的重复查找(逐槽试插同一个 node 的键)落在这里, 不触碰冻结表
-  load->store_buffer = store_buffer;
-  const Vehicle* ori_vehicle = load->vehicle;
-  const std::vector<InsertSlot> slots =
-      this->pd_pattern->enumerate_insert_slots(load.get(), segment);
-  const int slot_len = static_cast<int>(slots.size());
-  if (slot_len == 0) {
-    return nullptr;
-  }
-
-  // 先按插入位置估算两端连接处的距离变化, 再按 delta dist 升序试插: 变化越小的位置越可能成为最优解
-  const std::vector<std::int64_t> delta_dists =
-      this->pd_pattern->estimate_insert_delta_dists(load.get(), segment, slots);
-  std::vector<int> slot_order = RangeUtils::range_vector(slot_len);
-  std::ranges::stable_sort(slot_order, [&delta_dists](const int a, const int b) {
-    // 同 Δdist 时保持 enumerate_insert_slots 的原始顺序
-    return delta_dists[a] < delta_dists[b];
-  });
-  const int stop_feasible_count =
-      std::max(1, static_cast<int>(std::ceil(slot_len * INSERT_FEASIBLE_STOP_RATIO)));
-
-  const Vehicle* best_vehicle = nullptr;
-  double best_obj_val = std::numeric_limits<double>::max();
-  int best_slot_ind = -1;
-  int feasible_count = 0;
-
-  for (const int slot_ind : slot_order) {
-    // 车型每轮重置: 否则上一轮选出的车型会泄漏到本轮, 结果依赖枚举顺序
-    load->reset_route_profile();
-    const std::vector<Activity*> inserted =
-        this->pd_pattern->insert_segment_at(load.get(), segment, slots[slot_ind]);
-    if (inserted.empty()) {
-      continue;
-    }
-    this->eval_load(load.get());
-    // 如果是车辆导致的不可行，只挑选最优车型, 不占用车辆资源
-    if (load->is_infeasible()) {
-      this->tmp_select_best_vehicle(load.get(), vehicle_resource);
-    }
-    // 同分时优先保留原车型
-    if (load->is_feasible()) {
-      ++feasible_count;
-      if (load->constr_profile->obj_val < best_obj_val) {
-        best_vehicle = load->vehicle;
-        best_obj_val = load->constr_profile->obj_val;
-        best_slot_ind = slot_ind;
-      }
-    }
-    // 回滚链表结构; travel_dist/travel_time/ptws 不必恢复, 每次 eval 都会全量重算
-    load->remove_activities(inserted);
-    load->change_vehicle(ori_vehicle);
-    if (feasible_count >= stop_feasible_count) {
-      break;
-    }
-  }
-
-  if (best_vehicle == nullptr) {
-    return nullptr;
-  }
-  // 最优结构已在回滚中销毁: 用记录的槽位和车型重做一次插入
-  load->reset_route_profile();
-  load->change_vehicle(best_vehicle);
-  if (this->pd_pattern->insert_segment_at(load.get(), segment, slots[best_slot_ind]).empty()) {
-    throw std::runtime_error(
-        "invalid insertion scheme in function `greedy_insert_segment_to_load`");
-  }
-  this->eval_load(load.get());
-
-  if (load->is_infeasible()) {
-    throw std::runtime_error("插入segment后出现无解 in function `greedy_insert_segment_to_load`");
-  }
-
-  return load.release();
 }

@@ -21,6 +21,11 @@ class SolverPrecheck {
    * @brief 不可解订单集合
    */
   InfeasibleCargoOrder::VecUPtr infeasible_cargo_orders;
+  /**
+   * @brief 校验单个货单能否被任一车辆承运
+   * @details 用临时 Order 构造车次并求值；可行返回 nullptr，否则返回带无解原因的记录
+   */
+  [[nodiscard]] InfeasibleCargoOrder::UPtr check_cargo_order(CargoOrder* cargo_order) const;
 
  public:
   explicit SolverPrecheck(SolverContext* context) : context(context) {}

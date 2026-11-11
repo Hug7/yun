@@ -4,7 +4,7 @@
 
 ## 设计思想
 
-场景层`scenario`记录“不可逆的客观事实”，问题层`problem`记录“可协商的规则与偏好”
+场景层`scenario`记录“不可逆的客观事实”，问题层`problem`记录“可协商的规则与偏好”。问题层只定义规则与偏好，并据此对一个车次求值；车次的构造、插入与货单预检属于求解操作，不属于问题定义。
 
 ## 语言
 
@@ -39,11 +39,21 @@ _Avoid_: 属性、字段
 分实体类型（Location / VehicleModel / Order / Carrier）的枚举属性，每个 Label 下有一组 LabelValue。通过 LabelsetValueBitset 支持高效的集合并集运算和位图过滤。
 _Avoid_: 标记、特征
 
+### 问题层
+
+**Problem**（问题）:
+场景与参数下的一套约束与偏好：给定一个车次，能回答它是否可行、代价多少。
+_Avoid_: 求解器、引擎、上下文
+
+**LoadEditor**（车次编辑）:
+对车次的模型级操作：把订单装配成车次、给车次改派车型、把订单片段插入车次；只做评估，不占用车辆资源。
+_Avoid_: 算子（ruin / repair 才是搜索算子）、工厂、生成器
+
 ### 模型层
 
 **Load**（车次）:
-一次车辆出车计划。包含一条 Node 链（行驶路径）、一辆分配车辆、路由级聚合属性（LoadRouteProfile）和约束评分。构造时即建立双哨兵 depot：起始车场 Node 和目的车场 Node。
-_Avoid_: 路线、任务、运次
+一次车辆出车计划。包含一条 Node 链（行驶路径）、一辆分配车辆、路由级聚合属性（LoadRouteProfile）和约束评分。构造时即建立双哨兵 depot：起始车场 Node 和目的车场 Node。`VisualPlanSummary` 中「总车次数 = loads.size()」。
+_Avoid_: 路线、任务、运次、车辆（Vehicle，车次的承载工具）
 
 **Node**（停靠点）:
 Load 的 Node 链上的一个停留点。含位置、计划时间窗（ptws）、从上一 Node 到此的 travel_dist/travel_time，以及一个 Activity 链表。首尾两个 Node 为 depot 哨兵。
@@ -58,6 +68,13 @@ Load 的 Node 链的起点或终点。由 Vehicle 的 origin_loc / dest_loc 决�
 **Order**（订单）:
 模型层的取送货任务，是对数据层 CargoOrder 的求解表示。含取/送 Location、时间窗、维度、标签。一个 CargoOrder 可能被拆分成多个 Order 分别分配给不同 Load。
 
+**Segment**（订单片段）:
+按指定访问顺序排列的一组 Order，是插入操作的单位。
+_Avoid_: 批次、分组
+
+**InsertSlot**（插入槽位）:
+订单片段在车次停靠点链上的一个候选插入位置，由所属区（取货区/卸货区）和序号确定。
+
 **汇总口径约定**：凡「订单数 / 总订单数 / 各维度订单数」一律指**货单数**（按 `Order::cargo_orders` 展开计数），不是 `Order` 父单元数。
 
 **Constraint Score**（约束评分）:
@@ -70,10 +87,6 @@ Load 的 Node 链的起点或终点。由 Vehicle 的 origin_loc / dest_loc 决�
 _Avoid_: 运行、会话、任务
 
 ### 求解过程
-
-**车次 (Load)**：
-一条完整的配送计划（一车一路线），含车型、节点链与约束画像。`VisualPlanSummary` 中「总车次数 = loads.size()」。
-_Avoid_：车辆（Vehicle，车次的承载工具）。
 
 **Workspace**（工作空间）:
 一次求解过程中可变的工作状态：当前的 Load 集合与尚未指派的 Order 集合，可压栈暂存以支持回退。求解期间被反复改写，本身不是产物。

@@ -19,6 +19,7 @@ flowchart LR
     scenario[Scenario]
     parameter[Parameter]
     problem[Problem]
+    editor[LoadEditor]
     constraints["Constraint Managers<br/>Hc / Sc / Cc"]
     visual[VisualManager]
 
@@ -42,11 +43,14 @@ flowchart LR
     context -->|持有| scenario
     context -->|持有| parameter
     context -->|持有| problem
+    context -->|持有| editor
     context -->|持有| visual
 
     problem -->|使用| scenario
     problem -->|使用| parameter
     problem -->|管理| constraints
+
+    editor -->|使用| problem
 
     classDef planned stroke-dasharray: 5 5
 ```

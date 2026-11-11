@@ -115,9 +115,9 @@ RepairLoad* RepairMatrix::eval_cell(const int segment_ind, const int load_ind,
                                     CacheStoreBuffer* store_buffer) const {
   Load* load = nullptr;
   try {
-    load = this->context->problem->greedy_insert_segment_to_load(
-        this->sol->loads[load_ind], this->segments[segment_ind], this->sol->vehicle_resource,
-        store_buffer);
+    load = this->context->load_editor->greedy_insert(this->sol->loads[load_ind],
+                                                     this->segments[segment_ind],
+                                                     *this->sol->vehicle_resource, store_buffer);
   } catch (const std::exception& e) {
     // 该 cell 不可行: 收敛成占位对象, 不让异常冒穿并行边界
     spdlog::warn("repair cell (segment={}, load={}) 插入失败: {}", segment_ind, load_ind, e.what());
@@ -254,8 +254,7 @@ bool RepairMatrix::idle_segment_create_load() {
   for (const int& segment_ind : this->idle_segment_indices) {
     auto segment = this->segments[segment_ind];
     // 从空 load 起手: 内部过滤可用车辆并挑选最优车型, 无可行车时返回 infeasible 的 load
-    Load* load = this->context->problem->construct_load_by_order(segment->orders,
-                                                                 this->sol->vehicle_resource);
+    Load* load = this->context->load_editor->build(segment->orders, *this->sol->vehicle_resource);
     if (load->is_infeasible()) {
       delete load;
       continue;

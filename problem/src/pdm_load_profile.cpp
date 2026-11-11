@@ -102,7 +102,7 @@ void LoadConstrProfile::update_obj_val() {
   this->obj_val = this->total_hard_penalty + this->total_soft_penalty + this->total_cost;
 }
 
-bool LoadConstrProfile::dominate(LoadConstrProfile::UPtr& other) {
+bool LoadConstrProfile::dominate(const LoadConstrProfile::UPtr& other) const {
   if (this->infeasible ^ other->infeasible) {
     return other->infeasible;
   } else {
