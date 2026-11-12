@@ -53,7 +53,7 @@ Solution* AlnsModel::solve() const {
       }
     }
     // 重置 current solution，停滞迭代次数超过`max_stagnate_iter`次
-    if (stagnate_iter - pre_update_best_sol_iter > parameter->max_stagnate_iter) {
+    if (iter - stagnate_iter > parameter->max_stagnate_iter) {
       stagnate_iter = iter;
       this->sol_manager->reset_cur_sol();
       this->sol_manager->reset_tmp_sol();
