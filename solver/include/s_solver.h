@@ -17,10 +17,6 @@ class Solver {
    */
   SolverContext* context;
   /**
-   * @brief 订单池
-   */
-  OrderPool* order_pool;
-  /**
    * @brief 工作空间
    */
   Workspace* workspace;

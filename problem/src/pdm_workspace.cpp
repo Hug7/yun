@@ -7,12 +7,17 @@
 
 #include <ranges>
 #include <stdexcept>
+#include <utility>
+
+#include "pdm_order_builder.h"
 
 // ====== implement of Workspace ======
-Workspace::Workspace(const SolverContext* _context, const OrderPool* order_pool)
-    : context(_context) {
-  // this->unassigned_orders.reserve(order_pool->len);
-  for (const auto order : order_pool->orders) {
+Workspace::Workspace(const SolverContext* _context) : context(_context) {
+  // 构造订单
+  this->orders = build_orders(this->context);
+  // 定义未指派的订单
+  this->unassigned_orders.reserve(this->orders.size());
+  for (const auto order : this->orders) {
     this->unassigned_orders.emplace(order->ind, order);
   }
   this->vehicle_resource =
@@ -20,10 +25,17 @@ Workspace::Workspace(const SolverContext* _context, const OrderPool* order_pool)
 }
 
 Workspace::~Workspace() {
+  // 先释放车次，车次中的活动还引用着订单
   for (const auto& load : this->loads) {
     delete load;
   }
+  this->loads.clear();
   this->unassigned_orders.clear();
+  // 释放订单
+  for (const auto& order : this->orders) {
+    delete order;
+  }
+  this->orders.clear();
 }
 
 void Workspace::push(const std::vector<Load*>& _loads,
