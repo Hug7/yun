@@ -12,7 +12,7 @@
 #include "pdm_context.h"
 #include "pdm_func_timing.h"
 #include "pdm_load.h"
-#include "pdm_order_pool.h"
+#include "pdm_order.h"
 #include "pdm_resource.h"
 #include "pdm_solution.h"
 
@@ -50,6 +50,10 @@ class Workspace {
    */
   VehicleResource::UPtr vehicle_resource;
   /**
+   * @brief 订单集合-持有所有权，析构时释放
+   */
+  std::vector<Order*> orders;
+  /**
    * @brief 车次列表
    */
   std::vector<Load*> loads;
@@ -66,7 +70,11 @@ class Workspace {
    */
   FuncTiming::VecUPtr func_timings;
 
-  explicit Workspace(const SolverContext* _context, const OrderPool* order_pool);
+  /**
+   * @brief 构造工作空间
+   * @param _context solver上下文
+   */
+  explicit Workspace(const SolverContext* _context);
 
   ~Workspace();
 
