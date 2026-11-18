@@ -11,6 +11,7 @@
 
 #include "pdm_context.h"
 #include "pdm_func_timing.h"
+#include "pdm_graph_order.h"
 #include "pdm_load.h"
 #include "pdm_order.h"
 #include "pdm_resource.h"
@@ -50,7 +51,7 @@ class Workspace {
    */
   VehicleResource::UPtr vehicle_resource;
   /**
-   * @brief 订单集合-持有所有权，析构时释放
+   * @brief 订单集合
    */
   std::vector<Order*> orders;
   /**
@@ -61,6 +62,10 @@ class Workspace {
    * @brief 未指派的订单集合
    */
   std::unordered_map<int, const Order*> unassigned_orders;
+  /**
+   * @brief 订单关系图
+   */
+  OrderRelationshipGraph::UPtr order_relationship_graph;
   /**
    * @brief 车次和订单的存储栈
    */

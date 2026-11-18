@@ -69,6 +69,8 @@ class VehicleResource {
   void occupy(const Vehicle* vehicle) const;
 
   void release(const Vehicle* vehicle) const;
+
+  bool has_available(const Vehicle* vehicle) const;
 };
 
 /**

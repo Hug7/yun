@@ -146,3 +146,11 @@ class Bitset {
    */
   [[nodiscard]] int sum() const;
 };
+
+namespace BitsetUtils {
+
+Bitset::UPtr call_intersection(const Bitset::UPtr& a, const Bitset::UPtr& b);
+
+Bitset::UPtr call_union(const Bitset::UPtr& a, const Bitset::UPtr& b);
+
+} // namespace BitsetUtils

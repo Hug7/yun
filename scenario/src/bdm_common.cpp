@@ -68,3 +68,15 @@ int Bitset::sum() const {
   for (const auto x : w) c += __builtin_popcountll(x);
   return c;
 }
+
+Bitset::UPtr BitsetUtils::call_intersection(const Bitset::UPtr& a, const Bitset::UPtr& b) {
+  auto c = std::make_unique<Bitset>(a);
+  c->call_intersection(b);
+  return c;
+}
+
+Bitset::UPtr BitsetUtils::call_union(const Bitset::UPtr& a, const Bitset::UPtr& b) {
+  auto c = std::make_unique<Bitset>(a);
+  c->call_union(b);
+  return c;
+}

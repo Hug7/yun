@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "pdm_graph_order.h"
 #include "pdm_order_builder.h"
 
 // ====== implement of Workspace ======
@@ -22,6 +23,9 @@ Workspace::Workspace(const SolverContext* _context) : context(_context) {
   }
   this->vehicle_resource =
       ResourceFactory::create_vehicle_resource(_context->scenario->carrier_manager);
+  // 构建订单关系图
+  this->order_relationship_graph =
+      build_order_relationship_graph(this->context, this->orders, this->vehicle_resource);
 }
 
 Workspace::~Workspace() {

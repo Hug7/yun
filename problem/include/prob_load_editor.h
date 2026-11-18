@@ -27,7 +27,7 @@ class LoadEditor {
   /**
    * @brief 将订单按照顺序构造 load
    * @details 根据车辆资源选择最合适的车辆
-   * @param orders 订单集合
+   * @param orders 订单列表
    * @param vehicle_resource 车辆资源
    */
   [[nodiscard]] Load* build(const std::vector<const Order*>& orders,

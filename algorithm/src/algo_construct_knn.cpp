@@ -3,16 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <ranges>
-#include <unordered_map>
-#include <utility>
+#include <stdexcept>
+#include <unordered_set>
 #include <vector>
 
 #include "algo_construct.h"
-#include "bdm_dist_matrix.h"
-#include "bdm_location.h"
+#include "algo_graph_knn.h"
 #include "c_rang_utils.h"
 #include "pdm_load.h"
 #include "pdm_order.h"
@@ -20,20 +19,6 @@
 #include "prob_problem.h"
 
 namespace {
-
-struct OrderPairEdge {
-  /**
-   * @brief 订单的索引
-   */
-  int order_ind;
-  /**
-   * @brief 平均距离
-   */
-  std::int64_t mean_dist;
-
-  OrderPairEdge(const int order_ind, const std::int64_t mean_dist)
-      : order_ind(order_ind), mean_dist(mean_dist) {}
-};
 
 /**
  * @brief 选取种子订单
@@ -61,144 +46,6 @@ int select_seed_order_ind(std::unordered_set<int>& unassigned_order_indices, Sol
     }
   }
   return seed_order_ind;
-}
-
-/**
- * @brief 构造始发 order 与目的 orders 的边权重
- * @param from_order 始发 order
- * @param orders 目的 orders 列表
- * @param context solver上下文
- * @param k_neighbor_count k近邻数量
- * @return 始发 order 与目的 orders 的边权重
- */
-std::unordered_map<int, int> construct_knn_edge(const Order* from_order,
-                                                const std::vector<const Order*>& orders,
-                                                const SolverContext* context,
-                                                const int k_neighbor_count) {
-  // 获取订单 提货站点间\卸货站点间 所有公共可用车型的平均距离，如果没有公共可用车型则不考虑
-  const auto carrier_manager = context->scenario->carrier_manager;
-  std::vector<OrderPairEdge> drop_edges;
-  std::vector<OrderPairEdge> pick_edges;
-  for (const auto order_b : orders) {
-    if (from_order == order_b) {
-      continue;
-    }
-    // 取可用车型交集
-    const auto available_vehicle_bitset = carrier_manager->full_vehicle_bitset();
-    available_vehicle_bitset->call_intersection(from_order->available_vehicle_bitset);
-    available_vehicle_bitset->call_intersection(order_b->available_vehicle_bitset);
-
-    const int vehicle_count = available_vehicle_bitset->sum();
-    if (vehicle_count == 0) {
-      continue;
-    }
-    const size_t bitset_len = available_vehicle_bitset->len();
-    std::int64_t total_drop_dist = 0;
-    std::int64_t total_pick_dist = 0;
-    for (size_t u = 0; u < bitset_len; ++u) {
-      if (available_vehicle_bitset->test(u)) {
-        const auto dist_matrix = carrier_manager->vehicles[u]->get_dist_matrix();
-        total_drop_dist += dist_matrix->get_dist(from_order->drop_loc->ind, order_b->drop_loc->ind);
-        if (context->parameter->load_unload_policy == LoadUnloadPolicyType::FILO) {
-          total_pick_dist +=
-              dist_matrix->get_dist(order_b->pick_loc->ind, from_order->pick_loc->ind);
-        } else {
-          total_pick_dist +=
-              dist_matrix->get_dist(from_order->pick_loc->ind, order_b->pick_loc->ind);
-        }
-      }
-    }
-    const std::int64_t mean_drop_dist = total_drop_dist / vehicle_count;
-    const std::int64_t mean_pick_dist = total_pick_dist / vehicle_count;
-    drop_edges.emplace_back(order_b->ind, mean_drop_dist);
-    pick_edges.emplace_back(order_b->ind, mean_pick_dist);
-  }
-  if (pick_edges.empty()) {
-    return {};
-  }
-  // 按照距离排序，从小到大
-  std::ranges::sort(drop_edges, [](const OrderPairEdge& a, const OrderPairEdge& b) {
-    if (a.mean_dist == b.mean_dist) {
-      return a.order_ind < b.order_ind;
-    }
-    return a.mean_dist < b.mean_dist;
-  });
-  std::ranges::sort(pick_edges, [](const OrderPairEdge& a, const OrderPairEdge& b) {
-    if (a.mean_dist == b.mean_dist) {
-      return a.order_ind < b.order_ind;
-    }
-    return a.mean_dist < b.mean_dist;
-  });
-  // 统计提货和卸货的序号，构建rank
-  std::unordered_map<int, int> ranks;
-  int pick_rank_ind = 0;
-  std::int64_t pick_pre_rank_dist = -1;
-  for (const auto& edge : pick_edges) {
-    if (edge.mean_dist != pick_pre_rank_dist) {
-      pick_pre_rank_dist = edge.mean_dist;
-      ++pick_rank_ind;
-    }
-    ranks[edge.order_ind] += pick_rank_ind;
-  }
-  int drop_rank_ind = 0;
-  std::int64_t drop_pre_rank_dist = -1;
-  for (const auto& edge : drop_edges) {
-    if (edge.mean_dist != drop_pre_rank_dist) {
-      drop_pre_rank_dist = edge.mean_dist;
-      ++drop_rank_ind;
-    }
-    ranks[edge.order_ind] += drop_rank_ind;
-  }
-  // 对rank从小到大排序，取前K个不同rank值的订单Ind集合
-  std::vector<std::pair<int, int>> rank_pairs;
-  rank_pairs.reserve(ranks.size());
-  for (auto& [fst, snd] : ranks) {
-    rank_pairs.emplace_back(fst, snd);
-  }
-  std::ranges::sort(rank_pairs, [](const auto& pair_a, const auto& pair_b) {
-    return pair_a.second < pair_b.second;
-  });
-  std::unordered_map<int, int> knn_order_edges;
-  int pre_rank = -1;
-  for (const auto& [fst, snd] : rank_pairs) {
-    if (snd != pre_rank) {
-      ++pre_rank;
-      if (pre_rank >= k_neighbor_count) {
-        break;
-      }
-    }
-    knn_order_edges[fst] = pre_rank;
-  }
-  return knn_order_edges;
-}
-
-/**
- * @brief 构造K近邻图
- * @details
- * @param context solver上下文
- * @param sol solution
- * @param k_neighbor_count 近邻数
- */
-std::unordered_map<int, std::unordered_map<int, int>> construct_knn_graph(
-    const SolverContext* context, Solution* sol, const int k_neighbor_count) {
-  // 拼装所有订单
-  std::vector<const Order*> orders;
-  // 拼装未指派订单
-  for (const auto order : sol->unassigned_orders | std::views::values) {
-    orders.emplace_back(order);
-  }
-  // 拼装load中订单
-  for (const auto load : sol->loads) {
-    auto cur_orders = load->get_orders();
-    orders.insert(orders.end(), cur_orders.begin(), cur_orders.end());
-  }
-  // 构造订单间的knn图
-  std::unordered_map<int, std::unordered_map<int, int>> knn_graph;
-  for (const auto order : orders) {
-    knn_graph[order->ind] = construct_knn_edge(order, orders, context, k_neighbor_count);
-  }
-
-  return knn_graph;
 }
 
 /**
@@ -251,7 +98,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
   auto sol = workspace->generate_sol();
 
   // 构造knn关系图(knn graph)
-  auto knn_graph = construct_knn_graph(context, sol, parameter.neighbor_count);
+  auto knn_graph = construct_knn_graph(workspace->order_relationship_graph, sol, parameter.neighbor_count);
   // candidate load indices
   std::unordered_set<int> candidate_load_indices =
       RangeUtils::range_set(static_cast<int>(sol->loads.size()));

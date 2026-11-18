@@ -9,9 +9,9 @@ flowchart LR
     solver[Solver]
     precheck[SolverPrecheck]
     context[SolverContext]
-    order_pool[OrderPool]
     workspace[Workspace]
     solution[Solution]
+    orders[Order]
     dsl["DSL<br/>StrategyManager"]
     funcs["Registered Functions<br/>C++ callbacks"]
     algorithm["Algorithm"]
@@ -25,11 +25,10 @@ flowchart LR
 
     solver -->|构造并调用| precheck
     solver -->|构造| context
-    solver -->|构造| order_pool
     solver -->|构造| workspace
     solver -->|构造并执行| dsl
 
-    order_pool -->|读取| context
+    workspace -->|持有| orders
     workspace -->|引用| context
     workspace -->|创建 / 应用| solution
 
