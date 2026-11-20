@@ -22,10 +22,6 @@ void CargoSubOrder::update_labelset_value(const int label_ind4labelset,
 
 // ====== implement of CargoOrder ======
 CargoOrder::~CargoOrder() {
-  delete this->pick_time_window;
-
-  delete this->drop_time_window;
-
   for (const auto& sub : this->sub_orders) {
     delete sub;
   }
@@ -33,11 +29,11 @@ CargoOrder::~CargoOrder() {
   this->sub_order_map.clear();
 }
 
-void CargoOrder::set_pick_time_window(TimeWindow* _pick_time_window) {
+void CargoOrder::set_pick_time_window(const TimeWindow& _pick_time_window) {
   this->pick_time_window = _pick_time_window;
 }
 
-void CargoOrder::set_drop_time_window(TimeWindow* _drop_time_window) {
+void CargoOrder::set_drop_time_window(const TimeWindow& _drop_time_window) {
   this->drop_time_window = _drop_time_window;
 }
 

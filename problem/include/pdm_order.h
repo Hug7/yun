@@ -40,19 +40,11 @@ class Order {
   /**
    * @brief pick time windows
    */
-  std::vector<TimeWindow*> pick_time_windows;
-  /**
-   * @brief length of pick time windows
-   */
-  int pick_time_windows_len;
+  std::vector<TimeWindow> pick_time_windows;
   /**
    * @brief drop time windows
    */
-  std::vector<TimeWindow*> drop_time_windows;
-  /**
-   * @brief length of drop time windows
-   */
-  int drop_time_windows_len;
+  std::vector<TimeWindow> drop_time_windows;
   /**
    * @brief pick work time
    */

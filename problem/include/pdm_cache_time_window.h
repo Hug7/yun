@@ -157,13 +157,11 @@ class NodeTimeWindowStoreBuffer {
    */
   std::vector<const Order*> orders_scratch;
 
-  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> pick;
+  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow>> pick;
 
-  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> drop;
+  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow>> drop;
 
-  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> other;
-
-  ~NodeTimeWindowStoreBuffer();
+  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow>> other;
 
   [[nodiscard]] bool empty() const {
     return this->pick.empty() && this->drop.empty() && this->other.empty();
@@ -175,8 +173,8 @@ class NodeTimeWindowStoreBuffer {
    * @param node_tw_key node 时间窗key
    * @return 返回新条目的时间窗
    */
-  const std::vector<TimeWindow*>* get_or_create_pick(const Node* node,
-                                                     const NodeTimeWindowKey& node_tw_key);
+  const std::vector<TimeWindow>* get_or_create_pick(const Node* node,
+                                                    const NodeTimeWindowKey& node_tw_key);
 
   /**
    * @brief 查找 drop 并写入本写缓冲
@@ -184,14 +182,14 @@ class NodeTimeWindowStoreBuffer {
    * @param node_tw_key node 时间窗key
    * @return 返回新条目的时间窗
    */
-  const std::vector<TimeWindow*>* get_or_create_drop(const Node* node,
-                                                     const NodeTimeWindowKey& node_tw_key);
+  const std::vector<TimeWindow>* get_or_create_drop(const Node* node,
+                                                    const NodeTimeWindowKey& node_tw_key);
 
   /**
    * @brief 计算并写入本写缓冲, 返回新条目的时间窗
    */
-  const std::vector<TimeWindow*>* get_or_create_other(const NodeTimeWindowKey& node_tw_key,
-                                                      const PlanDatetimeRange* plan_datetime_range);
+  const std::vector<TimeWindow>* get_or_create_other(const NodeTimeWindowKey& node_tw_key,
+                                                     const PlanDatetimeRange* plan_datetime_range);
 };
 
 /**
@@ -204,43 +202,42 @@ class NodeTimeWindowCache {
  public:
   const PlanDatetimeRange* plan_datetime_range;
 
-  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> pick;
+  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow>> pick;
 
-  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> drop;
+  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow>> drop;
 
-  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow*>> other;
+  std::unordered_map<NodeTimeWindowKey, std::vector<TimeWindow>> other;
 
   explicit NodeTimeWindowCache(const PlanDatetimeRange* plan_datetime_range);
-
-  ~NodeTimeWindowCache();
 
   /**
    * @brief 只读查找 pick 条目, 未命中返回 nullptr, 绝不写入本表
    * @param scratch 调用方提供的 orders 复用缓冲, 必须来自当前任务私有对象
    */
-  [[nodiscard]] const std::vector<TimeWindow*>* find_pick(const Node* node,
-                                                          std::vector<const Order*>& scratch) const;
+  [[nodiscard]] const std::vector<TimeWindow>* find_pick(const Node* node,
+                                                         std::vector<const Order*>& scratch) const;
 
   /**
    * @brief 只读查找 drop 条目, 未命中返回 nullptr, 绝不写入本表
+   * @param node 卸货节点
    * @param scratch 调用方提供的 orders 复用缓冲, 必须来自当前任务私有对象
    */
-  [[nodiscard]] const std::vector<TimeWindow*>* find_drop(const Node* node,
-                                                          std::vector<const Order*>& scratch) const;
+  [[nodiscard]] const std::vector<TimeWindow>* find_drop(const Node* node,
+                                                         std::vector<const Order*>& scratch) const;
 
   /**
    * @brief 只读查找 other 条目, 未命中返回 nullptr
    */
-  [[nodiscard]] const std::vector<TimeWindow*>* find_other(const Node* node) const;
+  [[nodiscard]] const std::vector<TimeWindow>* find_other(const Node* node) const;
 
   /**
    * @brief 串行阶段直写: 未命中则计算并入库
-   * @param node: 提货节点
-   * @param node_time_window_key: 节点的时间窗key
+   * @param node 提货节点
+   * @param node_time_window_key 节点的时间窗key
    * @throws std::logic_error 并行阶段调用
    */
-  const std::vector<TimeWindow*>* get_or_create_pick(const Node* node,
-                                                     const NodeTimeWindowKey& node_time_window_key);
+  const std::vector<TimeWindow>* get_or_create_pick(const Node* node,
+                                                    const NodeTimeWindowKey& node_time_window_key);
 
   /**
    * @brief 串行阶段直写: 未命中则计算并入库
@@ -248,19 +245,18 @@ class NodeTimeWindowCache {
    * @param node_time_window_key: 节点的时间窗key
    * @throws std::logic_error 并行阶段调用
    */
-  const std::vector<TimeWindow*>* get_or_create_drop(const Node* node,
-                                                     const NodeTimeWindowKey& node_time_window_key);
+  const std::vector<TimeWindow>* get_or_create_drop(const Node* node,
+                                                    const NodeTimeWindowKey& node_time_window_key);
 
   /**
    * @brief 串行阶段直写: 未命中则计算并入库
    * @throws std::logic_error 并行阶段调用
    */
-  const std::vector<TimeWindow*>* get_or_create_other(const NodeTimeWindowKey& node_tw_key);
+  const std::vector<TimeWindow>* get_or_create_other(const NodeTimeWindowKey& node_tw_key);
 
   /**
    * @brief 把写缓冲的新增条目归档进本表(必须在屏障之后的串行阶段调用)
-   * @details 重复键的 TimeWindow* 会被显式 delete:写缓冲独占自己 new 出来的时间窗,
-   * 归档是所有权转移, 未被接收的那一份必须释放。
+   * @details 重复键的条目直接丢弃(值语义, 无手动释放); 未重复的条目整体移入本表。
    */
   void archive(NodeTimeWindowStoreBuffer* node_tw_store_buffer);
 
@@ -270,8 +266,8 @@ class NodeTimeWindowCache {
    * store_buffer 为 nullptr 时表示串行阶段, 直接读写本表。
    * 返回的引用在本次推导内有效, 不得跨越归档点长期持有。
    */
-  const std::vector<TimeWindow*>& lookup(NodeTimeWindowStoreBuffer* node_tw_store_buffer,
-                                         const Node* node);
+  const std::vector<TimeWindow>& lookup(NodeTimeWindowStoreBuffer* node_tw_store_buffer,
+                                        const Node* node);
 
   /**
    * @brief 标记进入并行阶段, 并行阶段禁止对本表写入

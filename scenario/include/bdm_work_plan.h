@@ -40,7 +40,7 @@ class Calendar {
   /**
    * @brief 设置某一天的时间范围列表
    */
-  void set_one_day_time_ranges(const int day_ind, std::vector<std::pair<int, int>>& time_ranges);
+  void set_one_day_time_ranges(int day_ind, std::vector<std::pair<int, int>>& time_ranges);
 
   /**
    * @brief 后处理: 填充空的时间窗范围
@@ -53,7 +53,7 @@ class Calendar {
    * @param tw 时间窗
    * @return 交集时间窗-timestamp格式
    */
-  std::vector<TimeWindow*> intersection(TimeWindow* tw);
+  std::vector<TimeWindow> intersection(const TimeWindow& tw) const;
 };
 
 class WorkEffect {
@@ -110,19 +110,19 @@ class WorkPlan {
    */
   WorkEffect* work_effect;
 
-  WorkPlan(const DimensionManager* dim_manager);
+  explicit WorkPlan(const DimensionManager* dim_manager);
 
   ~WorkPlan();
   /**
    * @brief 设置固定提货时间
-   * @param fixed_pick_time 固定提货时间，单位: s
+   * @param _fixed_pick_time 固定提货时间，单位: s
    */
-  void set_fixed_pick_time(int fixed_pick_time);
+  void set_fixed_pick_time(int _fixed_pick_time);
   /**
    * @brief 设置固定卸货时间
-   * @param fixed_drop_time 固定卸货时间，单位: s
+   * @param _fixed_drop_time 固定卸货时间，单位: s
    */
-  void set_fixed_drop_time(int fixed_drop_time);
+  void set_fixed_drop_time(int _fixed_drop_time);
 
   /**
    * @brief 设置日历

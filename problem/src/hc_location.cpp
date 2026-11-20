@@ -49,7 +49,7 @@ HardConstrScore::UPtr HcTimeWindow::eval(Load* load) {
 
   auto tail_node = load->last_node;
   while (tail_node != nullptr) {
-    if (tail_node->ptws.empty() || tail_node->ptws[0]->over_time > 0) {
+    if (tail_node->ptws.empty() || tail_node->ptws[0].over_time > 0) {
       return std::make_unique<HardConstrScore>(this->code, false, 1, 1, this->seq_type,
                                                this->vehicle_type,
                                                InfeasibleReasonCollection::TIME_WINDOW);

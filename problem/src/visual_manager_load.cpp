@@ -115,22 +115,22 @@ void fill_plan_time(VisualLoad& visual_load, const Load* load) {
   const int node_len = static_cast<int>(time_window_plans.size());
 
   for (const auto& twp : time_window_plans) {
-    visual_load.total_wait_time_second += twp->wait_time;
+    visual_load.total_wait_time_second += twp.wait_time;
   }
 
-  visual_load.plan_earliest_start_timestamp = time_window_plans[0]->early_arr;
+  visual_load.plan_earliest_start_timestamp = time_window_plans[0].early_arr;
   visual_load.plan_earliest_start_time = TimeParse::format_sec_to_tm(
       visual_load.plan_earliest_start_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
 
-  visual_load.plan_earliest_end_timestamp = time_window_plans[node_len - 1]->early_depart;
+  visual_load.plan_earliest_end_timestamp = time_window_plans[node_len - 1].early_depart;
   visual_load.plan_earliest_end_time = TimeParse::format_sec_to_tm(
       visual_load.plan_earliest_end_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
 
-  visual_load.plan_latest_start_timestamp = time_window_plans[0]->late_arr;
+  visual_load.plan_latest_start_timestamp = time_window_plans[0].late_arr;
   visual_load.plan_latest_start_time = TimeParse::format_sec_to_tm(
       visual_load.plan_latest_start_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
 
-  visual_load.plan_latest_end_timestamp = time_window_plans[node_len - 1]->late_depart;
+  visual_load.plan_latest_end_timestamp = time_window_plans[node_len - 1].late_depart;
   visual_load.plan_latest_end_time = TimeParse::format_sec_to_tm(
       visual_load.plan_latest_end_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
 }

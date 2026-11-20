@@ -6,81 +6,83 @@
 #include "bdm_time_window_utils.h"
 
 #include <algorithm>
-#include <memory>
+#include <cstddef>
+#include <optional>
+#include <vector>
 
 #include "bdm_time_window.h"
 #include "bdm_time_window_plan.h"
 
 // ====== implement of TimeWindowInfer ======
-TimeWindowPlan::UPtr TimeWindowInfer::forward_s_s(TimeWindowPlan::UPtr& pre_node_plan_tw,
-                                                  const std::int64_t cost_time,
-                                                  const std::int64_t work_time,
-                                                  const TimeWindow* ori_tw) {
-  auto cur_tw = std::make_unique<TimeWindowPlan>();
+TimeWindowPlan TimeWindowInfer::forward_s_s(const TimeWindowPlan& pre_node_plan_tw,
+                                            const std::int64_t cost_time,
+                                            const std::int64_t work_time,
+                                            const TimeWindow& ori_tw) {
+  TimeWindowPlan cur_tw;
 
-  const std::int64_t plan_early_arr = pre_node_plan_tw->early_depart + cost_time;
-  const std::int64_t plan_late_arr = pre_node_plan_tw->late_depart + cost_time;
+  const std::int64_t plan_early_arr = pre_node_plan_tw.early_depart + cost_time;
+  const std::int64_t plan_late_arr = pre_node_plan_tw.late_depart + cost_time;
 
-  if (plan_early_arr <= ori_tw->late) {
-    if (plan_late_arr >= ori_tw->early) {
-      cur_tw->early_arr = std::max(plan_early_arr, ori_tw->early);
-      cur_tw->late_arr = std::min(plan_late_arr, ori_tw->late);
-      cur_tw->early_depart = cur_tw->early_arr + work_time;
-      cur_tw->late_depart = cur_tw->late_arr + work_time;
+  if (plan_early_arr <= ori_tw.late) {
+    if (plan_late_arr >= ori_tw.early) {
+      cur_tw.early_arr = std::max(plan_early_arr, ori_tw.early);
+      cur_tw.late_arr = std::min(plan_late_arr, ori_tw.late);
+      cur_tw.early_depart = cur_tw.early_arr + work_time;
+      cur_tw.late_depart = cur_tw.late_arr + work_time;
     } else {
       // wait time case
-      cur_tw->early_arr = plan_late_arr;
-      cur_tw->late_arr = plan_late_arr;
-      cur_tw->early_depart = ori_tw->early + work_time;
-      cur_tw->late_depart = ori_tw->early + work_time;
-      cur_tw->wait_time = ori_tw->early - plan_late_arr;
+      cur_tw.early_arr = plan_late_arr;
+      cur_tw.late_arr = plan_late_arr;
+      cur_tw.early_depart = ori_tw.early + work_time;
+      cur_tw.late_depart = ori_tw.early + work_time;
+      cur_tw.wait_time = ori_tw.early - plan_late_arr;
     }
   } else {
     // over time case
-    cur_tw->early_arr = plan_early_arr;
-    cur_tw->late_arr = plan_early_arr;
-    cur_tw->early_depart = plan_early_arr + work_time;
-    cur_tw->late_depart = plan_early_arr + work_time;
-    cur_tw->over_time = plan_early_arr - ori_tw->late;
+    cur_tw.early_arr = plan_early_arr;
+    cur_tw.late_arr = plan_early_arr;
+    cur_tw.early_depart = plan_early_arr + work_time;
+    cur_tw.late_depart = plan_early_arr + work_time;
+    cur_tw.over_time = plan_early_arr - ori_tw.late;
   }
 
   return cur_tw;
 }
 
-void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw,
+void TimeWindowInfer::forward_s_m(const TimeWindowPlan& pre_node_plan_tw,
                                   const std::int64_t cost_time, const std::int64_t work_time,
-                                  const std::vector<TimeWindow*>& ori_tws,
-                                  TimeWindowPlan::VecUPtr& plan_node_tws) {
+                                  const std::vector<TimeWindow>& ori_tws,
+                                  std::vector<TimeWindowPlan>& plan_node_tws) {
   bool non_wait_over_flag = false;
-  const size_t plan_node_tws_len = plan_node_tws.size();
+  const std::size_t plan_node_tws_len = plan_node_tws.size();
   if (plan_node_tws_len > 1 ||
-      (plan_node_tws_len > 0 && plan_node_tws[0]->is_zero_wait_over_time())) {
+      (plan_node_tws_len > 0 && plan_node_tws[0].is_zero_wait_over_time())) {
     non_wait_over_flag = true;
   }
 
-  const std::int64_t plan_early_arr = pre_node_plan_tw->early_depart + cost_time;
-  const std::int64_t plan_late_arr = pre_node_plan_tw->late_depart + cost_time;
+  const std::int64_t plan_early_arr = pre_node_plan_tw.early_depart + cost_time;
+  const std::int64_t plan_late_arr = pre_node_plan_tw.late_depart + cost_time;
 
   for (const auto& cur_ori_tw : ori_tws) {
-    if (plan_late_arr < cur_ori_tw->early) {
+    if (plan_late_arr < cur_ori_tw.early) {
       // case: wait time
       if (non_wait_over_flag) {
         break;
       }
       if (plan_node_tws_len == 0 ||
-          (plan_node_tws[0]->over_time > 0 ||
-           (cur_ori_tw->early - plan_late_arr) < plan_node_tws[0]->wait_time)) {
+          (plan_node_tws[0].over_time > 0 ||
+           (cur_ori_tw.early - plan_late_arr) < plan_node_tws[0].wait_time)) {
         plan_node_tws.clear();
         plan_node_tws.push_back(forward_s_s(pre_node_plan_tw, cost_time, work_time, cur_ori_tw));
       }
-    } else if (plan_early_arr > cur_ori_tw->late) {
+    } else if (plan_early_arr > cur_ori_tw.late) {
       // case: over time
       if (non_wait_over_flag) {
         continue;
       }
       if (plan_node_tws_len == 0 ||
-          (plan_node_tws[0]->wait_time == 0 &&
-           (plan_early_arr - cur_ori_tw->late) < plan_node_tws[0]->over_time)) {
+          (plan_node_tws[0].wait_time == 0 &&
+           (plan_early_arr - cur_ori_tw.late) < plan_node_tws[0].over_time)) {
         plan_node_tws.clear();
         plan_node_tws.push_back(forward_s_s(pre_node_plan_tw, cost_time, work_time, cur_ori_tw));
       }
@@ -94,28 +96,28 @@ void TimeWindowInfer::forward_s_m(TimeWindowPlan::UPtr& pre_node_plan_tw,
   }
 }
 
-TimeWindowPlan::VecUPtr TimeWindowInfer::forward(TimeWindowPlan::VecUPtr& pre_node_plan_tws,
-                                                 const std::int64_t cost_time,
-                                                 const std::int64_t work_time,
-                                                 const std::vector<TimeWindow*>& ori_tws) {
-  TimeWindowPlan::VecUPtr plan_node_tws;
-  for (auto& pre_node_plan_tw : pre_node_plan_tws) {
+std::vector<TimeWindowPlan> TimeWindowInfer::forward(
+    const std::vector<TimeWindowPlan>& pre_node_plan_tws, const std::int64_t cost_time,
+    const std::int64_t work_time, const std::vector<TimeWindow>& ori_tws) {
+  std::vector<TimeWindowPlan> plan_node_tws;
+  for (const auto& pre_node_plan_tw : pre_node_plan_tws) {
     forward_s_m(pre_node_plan_tw, cost_time, work_time, ori_tws, plan_node_tws);
   }
   return plan_node_tws;
 }
 
-TimeWindow* TimeWindowUntils::intersection(const TimeWindow* tw_a, const TimeWindow* tw_b) {
-  const std::int64_t tmp_early = std::max(tw_a->early, tw_b->early);
-  const std::int64_t tmp_late = std::min(tw_a->late, tw_b->late);
+std::optional<TimeWindow> TimeWindowUntils::intersection(const TimeWindow& tw_a,
+                                                         const TimeWindow& tw_b) {
+  const std::int64_t tmp_early = std::max(tw_a.early, tw_b.early);
+  const std::int64_t tmp_late = std::min(tw_a.late, tw_b.late);
   if (tmp_early > tmp_late) {
-    return nullptr;
+    return std::nullopt;
   }
-  return new TimeWindow(tmp_early, tmp_late);
+  return TimeWindow(tmp_early, tmp_late);
 }
 
-std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
-    const std::vector<const std::vector<TimeWindow*>*>& tws_arr) {
+std::vector<TimeWindow> TimeWindowUntils::intersection_tws_arr(
+    const std::vector<const std::vector<TimeWindow>*>& tws_arr) {
   if (tws_arr.empty()) {
     return {};
   }
@@ -130,24 +132,24 @@ std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
   // 每个向量当前的读取位置
   std::vector<std::size_t> idx(n, 0);
   // 时间窗交集结果
-  std::vector<TimeWindow*> res;
+  std::vector<TimeWindow> res;
 
   while (true) {
     // 获取最大最小时间窗
-    std::int64_t cur_max_early = (*tws_arr[0])[idx[0]]->early;
-    std::int64_t cur_min_late = (*tws_arr[0])[idx[0]]->late;
+    std::int64_t cur_max_early = (*tws_arr[0])[idx[0]].early;
+    std::int64_t cur_min_late = (*tws_arr[0])[idx[0]].late;
     std::size_t cur_min_late_ind = 0;
     for (std::size_t u = 1; u < n; ++u) {
-      const TimeWindow* cand = (*tws_arr[u])[idx[u]];
-      cur_max_early = std::max(cur_max_early, cand->early);
-      if (cur_min_late > cand->late) {
-        cur_min_late = cand->late;
+      const TimeWindow& cand = (*tws_arr[u])[idx[u]];
+      cur_max_early = std::max(cur_max_early, cand.early);
+      if (cur_min_late > cand.late) {
+        cur_min_late = cand.late;
         cur_min_late_ind = u;
       }
     }
     // 记录交集时间窗
     if (cur_min_late > cur_max_early) {
-      res.push_back(new TimeWindow(cur_max_early, cur_min_late));
+      res.emplace_back(cur_max_early, cur_min_late);
     }
     // 推进选中的向量
     if (++idx[cur_min_late_ind] >= (*tws_arr[cur_min_late_ind]).size()) {
@@ -158,24 +160,21 @@ std::vector<TimeWindow*> TimeWindowUntils::intersection_tws_arr(
   return res;
 }
 
-std::vector<TimeWindow*> TimeWindowUntils::merge_time_windows(std::vector<TimeWindow*>& tws) {
-  std::vector<TimeWindow*> res_tws;
-  for (const auto& tw : tws) {
-    if (res_tws.empty()) {
-      res_tws.push_back(new TimeWindow(tw));
-    } else {
-      const auto last_tw = res_tws.back();
-      if ((tw->early - last_tw->late) <=
-          TimeWindowParameter::INTERVAL_SECS_CONTINUOUS_TIME_BUCKET) {
-        res_tws.pop_back();
-        res_tws.push_back(new TimeWindow(last_tw->early, tw->late));
-        delete last_tw;
-      } else {
-        res_tws.push_back(new TimeWindow(tw));
-      }
-    }
-    delete tw;
+void TimeWindowUntils::append_merged(std::vector<TimeWindow>& res, const std::int64_t early,
+                                     const std::int64_t late) {
+  if (!res.empty() &&
+      (early - res.back().late) <= TimeWindowParameter::INTERVAL_SECS_CONTINUOUS_TIME_BUCKET) {
+    res.back().late = std::max(res.back().late, late);
+    return;
   }
+  res.emplace_back(early, late);
+}
 
+std::vector<TimeWindow> TimeWindowUntils::merge_time_windows(const std::vector<TimeWindow>& tws) {
+  std::vector<TimeWindow> res_tws;
+  res_tws.reserve(tws.size());
+  for (const auto& tw : tws) {
+    append_merged(res_tws, tw.early, tw.late);
+  }
   return res_tws;
 }

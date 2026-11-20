@@ -5,8 +5,8 @@
 
 #include "pdm_cache_time_window.h"
 
-#include <ranges>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "bdm_time_window.h"
@@ -26,30 +26,7 @@ NodeTimeWindowKey::NodeTimeWindowKey(ActivityType activity_type, const Location*
 }
 
 // ====== implement of NodeTimeWindowStoreBuffer ======
-NodeTimeWindowStoreBuffer::~NodeTimeWindowStoreBuffer() {
-  for (auto& tws : this->pick | std::views::values) {
-    for (const auto tw : tws) {
-      delete tw;
-    }
-  }
-  this->pick.clear();
-
-  for (auto& tws : this->drop | std::views::values) {
-    for (const auto tw : tws) {
-      delete tw;
-    }
-  }
-  this->drop.clear();
-
-  for (auto& val : this->other | std::views::values) {
-    for (const auto tw : val) {
-      delete tw;
-    }
-  }
-  this->other.clear();
-}
-
-const std::vector<TimeWindow*>* NodeTimeWindowStoreBuffer::get_or_create_pick(
+const std::vector<TimeWindow>* NodeTimeWindowStoreBuffer::get_or_create_pick(
     const Node* node, const NodeTimeWindowKey& node_tw_key) {
   const auto it = this->pick.find(node_tw_key);
   if (it != this->pick.end()) {
@@ -60,7 +37,7 @@ const std::vector<TimeWindow*>* NodeTimeWindowStoreBuffer::get_or_create_pick(
   return &new_it->second;
 }
 
-const std::vector<TimeWindow*>* NodeTimeWindowStoreBuffer::get_or_create_drop(
+const std::vector<TimeWindow>* NodeTimeWindowStoreBuffer::get_or_create_drop(
     const Node* node, const NodeTimeWindowKey& node_tw_key) {
   const auto it = this->drop.find(node_tw_key);
   if (it != this->drop.end()) {
@@ -71,14 +48,14 @@ const std::vector<TimeWindow*>* NodeTimeWindowStoreBuffer::get_or_create_drop(
   return &new_it->second;
 }
 
-const std::vector<TimeWindow*>* NodeTimeWindowStoreBuffer::get_or_create_other(
+const std::vector<TimeWindow>* NodeTimeWindowStoreBuffer::get_or_create_other(
     const NodeTimeWindowKey& node_tw_key, const PlanDatetimeRange* plan_datetime_range) {
   const auto it = this->other.find(node_tw_key);
   if (it != this->other.end()) {
     return &it->second;
   }
-  std::vector<TimeWindow*> tws;
-  tws.push_back(new TimeWindow(plan_datetime_range->start_time, plan_datetime_range->end_time));
+  std::vector<TimeWindow> tws{
+      TimeWindow(plan_datetime_range->start_time, plan_datetime_range->end_time)};
   const auto [new_it, _] = this->other.emplace(node_tw_key, std::move(tws));
   return &new_it->second;
 }
@@ -90,31 +67,7 @@ NodeTimeWindowCache::NodeTimeWindowCache(const PlanDatetimeRange* plan_datetime_
   this->drop.reserve(CacheParameter::PICK_DROP_RESERVED_ENTRY_COUNT);
 }
 
-NodeTimeWindowCache::~NodeTimeWindowCache() {
-  // release pick cache
-  for (auto& val : this->pick | std::views::values) {
-    for (const auto tw : val) {
-      delete tw;
-    }
-  }
-  this->pick.clear();
-  // release drop cache
-  for (auto& val : this->drop | std::views::values) {
-    for (const auto tw : val) {
-      delete tw;
-    }
-  }
-  this->drop.clear();
-
-  for (auto& val : this->other | std::views::values) {
-    for (const auto tw : val) {
-      delete tw;
-    }
-  }
-  this->other.clear();
-}
-
-const std::vector<TimeWindow*>* NodeTimeWindowCache::find_pick(
+const std::vector<TimeWindow>* NodeTimeWindowCache::find_pick(
     const Node* node, std::vector<const Order*>& scratch) const {
   node->get_orders(scratch);
   const NodeTimeWindowKey key(node->activity_type, node->loc, scratch);
@@ -125,7 +78,7 @@ const std::vector<TimeWindow*>* NodeTimeWindowCache::find_pick(
   return &it->second;
 }
 
-const std::vector<TimeWindow*>* NodeTimeWindowCache::find_drop(
+const std::vector<TimeWindow>* NodeTimeWindowCache::find_drop(
     const Node* node, std::vector<const Order*>& scratch) const {
   node->get_orders(scratch);
   const NodeTimeWindowKey key(node->activity_type, node->loc, scratch);
@@ -136,7 +89,7 @@ const std::vector<TimeWindow*>* NodeTimeWindowCache::find_drop(
   return &it->second;
 }
 
-const std::vector<TimeWindow*>* NodeTimeWindowCache::find_other(const Node* node) const {
+const std::vector<TimeWindow>* NodeTimeWindowCache::find_other(const Node* node) const {
   const NodeTimeWindowKey key(node->activity_type, node->loc);
   const auto it = this->other.find(key);
   if (it == this->other.end()) {
@@ -145,7 +98,7 @@ const std::vector<TimeWindow*>* NodeTimeWindowCache::find_other(const Node* node
   return &it->second;
 }
 
-const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_pick(
+const std::vector<TimeWindow>* NodeTimeWindowCache::get_or_create_pick(
     const Node* node, const NodeTimeWindowKey& node_time_window_key) {
   if (this->is_parallel()) {
     throw std::logic_error(
@@ -161,7 +114,7 @@ const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_pick(
   return &new_it->second;
 }
 
-const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_drop(
+const std::vector<TimeWindow>* NodeTimeWindowCache::get_or_create_drop(
     const Node* node, const NodeTimeWindowKey& node_time_window_key) {
   if (this->is_parallel()) {
     throw std::logic_error(
@@ -177,7 +130,7 @@ const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_drop(
   return &new_it->second;
 }
 
-const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_other(
+const std::vector<TimeWindow>* NodeTimeWindowCache::get_or_create_other(
     const NodeTimeWindowKey& node_tw_key) {
   if (this->is_parallel()) {
     throw std::logic_error(
@@ -187,9 +140,8 @@ const std::vector<TimeWindow*>* NodeTimeWindowCache::get_or_create_other(
   if (it != this->other.end()) {
     return &it->second;
   }
-  std::vector<TimeWindow*> tws;
-  tws.push_back(
-      new TimeWindow(this->plan_datetime_range->start_time, this->plan_datetime_range->end_time));
+  std::vector<TimeWindow> tws{
+      TimeWindow(this->plan_datetime_range->start_time, this->plan_datetime_range->end_time)};
   const auto [new_it, _] = this->other.emplace(node_tw_key, std::move(tws));
   return &new_it->second;
 }
@@ -200,40 +152,31 @@ void NodeTimeWindowCache::archive(NodeTimeWindowStoreBuffer* node_tw_store_buffe
   }
   for (auto& [key, tws] : node_tw_store_buffer->pick) {
     if (this->pick.contains(key)) {
-      // 重复键: 冻结表已持有等价条目,写缓冲这一份必须显式释放
-      for (const auto tw : tws) {
-        delete tw;
-      }
+      // 重复键: 冻结表已持有等价条目, 值语义下直接丢弃写缓冲这一份
       continue;
     }
     this->pick.emplace(key, std::move(tws));
   }
   for (auto& [key, tws] : node_tw_store_buffer->drop) {
     if (this->drop.contains(key)) {
-      // 重复键: 冻结表已持有等价条目,写缓冲这一份必须显式释放
-      for (const auto tw : tws) {
-        delete tw;
-      }
+      // 重复键: 冻结表已持有等价条目, 值语义下直接丢弃写缓冲这一份
       continue;
     }
     this->drop.emplace(key, std::move(tws));
   }
   for (auto& [key, tws] : node_tw_store_buffer->other) {
     if (this->other.contains(key)) {
-      for (const auto tw : tws) {
-        delete tw;
-      }
       continue;
     }
     this->other.emplace(key, std::move(tws));
   }
-  // 条目所有权已转移完毕, 只清容器;写缓冲可继续复用
+  // 条目已转移完毕, 只清容器;写缓冲可继续复用
   node_tw_store_buffer->pick.clear();
   node_tw_store_buffer->drop.clear();
   node_tw_store_buffer->other.clear();
 }
 
-const std::vector<TimeWindow*>& NodeTimeWindowCache::lookup(
+const std::vector<TimeWindow>& NodeTimeWindowCache::lookup(
     NodeTimeWindowStoreBuffer* node_tw_store_buffer, const Node* node) {
   const bool exist_store_buffer = node_tw_store_buffer != nullptr;
 

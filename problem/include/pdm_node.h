@@ -36,7 +36,7 @@ class Node {
   /**
    * @brief plan time windows of the node
    */
-  TimeWindowPlan::VecUPtr ptws;
+  std::vector<TimeWindowPlan> ptws;
   /**
    * @brief first activity in the node
    */
@@ -66,9 +66,9 @@ class Node {
 
   Node(ActivityType activity_type, const Location* loc, Activity::UPtr activity);
 
-  void set_travel_dist(std::int64_t travel_dist);
+  void set_travel_dist(std::int64_t _travel_dist);
 
-  void set_travel_time(std::int64_t travel_time);
+  void set_travel_time(std::int64_t _travel_time);
 
   [[nodiscard]] bool hase_next() const { return this->next != nullptr; }
 
@@ -88,7 +88,7 @@ class Node {
    */
   bool remove_activity(Activity* activity);
 
-  [[nodiscard]] std::vector<TimeWindow*> intersection_time_windows() const;
+  [[nodiscard]] std::vector<TimeWindow> intersection_time_windows() const;
 
   /**
    * @brief 收集节点上的订单

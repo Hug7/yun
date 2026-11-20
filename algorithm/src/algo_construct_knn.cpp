@@ -36,7 +36,7 @@ int select_seed_order_ind(std::unordered_set<int>& unassigned_order_indices, Sol
     if (order->drop_time_windows.empty()) {
       continue;
     }
-    const std::int64_t latest_drop_time = order->drop_time_windows.back()->late;
+    const std::int64_t latest_drop_time = order->drop_time_windows.back().late;
 
     if (latest_drop_time < seed_minimum_latest_drop_time) {
       seed_minimum_latest_drop_time = latest_drop_time;

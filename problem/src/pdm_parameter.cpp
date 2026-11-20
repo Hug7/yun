@@ -44,8 +44,8 @@ void PlanDatetimeRange::set_end_datetime(const std::string& end_datetime) {
   this->end_time = TimeParse::parse_tm_to_sec(end_datetime, TimeParse::fmt_yyyymmddhhmm_1);
 }
 
-TimeWindow* PlanDatetimeRange::create_default_time_window() const {
-  return new TimeWindow(this->start_time, this->end_time);
+TimeWindow PlanDatetimeRange::create_default_time_window() const {
+  return {this->start_time, this->end_time};
 }
 
 // ====== implement of CargoOrderGroupRule ======

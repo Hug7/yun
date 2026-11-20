@@ -5,12 +5,32 @@
 
 #include "pdm_order.h"
 
+#include <format>
 #include <memory>
+#include <stdexcept>
+#include <utility>
 
 #include "bdm_available_vehicle.h"
 #include "bdm_time_window.h"
 #include "bdm_time_window_utils.h"
 #include "c_constant.h"
+
+namespace {
+/**
+ * @brief 用单个时间窗裁剪一组时间窗
+ */
+std::vector<TimeWindow> intersect_windows(const std::vector<TimeWindow>& base,
+                                          const TimeWindow& tw) {
+  std::vector<TimeWindow> res;
+  res.reserve(base.size());
+  for (const auto& cur_tw : base) {
+    if (const auto hit = TimeWindowUntils::intersection(cur_tw, tw); hit.has_value()) {
+      res.push_back(hit.value());
+    }
+  }
+  return res;
+}
+}  // namespace
 
 // ====== implement of Order ======
 Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
@@ -26,59 +46,36 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
   this->drop_time_windows.push_back(plan_datetime_range->create_default_time_window());
 
   for (const auto cargo_order : cargo_orders) {
-    // process order pick time window
-    std::vector<TimeWindow*> tmp_pick_time_windows;
-    TimeWindow* cur_pick_tw = cargo_order->pick_time_window;
-    for (auto& ptw : this->pick_time_windows) {
-      TimeWindow* tw = TimeWindowUntils::intersection(cur_pick_tw, ptw);
-      if (tw != nullptr) {
-        tmp_pick_time_windows.push_back(tw);
-      }
+    // 时间窗缺失属于数据错误, 在此显式报错而不是解引用空指针
+    if (!cargo_order->pick_time_window.has_value() || !cargo_order->drop_time_window.has_value()) {
+      throw std::runtime_error(
+          std::format("CargoOrder {} 缺少提货或卸货时间窗", cargo_order->code));
     }
-    for (auto& tw : this->pick_time_windows) {
-      delete tw;
-    }
-    this->pick_time_windows = tmp_pick_time_windows;
-    // process order drop time window
-    std::vector<TimeWindow*> tmp_drop_time_windows;
-    TimeWindow* cur_drop_tw = cargo_order->drop_time_window;
-    for (auto& dtw : this->drop_time_windows) {
-      TimeWindow* tw = TimeWindowUntils::intersection(cur_drop_tw, dtw);
-      if (tw != nullptr) {
-        tmp_drop_time_windows.push_back(tw);
-      }
-    }
-    for (auto& tw : this->drop_time_windows) {
-      delete tw;
-    }
-    this->drop_time_windows = tmp_drop_time_windows;
+    this->pick_time_windows =
+        intersect_windows(this->pick_time_windows, cargo_order->pick_time_window.value());
+    this->drop_time_windows =
+        intersect_windows(this->drop_time_windows, cargo_order->drop_time_window.value());
   }
-  this->pick_time_windows_len = static_cast<int>(this->pick_time_windows.size());
-  this->drop_time_windows_len = static_cast<int>(this->drop_time_windows.size());
   // intersection pick and drop time windows for location calendar
-  Calendar* pick_calendar = this->pick_loc->work_plan->pick_calendar;
+  const Calendar* pick_calendar = this->pick_loc->work_plan->pick_calendar;
   if (pick_calendar != nullptr) {
-    std::vector<TimeWindow*> res_pick_time_windows;
-    for (auto& tw : this->pick_time_windows) {
-      std::vector<TimeWindow*> extend_tws = pick_calendar->intersection(tw);
+    std::vector<TimeWindow> res_pick_time_windows;
+    for (const auto& tw : this->pick_time_windows) {
+      const std::vector<TimeWindow> extend_tws = pick_calendar->intersection(tw);
       res_pick_time_windows.insert(res_pick_time_windows.end(), extend_tws.begin(),
                                    extend_tws.end());
-      delete tw;
     }
     this->pick_time_windows = TimeWindowUntils::merge_time_windows(res_pick_time_windows);
-    this->pick_time_windows_len = static_cast<int>(this->pick_time_windows.size());
   }
-  Calendar* drop_calendar = this->drop_loc->work_plan->drop_calendar;
+  const Calendar* drop_calendar = this->drop_loc->work_plan->drop_calendar;
   if (drop_calendar != nullptr) {
-    std::vector<TimeWindow*> res_drop_time_windows;
-    for (auto& tw : this->drop_time_windows) {
-      std::vector<TimeWindow*> extend_tws = drop_calendar->intersection(tw);
+    std::vector<TimeWindow> res_drop_time_windows;
+    for (const auto& tw : this->drop_time_windows) {
+      const std::vector<TimeWindow> extend_tws = drop_calendar->intersection(tw);
       res_drop_time_windows.insert(res_drop_time_windows.end(), extend_tws.begin(),
                                    extend_tws.end());
-      delete tw;
     }
     this->drop_time_windows = TimeWindowUntils::merge_time_windows(res_drop_time_windows);
-    this->drop_time_windows_len = static_cast<int>(this->drop_time_windows.size());
   }
 
   // accumulate sub cargo order
@@ -119,13 +116,7 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
 
 Order::~Order() {
   this->cargo_orders.clear();
-  for (const auto& tw : this->pick_time_windows) {
-    delete tw;
-  }
   this->pick_time_windows.clear();
-  for (const auto& tw : this->drop_time_windows) {
-    delete tw;
-  }
   this->drop_time_windows.clear();
   delete this->labelset_value;
 }

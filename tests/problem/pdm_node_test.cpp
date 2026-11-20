@@ -52,8 +52,8 @@ Node::UPtr BuildChain() {
   drop_node->add_back_activity(std::move(pair_a.second));
   drop_node->add_back_activity(std::move(pair_b.second));
 
-  pick_node->ptws.push_back(std::make_unique<TimeWindowPlan>(1, 2, 3, 4, 5, 6));
-  pick_node->ptws.push_back(std::make_unique<TimeWindowPlan>(7, 8, 9, 10, 11, 12));
+  pick_node->ptws.emplace_back(1, 2, 3, 4, 5, 6);
+  pick_node->ptws.emplace_back(7, 8, 9, 10, 11, 12);
   pick_node->set_travel_dist(100);
   pick_node->set_travel_time(60);
   drop_node->set_travel_dist(200);
@@ -174,16 +174,15 @@ TEST(NodeOpsDeepCopyChain, ClonesNodesAndActivityChains) {
     EXPECT_EQ(copy_node->prev, copy_prev);
     EXPECT_NE(copy_node, src_node);
 
-    // ptws 逐个深拷贝
+    // ptws 值语义拷贝
     ASSERT_EQ(copy_node->ptws.size(), src_node->ptws.size());
     for (size_t u = 0; u < copy_node->ptws.size(); ++u) {
-      EXPECT_NE(copy_node->ptws[u].get(), src_node->ptws[u].get());
-      EXPECT_EQ(copy_node->ptws[u]->early_arr, src_node->ptws[u]->early_arr);
-      EXPECT_EQ(copy_node->ptws[u]->late_arr, src_node->ptws[u]->late_arr);
-      EXPECT_EQ(copy_node->ptws[u]->early_depart, src_node->ptws[u]->early_depart);
-      EXPECT_EQ(copy_node->ptws[u]->late_depart, src_node->ptws[u]->late_depart);
-      EXPECT_EQ(copy_node->ptws[u]->wait_time, src_node->ptws[u]->wait_time);
-      EXPECT_EQ(copy_node->ptws[u]->over_time, src_node->ptws[u]->over_time);
+      EXPECT_EQ(copy_node->ptws[u].early_arr, src_node->ptws[u].early_arr);
+      EXPECT_EQ(copy_node->ptws[u].late_arr, src_node->ptws[u].late_arr);
+      EXPECT_EQ(copy_node->ptws[u].early_depart, src_node->ptws[u].early_depart);
+      EXPECT_EQ(copy_node->ptws[u].late_depart, src_node->ptws[u].late_depart);
+      EXPECT_EQ(copy_node->ptws[u].wait_time, src_node->ptws[u].wait_time);
+      EXPECT_EQ(copy_node->ptws[u].over_time, src_node->ptws[u].over_time);
     }
 
     // activity 子链: 数量、顺序、prev/last 一致, 对象本身是新的

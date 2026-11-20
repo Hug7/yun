@@ -46,7 +46,7 @@ class PlanDatetimeRange {
    * @brief 创建默认的时间窗口
    * @details 根据计划时间范围创建一个时间窗口
    */
-  [[nodiscard]] TimeWindow* create_default_time_window() const;
+  [[nodiscard]] TimeWindow create_default_time_window() const;
 };
 
 /**

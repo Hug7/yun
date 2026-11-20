@@ -177,22 +177,22 @@ void Load::update_node_dist_time() const {
   }
 }
 
-void Load::update_start_node_dist_time() {
+void Load::update_start_node_dist_time() const {
   const DistMatrix* dist_matrix = this->vehicle->get_dist_matrix();
-  auto dist_time =
+  auto [_dist, _time] =
       dist_matrix->get_dist_time(this->first_node->loc->ind, this->first_node->next->loc->ind);
-  this->first_node->next->travel_dist = dist_time.dist;
-  this->first_node->next->travel_time = dist_time.time;
+  this->first_node->next->travel_dist = _dist;
+  this->first_node->next->travel_time = _time;
 
   // todo updata time window
 }
 
 void Load::update_end_node_dist_time() const {
   const DistMatrix* dist_matrix = this->vehicle->get_dist_matrix();
-  auto dist_time =
+  auto [_dist, _time] =
       dist_matrix->get_dist_time(this->last_node->prev->loc->ind, this->last_node->loc->ind);
-  this->last_node->travel_dist = dist_time.dist;
-  this->last_node->travel_time = dist_time.time;
+  this->last_node->travel_dist = _dist;
+  this->last_node->travel_time = _time;
 
   // todo updata time window
 }
@@ -206,7 +206,7 @@ void Load::update_time_window() const {
   Node* head_node = pre_node->next.get();
   while (head_node != nullptr) {
     // 冻结表 →写缓冲→ 重算并写入写缓冲; 返回的引用在本次推导内有效
-    const std::vector<TimeWindow*>& cur_tws =
+    const std::vector<TimeWindow>& cur_tws =
         tw_cache->lookup(this->get_node_tw_store_buffer(), head_node);
     const std::int64_t work_time = head_node->get_work_time();
     head_node->ptws =
@@ -238,43 +238,44 @@ std::vector<Node*> Load::unfold_node_linked() const {
   return reverse_nodes;
 }
 
-TimeWindowPlan::VecUPtr Load::infer_time_window_plans() const {
+std::vector<TimeWindowPlan> Load::infer_time_window_plans() const {
   const std::vector<Node*>& nodes = this->unfold_node_linked();
   // 推导时间窗-反向推导(非最优且不能兼容限制时间窗)
   const int node_len = static_cast<int>(nodes.size());
-  TimeWindowPlan::VecUPtr time_window_plans;
-  time_window_plans.push_back(nodes[node_len - 1]->ptws[0]->deep_copy());
+  std::vector<TimeWindowPlan> time_window_plans;
+  time_window_plans.push_back(nodes[node_len - 1]->ptws[0]);
   int pre_ptw_ind = 0;
   auto pre_node = nodes[node_len - 1];
   for (int nu = node_len - 2; nu >= 0; --nu) {
     const auto cur_node = nodes[nu];
-    auto cur_time_window_plan = std::make_unique<TimeWindowPlan>();
-    cur_time_window_plan->early_depart =
-        time_window_plans[pre_ptw_ind]->early_arr - pre_node->travel_time;
-    cur_time_window_plan->late_depart =
-        time_window_plans[pre_ptw_ind]->late_arr - pre_node->travel_time;
-    std::int64_t cur_early_arr = cur_time_window_plan->early_depart - cur_node->get_work_time();
-    std::int64_t cur_late_arr = cur_time_window_plan->late_depart - cur_node->get_work_time();
+    TimeWindowPlan cur_time_window_plan;
+    cur_time_window_plan.early_depart =
+        time_window_plans[pre_ptw_ind].early_arr - pre_node->travel_time;
+    cur_time_window_plan.late_depart =
+        time_window_plans[pre_ptw_ind].late_arr - pre_node->travel_time;
+    const std::int64_t cur_early_arr =
+        cur_time_window_plan.early_depart - cur_node->get_work_time();
+    const std::int64_t cur_late_arr = cur_time_window_plan.late_depart - cur_node->get_work_time();
     for (const auto& twp : cur_node->ptws) {
-      if (twp->wait_time > 0) {
-        cur_time_window_plan->early_arr = cur_early_arr - twp->wait_time;
-        cur_time_window_plan->late_arr = cur_late_arr - twp->wait_time;
-        cur_time_window_plan->wait_time = twp->wait_time;
+      if (twp.wait_time > 0) {
+        cur_time_window_plan.early_arr = cur_early_arr - twp.wait_time;
+        cur_time_window_plan.late_arr = cur_late_arr - twp.wait_time;
+        cur_time_window_plan.wait_time = twp.wait_time;
         break;
-      } else if (twp->over_time > 0) {
-        cur_time_window_plan->early_arr = cur_early_arr;
-        cur_time_window_plan->late_arr = cur_late_arr;
-        cur_time_window_plan->over_time = twp->over_time;
+      } else if (twp.over_time > 0) {
+        cur_time_window_plan.early_arr = cur_early_arr;
+        cur_time_window_plan.late_arr = cur_late_arr;
+        cur_time_window_plan.over_time = twp.over_time;
         break;
-      } else if (twp->early_arr <= cur_early_arr && twp->late_arr >= cur_late_arr) {
-        cur_time_window_plan->early_arr = cur_early_arr;
-        cur_time_window_plan->late_arr = cur_late_arr;
+      } else if (twp.early_arr <= cur_early_arr && twp.late_arr >= cur_late_arr) {
+        cur_time_window_plan.early_arr = cur_early_arr;
+        cur_time_window_plan.late_arr = cur_late_arr;
         break;
       }
     }
     pre_node = cur_node;
     ++pre_ptw_ind;
-    time_window_plans.push_back(std::move(cur_time_window_plan));
+    time_window_plans.push_back(cur_time_window_plan);
   }
   std::ranges::reverse(time_window_plans);
 

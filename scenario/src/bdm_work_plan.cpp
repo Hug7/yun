@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "bdm_time_window_utils.h"
 #include "c_chrono_util.h"
 #include "c_constant.h"
 
@@ -29,8 +30,7 @@ Calendar::Calendar(CalendarTimeRangeType time_range_type) {
 
 void Calendar::set_one_day_time_ranges(const int day_ind,
                                        std::vector<std::pair<int, int>>& time_ranges) {
-  sort(
-      time_ranges.begin(), time_ranges.end(),
+  std::ranges::sort(time_ranges,
       [](const std::pair<int, int>& a, const std::pair<int, int>& b) { return a.first < b.first; });
 
   if (!time_ranges.empty()) {
@@ -50,60 +50,37 @@ void Calendar::post_process() {
   }
 }
 
-std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
-  std::vector<TimeWindow*> res_time_windows;
-  auto early_dt = chrono_util::from_unix_date(tw->early);
-  auto late_dt = chrono_util::from_unix_date(tw->late);
+std::vector<TimeWindow> Calendar::intersection(const TimeWindow& tw) const {
+  std::vector<TimeWindow> res_time_windows;
+  auto early_dt = chrono_util::from_unix_date(tw.early);
+  const auto late_dt = chrono_util::from_unix_date(tw.late);
   if (this->time_range_type == CalendarTimeRangeType::WEEKLY) {
     while (early_dt <= late_dt) {
-      int day_of_week = chrono_util::day_of_week(early_dt);
-      for (auto& time_range : this->day_time_ranges[day_of_week]) {
+      const int day_of_week = chrono_util::day_of_week(early_dt);
+      for (const auto& time_range : this->day_time_ranges[day_of_week]) {
         std::int64_t cur_early = chrono_util::to_unix(early_dt) + time_range.first;
         std::int64_t cur_late = chrono_util::to_unix(early_dt) + time_range.second;
-        cur_early = std::max(cur_early, tw->early);
-        cur_late = std::min(cur_late, tw->late);
+        cur_early = std::max(cur_early, tw.early);
+        cur_late = std::min(cur_late, tw.late);
+        // 零长度时间段(due to 时间窗边界落在日历边界上)直接丢弃, 与原实现一致
         if (cur_early >= cur_late) {
           continue;
         }
-        if (!res_time_windows.empty()) {
-          auto last_tw = res_time_windows.back();
-          if ((cur_early - last_tw->late) <=
-              TimeWindowParameter::INTERVAL_SECS_CONTINUOUS_TIME_BUCKET) {
-            res_time_windows.pop_back();
-            res_time_windows.push_back(new TimeWindow(last_tw->early, cur_late));
-            delete last_tw;
-          } else {
-            res_time_windows.push_back(new TimeWindow(cur_early, cur_late));
-          }
-        } else {
-          res_time_windows.push_back(new TimeWindow(cur_early, cur_late));
-        }
+        TimeWindowUntils::append_merged(res_time_windows, cur_early, cur_late);
       }
       early_dt = chrono_util::add_days(early_dt, 1);
     }
   } else if (this->time_range_type == CalendarTimeRangeType::DAILY) {
     while (early_dt <= late_dt) {
-      for (auto& time_range : this->day_time_ranges[0]) {
+      for (const auto& time_range : this->day_time_ranges[0]) {
         std::int64_t cur_early = chrono_util::to_unix(early_dt) + time_range.first;
         std::int64_t cur_late = chrono_util::to_unix(early_dt) + time_range.second;
-        cur_early = std::max(cur_early, tw->early);
-        cur_late = std::min(cur_late, tw->late);
+        cur_early = std::max(cur_early, tw.early);
+        cur_late = std::min(cur_late, tw.late);
         if (cur_early >= cur_late) {
           continue;
         }
-        if (!res_time_windows.empty()) {
-          auto last_tw = res_time_windows.back();
-          if ((cur_early - last_tw->late) <=
-              TimeWindowParameter::INTERVAL_SECS_CONTINUOUS_TIME_BUCKET) {
-            res_time_windows.pop_back();
-            res_time_windows.push_back(new TimeWindow(last_tw->early, cur_late));
-            delete last_tw;
-          } else {
-            res_time_windows.push_back(new TimeWindow(cur_early, cur_late));
-          }
-        } else {
-          res_time_windows.push_back(new TimeWindow(cur_early, cur_late));
-        }
+        TimeWindowUntils::append_merged(res_time_windows, cur_early, cur_late);
       }
       early_dt = chrono_util::add_days(early_dt, 1);
     }
@@ -114,7 +91,6 @@ std::vector<TimeWindow*> Calendar::intersection(TimeWindow* tw) {
 
 // ====== implement of WorkEffect ======
 WorkEffect::WorkEffect(const DimensionManager* dim_manager) : dims_len(dim_manager->len) {
-  // this->effect_map
   constexpr int activity_type_count = static_cast<int>(ActivityType::NONE);
 
   this->effect_map = std::vector<std::vector<double>>(
@@ -124,8 +100,8 @@ WorkEffect::WorkEffect(const DimensionManager* dim_manager) : dims_len(dim_manag
 
 void WorkEffect::add(const Dimension* dim, ActivityType activity_type, double quantity) {
   if (quantity > 0) {
-    double factor = std::pow(10.0, WorkPlanParameter::WORK_EFFECT_QUANTITY_PRECISION);
-    double dim_precision = std::pow(10.0, dim->precision);
+    const double factor = std::pow(10.0, WorkPlanParameter::WORK_EFFECT_QUANTITY_PRECISION);
+    const double dim_precision = std::pow(10.0, dim->precision);
     this->effect_map[static_cast<int>(activity_type)][dim->ind] =
         (std::round(quantity * factor) / factor) * dim_precision;
   }
@@ -136,10 +112,10 @@ std::int64_t WorkEffect::get_work_time(ActivityType activity_type,
   std::int64_t work_time = 0;
   auto& dim_effects = this->effect_map[static_cast<int>(activity_type)];
   for (int u = 0; u < this->dims_len; u++) {
-    double unit_process_q = dim_effects[u];
+    const double unit_process_q = dim_effects[u];
     if (unit_process_q > 0) {
       work_time =
-          std::max(work_time, static_cast<std::int64_t>((dim_vals[u] * 3600.0) / unit_process_q));
+          std::max(work_time, static_cast<std::int64_t>(dim_vals[u] * 3600.0 / unit_process_q));
     }
   }
   return work_time;
@@ -162,9 +138,13 @@ WorkPlan::~WorkPlan() {
   delete this->work_effect;
 }
 
-void WorkPlan::set_fixed_drop_time(int fixed_drop_time) { this->fixed_drop_time = fixed_drop_time; }
+void WorkPlan::set_fixed_drop_time(const int _fixed_drop_time) {
+  this->fixed_drop_time = _fixed_drop_time;
+}
 
-void WorkPlan::set_fixed_pick_time(int fixed_pick_time) { this->fixed_pick_time = fixed_pick_time; }
+void WorkPlan::set_fixed_pick_time(const int _fixed_pick_time) {
+  this->fixed_pick_time = _fixed_pick_time;
+}
 
 void WorkPlan::set_calendar(Calendar* calendar, CalendarType calendar_type) {
   if (calendar_type == CalendarType::PICK) {
