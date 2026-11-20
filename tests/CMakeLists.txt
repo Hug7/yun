@@ -20,10 +20,17 @@ target_link_libraries(algo_alns_ruin_worst_removal_test PRIVATE
     yun_algorithm GTest::gtest_main)
 add_test(NAME algo_alns_ruin_worst_removal_test COMMAND algo_alns_ruin_worst_removal_test)
 
-add_executable(stra_alns_config_test solver/stra_alns_config_test.cpp)
-target_link_libraries(stra_alns_config_test PRIVATE
-    yun_solver sol2::sol2 GTest::gtest_main)
-add_test(NAME stra_alns_config_test COMMAND stra_alns_config_test)
+add_executable(algo_ls_knn_prune_test algorithm/algo_ls_knn_prune_test.cpp)
+target_link_libraries(algo_ls_knn_prune_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME algo_ls_knn_prune_test COMMAND algo_ls_knn_prune_test)
+
+add_executable(algo_ls_operator_test algorithm/algo_ls_operator_test.cpp)
+target_link_libraries(algo_ls_operator_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME algo_ls_operator_test COMMAND algo_ls_operator_test)
+
+add_executable(algo_ls_dist_prune_test algorithm/algo_ls_dist_prune_test.cpp)
+target_link_libraries(algo_ls_dist_prune_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME algo_ls_dist_prune_test COMMAND algo_ls_dist_prune_test)
 
 add_executable(stra_construct_config_test solver/stra_construct_config_test.cpp)
 target_link_libraries(stra_construct_config_test PRIVATE

@@ -16,6 +16,7 @@ constexpr char LOG[] = "log";
 constexpr char SNAPSHOT[] = "snapshot";
 constexpr char CONSTRUCT_KNN[] = "construct_knn";
 constexpr char ALNS[] = "alns";
+constexpr char LOCAL_SEARCH[] = "local_search";
 }  // namespace StrategyKey
 
 /**
@@ -61,6 +62,11 @@ class StrategyManager {
    * @param workspace 工作空间
    */
   void register_alns_func(Workspace* workspace);
+  /**
+   * @brief 注册-邻域搜索方法
+   * @param workspace 工作空间
+   */
+  void register_local_search_func(Workspace* workspace);
   /**
    * @brief 加载脚本
    */

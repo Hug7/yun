@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <format>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -48,6 +49,14 @@ class AlnsOperatorLuaField {
   static constexpr const char* REPAIR_OPERATOR_PARAMS = "repair_operator_params";
   static constexpr const char* OPERATOR_CODE = "code";
   static constexpr const char* OPERATOR_PARAMS = "params";
+};
+
+/**
+ * @brief ALNS 内嵌 local search 在 Lua 中的字段集合
+ */
+class AlnsLocalSearchLuaField {
+ public:
+  static constexpr const char* LOCAL_SEARCH = "local_search";
 };
 
 /**
@@ -457,6 +466,31 @@ std::vector<OperatorParam> parse_operator_params(const sol::table& cfg, const ch
   });
   return operator_params;
 }
+
+/**
+ * @brief 解析 alns 的 local search 子表
+ * @return local search 配置; 键缺失 / 解析失败时为空 optional
+ * @details 解析失败只告警并禁用, 不拖垮 alns
+ */
+std::optional<LsStrategyConfig> parse_local_search_config(
+    const sol::table& cfg, const std::shared_ptr<spdlog::logger>& logger) {
+  try {
+    const sol::object local_search_object = cfg[AlnsLocalSearchLuaField::LOCAL_SEARCH];
+    if (!local_search_object.valid() || local_search_object.get_type() == sol::type::lua_nil) {
+      return std::nullopt;
+    }
+    if (local_search_object.get_type() != sol::type::table) {
+      throw std::invalid_argument(std::string("alns: `") + AlnsLocalSearchLuaField::LOCAL_SEARCH +
+                                  "` must be a table");
+    }
+    const sol::table local_search_cfg = local_search_object.as<sol::table>();
+    return parse_local_search_strategy_config(local_search_object, LsParameter{}, logger);
+  } catch (const std::invalid_argument& e) {
+    // 配置非法时禁用内嵌 local search, 保证 alns 本身照常运行
+    logger->warn("alns: local search disabled: {}", e.what());
+    return std::nullopt;
+  }
+}
 }  // namespace
 
 // ====== implement of parse_alns_strategy_config ======
@@ -470,5 +504,7 @@ AlnsStrategyConfig parse_alns_strategy_config(const sol::table& cfg,
       cfg, AlnsOperatorLuaField::RUIN_OPERATOR_PARAMS, parse_ruin_operator_param);
   config.repair_operator_params = parse_operator_params<AlnsRepairOperatorParam>(
       cfg, AlnsOperatorLuaField::REPAIR_OPERATOR_PARAMS, parse_repair_operator_param);
+  // 内嵌 local search 参数, 默认关闭
+  config.local_search = parse_local_search_config(cfg, logger);
   return config;
 }

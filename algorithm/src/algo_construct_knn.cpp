@@ -98,7 +98,8 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
   auto sol = workspace->generate_sol();
 
   // 构造knn关系图(knn graph)
-  auto knn_graph = construct_knn_graph(workspace->order_relationship_graph, sol, parameter.neighbor_count);
+  auto knn_graph =
+      construct_knn_graph(*workspace->order_relationship_graph, sol, parameter.neighbor_count);
   // candidate load indices
   std::unordered_set<int> candidate_load_indices =
       RangeUtils::range_set(static_cast<int>(sol->loads.size()));

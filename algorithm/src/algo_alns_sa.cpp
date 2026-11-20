@@ -104,7 +104,7 @@ AlnsSaAcceptStatusCode AlnsSimulatedAnnealing::cal_accept_status(const Solution*
   }
   // 相对温度 metropolis 准则: P = exp(-delta / (tau * f0))
   const double accept_probability =
-      metropolis_accept_probability(delta, this->obj_scale, this->relative_temperature);
+      metropolis_accept_probability(delta, best_sol->total_obj_val(), this->relative_temperature);
   // if (this->logger != nullptr) {
   //   // 打印正劣化的相对量 r = delta / f0，用于标定 tau_0
   //   this->logger->debug("sa metropolis: delta={:.6f} r={:.6e} tau={:.6e} p={:.6f}", delta,

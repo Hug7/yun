@@ -3,6 +3,26 @@
 记录对外可见的变更；版本号格式与发布流程见
 [docs/versioning.md](docs/versioning.md)。
 
+## [Unreleased]
+
+### Added
+
+- 新增邻域搜索（local search）：独立策略步 `local_search(cfg)`，支持 relocate / or-opt /
+  exchange 三类邻域，且每类都按作用域拆成路线内部（intra-route）与跨路线（inter-route）两个
+  独立算子（`LsIntraRouteRelocate`、`LsInterRouteRelocate`、`LsIntraRouteExchange`、
+  `LsInterRouteExchange`），另有同车 2-opt（`LsTwoOpt`），默认 7 个算子实例；v1 仅支持
+  SPMD 装卸模式。当前为全量搜索：每个 pass 枚举并评估全部候选、只提交本 pass 最优的改进
+  move，不设时间预算、move 数上限或候选上限，直到一整轮没有改进为止。候选在评估前有两层
+  剪枝：订单 K 近邻图剪枝（新建相邻停车点对至少一对是 K 近邻边才保留）与里程增量剪枝
+  （move 生效后受影响车次里程增加即丢弃，阈值为 0），日志新增 `pruned`、`dist_pruned` 计数。
+  支持 `improvement = "best" | "first"` 选择改进策略（默认 `best`：扫完一轮取最优；`first`：
+  遇到第一个改进候选立即提交），每个 pass 的起点算子按 pass 序号轮转，日志新增
+  `improvement` 字段；新增 `max_evaluated` 评估次数上限（`0` 表示不限，按所有 report 的
+  汇总 `evaluated` 数计量，达到上限时提交本 pass 已找到的最优 move 后以 `max_evaluated`
+  终止）。KNN 剪枝的近邻数可用 `knn_neighbor_count` 配置（默认 10，`0` 表示不做 KNN 剪枝），图由 `LsSearch` 持有：
+  首次搜索时构建一次，ALNS 内嵌搜索整个求解复用，不再每次局部搜索重建。
+- `alns` 支持可选内嵌 local search：`alns { local_search = { ... } }`。
+
 ## [0.3.1] - 2026-11-09
 
 ### Changed

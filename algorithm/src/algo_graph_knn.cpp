@@ -12,7 +12,7 @@
 #include "pdm_load.h"
 #include "pdm_order.h"
 
-KnnGraph construct_knn_graph(const OrderRelationshipGraph::UPtr& order_relationship_graph,
+KnnGraph construct_knn_graph(const OrderRelationshipGraph& order_relationship_graph,
                              const Solution* sol, const int k_neighbor_count) {
   // 拼装所有订单
   std::vector<const Order*> orders;
@@ -30,7 +30,7 @@ KnnGraph construct_knn_graph(const OrderRelationshipGraph::UPtr& order_relations
   KnnGraph knn_graph;
   for (const auto from_order : orders) {
     int from_order_ind = from_order->ind;
-    auto cols = order_relationship_graph->rows[from_order_ind];
+    auto cols = order_relationship_graph.rows[from_order_ind];
     std::vector<OrderRelationshipElement*> elements;
     elements.reserve(k_neighbor_count);
 

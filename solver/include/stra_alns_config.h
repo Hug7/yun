@@ -8,11 +8,13 @@
 #include <spdlog/spdlog.h>
 
 #include <memory>
+#include <optional>
 #include <sol/sol.hpp>
 #include <vector>
 
 #include "algo_alns_operator.h"
 #include "algo_alns_parameter.h"
+#include "stra_ls_config.h"
 
 /**
  * @brief ALNS 策略的结构化配置
@@ -31,6 +33,10 @@ struct AlnsStrategyConfig {
    * @brief repair 算子参数, 为空表示使用算法层的默认 repair 算子
    */
   std::vector<AlnsRepairOperatorParam> repair_operator_params;
+  /**
+   * @brief 内嵌 local search 配置, 为空表示关闭（默认关闭）
+   */
+  std::optional<LsStrategyConfig> local_search;
 };
 
 /**

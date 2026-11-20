@@ -13,6 +13,7 @@
 #include <string>
 #include <variant>
 
+#include "algo_ls.h"
 #include "c_log.h"
 
 namespace {
@@ -177,4 +178,87 @@ TEST_F(StraAlnsConfigTest, NonTableOperatorParamsThrows) {
   const sol::table cfg = this->lua["cfg"];
 
   EXPECT_THROW(parse_alns_strategy_config(cfg, this->logger), std::runtime_error);
+}
+
+TEST_F(StraAlnsConfigTest, MissingLocalSearchConfigLeavesLocalSearchDisabled) {
+  const sol::table cfg = this->lua.create_table();
+
+  const AlnsStrategyConfig config = parse_alns_strategy_config(cfg, this->logger);
+
+  EXPECT_FALSE(config.local_search.has_value());
+}
+
+TEST_F(StraAlnsConfigTest, DisabledLocalSearchConfigEqualsMissing) {
+  this->lua.script(R"(
+    cfg = { local_search = { enabled = false } }
+  )");
+  const sol::table disabled_cfg = this->lua["cfg"];
+  const AlnsStrategyConfig disabled_config = parse_alns_strategy_config(disabled_cfg, this->logger);
+  EXPECT_FALSE(disabled_config.local_search.has_value());
+
+  const sol::table missing_cfg = this->lua.create_table();
+  const AlnsStrategyConfig missing_config = parse_alns_strategy_config(missing_cfg, this->logger);
+  EXPECT_FALSE(missing_config.local_search.has_value());
+}
+
+TEST_F(StraAlnsConfigTest, LocalSearchWithoutEnabledFlagDefaultsToOff) {
+  this->lua.script(R"(
+    cfg = { local_search = { epsilon = 1e-6 } }
+  )");
+  const sol::table cfg = this->lua["cfg"];
+
+  const AlnsStrategyConfig config = parse_alns_strategy_config(cfg, this->logger);
+
+  EXPECT_FALSE(config.local_search.has_value());
+}
+
+TEST_F(StraAlnsConfigTest, EnabledLocalSearchUsesDefaultParameter) {
+  this->lua.script(R"(
+    cfg = { local_search = { enabled = true } }
+  )");
+  const sol::table cfg = this->lua["cfg"];
+
+  const AlnsStrategyConfig config = parse_alns_strategy_config(cfg, this->logger);
+
+  ASSERT_TRUE(config.local_search.has_value());
+  EXPECT_DOUBLE_EQ(config.local_search->parameter.epsilon, LsParameter{}.epsilon);
+  EXPECT_EQ(config.local_search->parameter.improvement, LsImprovement::Best);
+  EXPECT_EQ(config.local_search->parameter.max_evaluated, 0);
+  EXPECT_TRUE(config.local_search->operators.empty());
+}
+
+TEST_F(StraAlnsConfigTest, EnabledLocalSearchOverridesParameter) {
+  this->lua.script(R"(
+    cfg = {
+      local_search = {
+        enabled = true,
+        epsilon = 1e-6,
+        improvement = "first",
+        operators = { { code = "LsTwoOpt", params = { min_span_len = 3 } } },
+      },
+    }
+  )");
+  const sol::table cfg = this->lua["cfg"];
+
+  const AlnsStrategyConfig config = parse_alns_strategy_config(cfg, this->logger);
+
+  ASSERT_TRUE(config.local_search.has_value());
+  EXPECT_DOUBLE_EQ(config.local_search->parameter.epsilon, 1e-6);
+  EXPECT_EQ(config.local_search->parameter.improvement, LsImprovement::First);
+  ASSERT_EQ(config.local_search->operators.size(), 1U);
+  ASSERT_TRUE(std::holds_alternative<LsTwoOptParam>(config.local_search->operators[0]));
+  const auto& two_opt = std::get<LsTwoOptParam>(config.local_search->operators[0]);
+  EXPECT_EQ(two_opt.min_span_len, 3);
+}
+
+TEST_F(StraAlnsConfigTest, InvalidLocalSearchConfigIsDisabledWithoutThrowing) {
+  this->lua.script(R"(
+    cfg = { local_search = { enabled = true, operators = { { code = "LsNotExist" } } } }
+  )");
+  const sol::table cfg = this->lua["cfg"];
+
+  EXPECT_NO_THROW({
+    const AlnsStrategyConfig config = parse_alns_strategy_config(cfg, this->logger);
+    EXPECT_FALSE(config.local_search.has_value());
+  });
 }

@@ -50,5 +50,5 @@ class AlnsSolutionManager {
    * @brief 使用 tmp_sol 更新 cur_sol 和 best_sol
    * @return solution 的接受状态码
    */
-  [[nodiscard]] AlnsSaAcceptStatusCode update_sol();
+  AlnsSaAcceptStatusCode update_sol();
 };

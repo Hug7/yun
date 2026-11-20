@@ -25,6 +25,5 @@ using KnnGraph = std::unordered_map<int, std::unordered_map<int, int>>;
  * @param k_neighbor_count 近邻数
  * @return K 近邻图，键与值均为订单索引
  */
-[[nodiscard]] KnnGraph construct_knn_graph(
-    const OrderRelationshipGraph::UPtr& order_relationship_graph, const Solution* sol,
-    int k_neighbor_count);
+[[nodiscard]] KnnGraph construct_knn_graph(const OrderRelationshipGraph& order_relationship_graph,
+                                           const Solution* sol, int k_neighbor_count);

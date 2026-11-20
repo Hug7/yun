@@ -8,14 +8,18 @@
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
+#include <memory>
 #include <stdexcept>
+#include <utility>
 
 #include "algo_alns_model.h"
 #include "algo_alns_operator.h"
 #include "algo_construct.h"
+#include "algo_ls.h"
 #include "pdm_func_timing.h"
 #include "stra_alns_config.h"
 #include "stra_construct_config.h"
+#include "stra_ls_config.h"
 #include "visual_manager.h"
 
 // ====== implement of StrategyManager::Private ======
@@ -83,15 +87,38 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
     const auto operator_manager =
         create_alns_operator(alns_config.ruin_operator_params, alns_config.repair_operator_params,
                              alns_config.parameter.get(), workspace->context, parallel_executor);
-    // 构建alns model
-    const auto alns_model =
-        std::make_unique<AlnsModel>(workspace, alns_config.parameter.get(), operator_manager.get());
+    // 构建alns model, 内嵌 local search 配置默认为空(关闭)
+    const auto alns_model = std::make_unique<AlnsModel>(
+        workspace, alns_config.parameter.get(), operator_manager.get(), alns_config.local_search);
     // 求解
     Solution* res_sol = alns_model->solve();
     // 将结果 res_sol 替换
     workspace->move_solution(res_sol);
     // 归档alns函数计时
     workspace->add_func_timing(std::move(alns_func_timing));
+  });
+}
+
+void StrategyManager::register_local_search_func(Workspace* workspace) {
+  // 注册-邻域搜索: 独立策略步, 在 workspace 当前解上就地做局部搜索
+  this->lua.set_function(StrategyKey::LOCAL_SEARCH, [workspace](const sol::object& cfg) {
+    const auto logger = workspace->context->logger;
+    // 统计local_search函数计时
+    auto local_search_func_timing = std::make_unique<FuncTiming>(StrategyKey::LOCAL_SEARCH);
+    // lua 参数一次性转换成结构化参数, 缺省字段使用 LsParameter 默认值
+    const LsStrategyConfig config = parse_local_search_strategy_config(cfg, LsParameter{}, logger);
+    // 用 workspace 当前解构造待搜索解
+    std::unique_ptr<Solution> sol(workspace->generate_sol());
+    // 搜索成功后才回写 workspace; 抛异常时 sol 由 unique_ptr 回收
+    // KNN 剪枝图由搜索器按 config.parameter.knn_neighbor_count 自行构建
+    const LsReport report =
+        run_local_search(sol.get(), config.parameter, config.operators, workspace->context,
+                         workspace->order_relationship_graph.get());
+    // move_solution 接管并释放传入的 solution
+    workspace->move_solution(sol.release());
+    logger->info("{}", report.format());
+    // 归档local_search函数计时
+    workspace->add_func_timing(std::move(local_search_func_timing));
   });
 }
 
@@ -135,6 +162,8 @@ StrategyManager::StrategyManager(Workspace* workspace) {
   this->register_construct_heuristic_func(workspace);
   // 注册-构造alns
   this->register_alns_func(workspace);
+  // 注册-邻域搜索
+  this->register_local_search_func(workspace);
   // 加载脚本
   this->load_script();
 }

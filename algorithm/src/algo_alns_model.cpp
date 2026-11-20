@@ -5,16 +5,24 @@
 
 #include "algo_alns_model.h"
 
+#include <stdexcept>
+#include <utility>
+
 #include "c_chrono_util.h"
 
 // ====== implement of AlnsModel ======
 AlnsModel::AlnsModel(const Workspace* _workspace, const AlnsParameter* _parameter,
-                     AlnsOperatorManager* operator_manager)
+                     AlnsOperatorManager* operator_manager, std::optional<LsSearchConfig> ls_config)
     : workspace(_workspace),
       parameter(_parameter),
       operator_manager(operator_manager),
       sol_manager(new AlnsSolutionManager(workspace, _parameter)),
-      segment_builder(new SegmentBuilder()) {}
+      segment_builder(new SegmentBuilder()) {
+  if (ls_config.has_value()) {
+    this->ls_search.emplace(this->workspace->context, ls_config->parameter, ls_config->operators,
+                            this->workspace->order_relationship_graph.get());
+  }
+}
 
 AlnsModel::~AlnsModel() {
   delete this->sol_manager;
@@ -29,7 +37,6 @@ Solution* AlnsModel::solve() const {
   int stagnate_iter = 0;                                                // 最优解停滞的迭代次数
   int last_iter = 0;                                                    // 最后一次迭代次数
   const auto start_ts = chrono_util::to_timestamp(chrono_util::now());  // 开始时间戳
-
   for (int iter = 1; iter <= this->parameter->max_iter; ++iter) {
     last_iter = iter;
     // 转动轮盘 max_sub_iter 次
@@ -42,6 +49,17 @@ Solution* AlnsModel::solve() const {
       // 执行 repair 算子
       this->operator_manager->repair_operator(operator_combinations[sub_iter])
           ->call(this->sol_manager->tmp_sol, this->segment_builder);
+      // 可选: 在 repair 之后、SA 判定之前对 tmp_sol 做邻域搜索
+      if (this->ls_search.has_value()) {
+        try {
+          const LsReport report = this->ls_search->run(this->sol_manager->tmp_sol);
+          logger->debug("{}", report.format());
+        } catch (const std::invalid_argument& e) {
+          // 前置条件不满足 / pattern 不支持: 禁用内嵌 local search, 只告警一次
+          logger->warn("local search disabled: {}", e.what());
+          this->ls_search.reset();
+        }
+      }
       // 更新 solution, 使用 sa 判断 tmp_sol 是否被接受
       auto status_code = this->sol_manager->update_sol();
       // 计算算子的分数
@@ -66,7 +84,6 @@ Solution* AlnsModel::solve() const {
           this->parameter->max_running_time_sec, iter);
       break;
     }
-    // TODO 执行 local search
     // 更新 sa 的温度
     this->sol_manager->sa->update_temperature();
     // 更新算子权重
