@@ -110,7 +110,7 @@ std::optional<TimeWindow> TimeWindowUntils::intersection(const TimeWindow& tw_a,
                                                          const TimeWindow& tw_b) {
   const std::int64_t tmp_early = std::max(tw_a.early, tw_b.early);
   const std::int64_t tmp_late = std::min(tw_a.late, tw_b.late);
-  if (tmp_early > tmp_late) {
+  if (tmp_early >= tmp_late) {
     return std::nullopt;
   }
   return TimeWindow(tmp_early, tmp_late);

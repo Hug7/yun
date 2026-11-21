@@ -62,7 +62,7 @@ std::vector<TimeWindow> Calendar::intersection(const TimeWindow& tw) const {
         std::int64_t cur_late = chrono_util::to_unix(early_dt) + time_range.second;
         cur_early = std::max(cur_early, tw.early);
         cur_late = std::min(cur_late, tw.late);
-        // 零长度时间段(due to 时间窗边界落在日历边界上)直接丢弃, 与原实现一致
+        // 零长度时间段(due to 时间窗边界落在日历边界上)直接丢弃
         if (cur_early >= cur_late) {
           continue;
         }

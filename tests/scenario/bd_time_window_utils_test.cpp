@@ -50,6 +50,22 @@ TEST(TimeWindowUntilsIntersection, ReturnsNullWhenDisjoint) {
   EXPECT_FALSE(result.has_value());
 }
 
+TEST(TimeWindowUntilsIntersection, ReturnsNullWhenTouchingAtEndpoint) {
+  const TimeWindow tw_a(100, 200);
+  const TimeWindow tw_b(200, 300);
+
+  const std::optional<TimeWindow> result = TimeWindowUntils::intersection(tw_a, tw_b);
+  EXPECT_FALSE(result.has_value());
+}
+
+TEST(TimeWindowUntilsIntersection, ReturnsNullForZeroLengthWindow) {
+  const TimeWindow point(150, 150);
+  const TimeWindow tw(100, 200);
+
+  const std::optional<TimeWindow> result = TimeWindowUntils::intersection(point, tw);
+  EXPECT_FALSE(result.has_value());
+}
+
 // ===== TimeWindowUntilsIntersectionTwsArr =====
 
 TEST(TimeWindowUntilsIntersectionTwsArr, EmptyArrayReturnsEmpty) {

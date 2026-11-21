@@ -20,8 +20,10 @@
   `improvement` 字段；新增 `max_evaluated` 评估次数上限（`0` 表示不限，按所有 report 的
   汇总 `evaluated` 数计量，达到上限时提交本 pass 已找到的最优 move 后以 `max_evaluated`
   终止）。KNN 剪枝的近邻数可用 `knn_neighbor_count` 配置（默认 10，`0` 表示不做 KNN 剪枝），图由 `LsSearch` 持有：
-  首次搜索时构建一次，ALNS 内嵌搜索整个求解复用，不再每次局部搜索重建。
-- `alns` 支持可选内嵌 local search：`alns { local_search = { ... } }`。
+  首次搜索时构建一次，ALNS 内嵌搜索整个求解复用，不再每次局部搜索重建。 (#10)
+- `alns` 支持可选内嵌 local search：`alns { local_search = { ... } }`。 (#10)
+- imeWindow和TimeWindowPlan从“堆对象 + 裸指针”改成值类型。 (#39)
+- 统一时间窗交集的处理逻辑。(#40)
 
 ## [0.3.1] - 2026-11-09
 
