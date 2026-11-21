@@ -22,7 +22,17 @@
   终止）。KNN 剪枝的近邻数可用 `knn_neighbor_count` 配置（默认 10，`0` 表示不做 KNN 剪枝），图由 `LsSearch` 持有：
   首次搜索时构建一次，ALNS 内嵌搜索整个求解复用，不再每次局部搜索重建。 (#10)
 - `alns` 支持可选内嵌 local search：`alns { local_search = { ... } }`。 (#10)
+
+### Changed
+
+- alns repair 公用插入方法改为 delta insert，用于缓解全量的无效插入动作。 (#31)
+- Problem 职责简化，将 insert 和 check order 功能移出。 (#33)
+- alns 参数改由策略层转换为 POD，算法层脱离 Lua。 (#28)
+- 构造方法 knn 从 solver 层移动到 algorithm 层。 (#27)
 - imeWindow和TimeWindowPlan从“堆对象 + 裸指针”改成值类型。 (#39)
+
+### Fixed
+
 - 统一时间窗交集的处理逻辑。(#40)
 
 ## [0.3.1] - 2026-11-09
