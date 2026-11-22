@@ -96,6 +96,17 @@ class Node {
    */
   void get_orders(std::vector<const Order*>& out) const;
 
+  /**
+   * @brief 收集节点上各订单的时间窗模式 id, 拼接时跳过相邻重复
+   * @details 与 get_orders() 再逐个取模式 id 相比, 本方法只走一遍活动链、不落订单指针;
+   * 相邻重复跳过只为少写一次缓冲, 返回的顺序仍与活动链一致, 不是规范形式,
+   * 调用方需自行排序去重。
+   * @param is_pick true 取提货时间窗模式, false 取卸货时间窗模式
+   * @param out 出参, 由调用方持有以便跨调用复用容量
+   * @throws std::logic_error 订单缺少时间窗模式 id
+   */
+  void get_time_window_pattern_ids(bool is_pick, std::vector<int>& out) const;
+
   [[nodiscard]] std::int64_t get_work_time() const;
 
   [[nodiscard]] int get_activity_count() const;

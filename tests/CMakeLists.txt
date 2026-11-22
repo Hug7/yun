@@ -53,6 +53,10 @@ add_executable(pdm_node_test problem/pdm_node_test.cpp)
 target_link_libraries(pdm_node_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME pdm_node_test COMMAND pdm_node_test)
 
+add_executable(pdm_time_window_cache_test problem/pdm_time_window_cache_test.cpp)
+target_link_libraries(pdm_time_window_cache_test PRIVATE yun_problem GTest::gtest_main)
+add_test(NAME pdm_time_window_cache_test COMMAND pdm_time_window_cache_test)
+
 add_executable(prob_pattern_spmd_test problem/prob_pattern_spmd_test.cpp)
 target_link_libraries(prob_pattern_spmd_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME prob_pattern_spmd_test COMMAND prob_pattern_spmd_test)

@@ -9,6 +9,7 @@
 #include "hc_manager.h"
 #include "pdm_load.h"
 #include "pdm_parameter.h"
+#include "pdm_time_window_pattern.h"
 #include "prob_pattern.h"
 #include "prob_policy.h"
 #include "sc_manager.h"
@@ -27,6 +28,12 @@ class Problem {
   LoadUnloadPolicy* lu_policy;
 
   PickDropPattern* pd_pattern;
+
+  /**
+   * @brief 订单时间窗模式登记表
+   * @details build_orders 与 precheck 等产出 Order 的时间窗落在同一个 pattern id 空间里。
+   */
+  TimeWindowPatternRegistry tw_pattern_registry;
 
   LoadContext* load_context;
 

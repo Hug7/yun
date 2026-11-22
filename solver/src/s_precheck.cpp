@@ -18,17 +18,17 @@
 
 // ====== implement of SolverPrecheck ======
 InfeasibleCargoOrder::UPtr SolverPrecheck::check_cargo_order(CargoOrder* cargo_order) const {
-  const Problem* problem = this->context->problem;
+  Problem* problem = this->context->problem;
 
   // construct order
   auto cargo_orders = std::vector<CargoOrder*>({cargo_order});
-  const std::unique_ptr<Order> order(OrderFactory::creat_tmp_order(
-      cargo_orders, problem->parameter->plan_datetime_range, problem->scenario));
+  const std::unique_ptr<Order> order(
+      OrderFactory::creat_tmp_order(cargo_orders, problem->parameter->plan_datetime_range,
+                                    problem->scenario, &problem->tw_pattern_registry));
   auto orders = std::vector<const Order*>({order.get()});
 
-  // 预检用临时 Order 构造 Load 并求值, 该 Order 在本函数末尾释放。若把其时间窗键(指向临时
-  // Order 的指针)写入共享冻结表, Order 释放后键即悬空 -> 后续 lookup 比较时 use-after-free。
-  // 因此挂一个函数局部的丢弃式写缓冲: 重算只落本缓冲、永不归档, 函数返回即释放, 不污染冻结表。
+  // 预检用临时 Order 构造 Load 并求值, 该 Order 在本函数末尾释放。这里仍挂一个函数局部的
+  // 丢弃式写缓冲, 只为避免把预检产生的一次性条目带进正式求解。
   CacheStoreBuffer precheck_tw_buffer;
 
   auto infeasible_cargo_order = std::make_unique<InfeasibleCargoOrder>(cargo_orders);

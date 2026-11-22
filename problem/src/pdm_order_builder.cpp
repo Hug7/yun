@@ -123,8 +123,9 @@ std::vector<Order*> merge_cargo_orders_to_orders(
     std::vector<CargoOrder*>& cargo_orders,
     const std::unique_ptr<GenerateIndex>& order_generate_index, const SolverContext* context) {
   const int ind = order_generate_index->next();
-  Order* order = OrderFactory::creat_order(
-      cargo_orders, ind, context->parameter->plan_datetime_range, context->scenario);
+  Order* order =
+      OrderFactory::creat_order(cargo_orders, ind, context->parameter->plan_datetime_range,
+                                context->scenario, &context->problem->tw_pattern_registry);
   // todo 需要校验合并后是否有解，无解后要再次对cargo order分组，要尽量减少分组数
   return {order};
 }

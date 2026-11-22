@@ -14,6 +14,7 @@
 #include "bdm_time_window.h"
 #include "bdm_time_window_utils.h"
 #include "c_constant.h"
+#include "pdm_time_window_pattern.h"
 
 namespace {
 /**
@@ -36,7 +37,7 @@ std::vector<TimeWindow> intersect_windows(const std::vector<TimeWindow>& base,
 Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
              std::vector<CargoOrder*>& cargo_orders, std::vector<std::int64_t>& dim_vals,
              LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
-             Bitset::UPtr available_vehicle_bitset)
+             Bitset::UPtr available_vehicle_bitset, TimeWindowPatternRegistry* pattern_registry)
     : ind(ind) {
   this->cargo_orders = cargo_orders;
   this->pick_loc = cargo_orders[0]->pick_loc;
@@ -77,6 +78,10 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
     }
     this->drop_time_windows = TimeWindowUntils::merge_time_windows(res_drop_time_windows);
   }
+
+  // 时间窗已最终确定, 登记模式 id 供节点时间窗缓存构造键; 同一内容的不同订单共享一个 id
+  this->pick_tw_pattern_id = pattern_registry->intern(this->pick_time_windows);
+  this->drop_tw_pattern_id = pattern_registry->intern(this->drop_time_windows);
 
   // accumulate sub cargo order
   // 1. accumulate the dim values
@@ -122,9 +127,10 @@ Order::~Order() {
 }
 
 // ====== implement of OrderFactory ======
-Order* OrderFactory::creat_order(std::vector<CargoOrder*>& cargo_orders, int ind,
+Order* OrderFactory::creat_order(std::vector<CargoOrder*>& cargo_orders, const int ind,
                                  const PlanDatetimeRange* plan_datetime_range,
-                                 const Scenario* scenario) {
+                                 const Scenario* scenario,
+                                 TimeWindowPatternRegistry* pattern_registry) {
   auto dim_vals = scenario->dim_manager->empty_dim_values();
   auto labelset_value = scenario->label_manager->order_labelset->empty_labelset_value();
   auto labelset_value_bitset =
@@ -132,11 +138,13 @@ Order* OrderFactory::creat_order(std::vector<CargoOrder*>& cargo_orders, int ind
   auto available_vehicle_bitset = scenario->carrier_manager->full_vehicle_bitset();
 
   return new Order(plan_datetime_range, ind, cargo_orders, dim_vals, labelset_value,
-                   std::move(labelset_value_bitset), std::move(available_vehicle_bitset));
+                   std::move(labelset_value_bitset), std::move(available_vehicle_bitset),
+                   pattern_registry);
 }
 
 Order* OrderFactory::creat_tmp_order(std::vector<CargoOrder*>& cargo_orders,
                                      const PlanDatetimeRange* plan_datetime_range,
-                                     const Scenario* scenario) {
-  return creat_order(cargo_orders, -1, plan_datetime_range, scenario);
+                                     const Scenario* scenario,
+                                     TimeWindowPatternRegistry* pattern_registry) {
+  return creat_order(cargo_orders, -1, plan_datetime_range, scenario, pattern_registry);
 }

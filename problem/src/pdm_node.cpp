@@ -5,6 +5,7 @@
 
 #include "pdm_node.h"
 
+#include <stdexcept>
 #include <unordered_map>
 
 #include "bdm_time_window.h"
@@ -87,17 +88,24 @@ std::vector<TimeWindow> Node::intersection_time_windows() const {
   if (this->first == nullptr) {
     return {};
   }
+  int pre_tw_pattern_id = -1;
   std::vector<const std::vector<TimeWindow>*> ori_tws_arr;
   if (this->activity_type == ActivityType::PICK) {
     auto tail_activity = this->last;
     while (tail_activity) {
-      ori_tws_arr.push_back(&tail_activity->order->pick_time_windows);
+      if (tail_activity->order->pick_tw_pattern_id != pre_tw_pattern_id) {
+        ori_tws_arr.push_back(&tail_activity->order->pick_time_windows);
+        pre_tw_pattern_id = tail_activity->order->pick_tw_pattern_id;
+      }
       tail_activity = tail_activity->prev;
     }
   } else if (this->activity_type == ActivityType::DROP) {
     auto tail_activity = this->last;
     while (tail_activity) {
-      ori_tws_arr.push_back(&tail_activity->order->drop_time_windows);
+      if (tail_activity->order->drop_tw_pattern_id != pre_tw_pattern_id) {
+        ori_tws_arr.push_back(&tail_activity->order->drop_time_windows);
+        pre_tw_pattern_id = tail_activity->order->drop_tw_pattern_id;
+      }
       tail_activity = tail_activity->prev;
     }
   }
@@ -109,6 +117,23 @@ void Node::get_orders(std::vector<const Order*>& out) const {
   auto tail_activity = this->last;
   while (tail_activity) {
     out.push_back(tail_activity->order);
+    tail_activity = tail_activity->prev;
+  }
+}
+
+void Node::get_time_window_pattern_ids(bool is_pick, std::vector<int>& out) const {
+  out.clear();
+  auto tail_activity = this->last;
+  while (tail_activity) {
+    const int pattern_id = is_pick ? tail_activity->order->pick_tw_pattern_id
+                                   : tail_activity->order->drop_tw_pattern_id;
+    if (pattern_id < 0) {
+      throw std::logic_error("Node: 订单缺少时间窗模式 id");
+    }
+    // 相邻订单常共享同一时间窗模式, 跳过可少写一次缓冲
+    if (out.empty() || out.back() != pattern_id) {
+      out.push_back(pattern_id);
+    }
     tail_activity = tail_activity->prev;
   }
 }
