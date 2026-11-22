@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -43,7 +44,13 @@ class DistMatrix {
    * @brief 距离和耗时数组
    * @details 将二维数组展开为一维数组，方便存储和访问
    */
-  DistTime* arr;
+  std::vector<DistTime> arr_;
+
+  /**
+   * @brief 计算二维下标对应的一维偏移
+   * @details 仅用于内部访问；Debug 构建会校验下标，Release 构建不引入额外分支
+   */
+  [[nodiscard]] std::size_t offset(int from_ind, int to_ind) const noexcept;
 
  public:
   /**
@@ -51,7 +58,7 @@ class DistMatrix {
    */
   const int dist_matrix_ind;
   /**
-   * @brief lenght of the matrix
+   * @brief length of the matrix
    */
   const int matrix_len;
 
@@ -59,13 +66,21 @@ class DistMatrix {
 
   ~DistMatrix();
 
+  DistMatrix(const DistMatrix&) = delete;
+
+  DistMatrix& operator=(const DistMatrix&) = delete;
+
+  DistMatrix(DistMatrix&&) noexcept = default;
+
+  DistMatrix& operator=(DistMatrix&&) = delete;
+
   /**
    * @brief 获取两个位置之间的距离
    * @param from_ind 起始位置索引
    * @param to_ind 结束位置索引
    * @return std::int64_t 两个位置之间的距离
    */
-  std::int64_t get_dist(const int from_ind, const int to_ind) const;
+  [[nodiscard]] std::int64_t get_dist(const int from_ind, const int to_ind) const;
 
   /**
    * @brief 获取两个位置之间的耗时
@@ -73,7 +88,7 @@ class DistMatrix {
    * @param to_ind 结束位置索引
    * @return std::int64_t 两个位置之间的耗时
    */
-  std::int64_t get_time(const int from_ind, const int to_ind) const;
+  [[nodiscard]] std::int64_t get_time(const int from_ind, const int to_ind) const;
 
   /**
    * @brief 获取两个位置之间的距离和耗时
@@ -81,7 +96,7 @@ class DistMatrix {
    * @param to_ind 结束位置索引
    * @return DistTime 两个位置之间的距离和耗时
    */
-  DistTime get_dist_time(const int from_ind, const int to_ind) const;
+  [[nodiscard]] DistTime get_dist_time(const int from_ind, const int to_ind) const;
 
   /**
    * @brief 设置两个位置之间的距离和耗时
@@ -115,15 +130,19 @@ class DistMatrixManager {
   /**
    * @brief 距离矩阵集合
    */
-  std::vector<DistMatrix*> dist_matrixes;
+  std::vector<DistMatrix*> dist_matrices;
 
-  DistMatrixManager(const int matrix_len)
+  explicit DistMatrixManager(const int matrix_len)
       : matrix_len(matrix_len),
         dist_matrix_code_map(),
         generate_index(std::make_unique<GenerateIndex>()),
-        dist_matrixes() {};
+        dist_matrices() {};
 
   ~DistMatrixManager();
+
+  DistMatrixManager(const DistMatrixManager&) = delete;
+
+  DistMatrixManager& operator=(const DistMatrixManager&) = delete;
 
   /**
    * @brief 创建距离矩阵编码

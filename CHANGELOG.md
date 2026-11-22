@@ -37,6 +37,7 @@
   标签占一段连续 word，位图分配从“每标签两个堆块”降为“每个 labelset 一块”。
   `Order::labelset_value_bitset` 保留 `unique_ptr`，用于表达“无标签位图”。相关公开头文件接口
   有变更，消费方需重新构建。 (#43)
+- 优化 DistMatrix 的尺寸与边界。 (#45)
 
 ### Fixed
 
