@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstdint>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -29,8 +30,8 @@ inline void tw_key_canonicalize(std::vector<int>& pattern_ids) {
 /**
  * @brief 键哈希值的唯一计算入口, 持有键与非持有视图必须算出同一个值
  */
-inline int tw_key_hash_code(const int* pattern_ids, int pattern_len) {
-  int hash_code = 1;
+inline std::uint64_t tw_key_hash_code(const int* pattern_ids, int pattern_len) {
+  std::uint64_t hash_code = 1;
   for (int u = 0; u < pattern_len; u++) {
     hash_code = hash_code * 31 + pattern_ids[u];
   }
@@ -55,7 +56,7 @@ class NodeTimeWindowKeyView {
 
   const int pattern_len;
 
-  const int hash_code;
+  const std::uint64_t hash_code;
 
   explicit NodeTimeWindowKeyView(const std::vector<int>& pattern_ids)
       : pattern_ids(pattern_ids.data()),
@@ -79,7 +80,7 @@ class NodeTimeWindowKey {
 
   const int pattern_len;
 
-  const int hash_code;
+  const std::uint64_t hash_code;
 
   /**
    * @brief 构造空键, 用于 other 节点(其值恒定, 整表至多一条)
@@ -119,8 +120,12 @@ namespace std {
 template <>
 struct hash<NodeTimeWindowKey> {
   using is_transparent = void;
-  size_t operator()(const NodeTimeWindowKey& v) const { return std::hash<int>{}(v.hash_code); }
-  size_t operator()(const NodeTimeWindowKeyView& v) const { return std::hash<int>{}(v.hash_code); }
+  size_t operator()(const NodeTimeWindowKey& v) const {
+    return std::hash<std::uint64_t>{}(v.hash_code);
+  }
+  size_t operator()(const NodeTimeWindowKeyView& v) const {
+    return std::hash<std::uint64_t>{}(v.hash_code);
+  }
 };
 
 template <>
