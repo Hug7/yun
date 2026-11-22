@@ -38,7 +38,7 @@ std::vector<VisualLabel> decode_labels(const Labelset* labelset,
     const auto label = labelset->labels[la];
     std::vector<std::string> label_values;
     for (int t = 0; t < label->len; ++t) {
-      if (labelset_value_bitset->bitsets[la]->test(t)) {
+      if (labelset_value_bitset->test(la, t)) {
         label_values.emplace_back(label->values[t]->value);
       }
     }
@@ -60,8 +60,7 @@ std::vector<VisualLabel> decode_orders_labels(const Labelset* labelset,
     std::vector<std::string> label_values;
     for (int t = 0; t < label->len; ++t) {
       for (const auto order : orders) {
-        if (order->labelset_value_bitset != nullptr &&
-            order->labelset_value_bitset->bitsets[la]->test(t)) {
+        if (order->labelset_value_bitset != nullptr && order->labelset_value_bitset->test(la, t)) {
           label_values.emplace_back(label->values[t]->value);
           break;
         }

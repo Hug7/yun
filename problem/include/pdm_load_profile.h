@@ -39,7 +39,7 @@ class LoadRouteProfile {
   /**
    * @brief dirty mark of the profile
    */
-  std::unique_ptr<Bitset> dirty_marks;
+  Bitset dirty_marks;
   /**
    * @brief peak loading value of all dimensions for the load
    */
@@ -52,19 +52,19 @@ class LoadRouteProfile {
   /**
    * @brief bitset of labelset value for the pick location
    */
-  LabelsetValueBitset::UPtr pick_loc_labelset_value_bitset;
+  LabelsetValueBitset pick_loc_labelset_value_bitset;
   /**
    * @brief bitset of labelset value for the drop location
    */
-  LabelsetValueBitset::UPtr drop_loc_labelset_value_bitset;
+  LabelsetValueBitset drop_loc_labelset_value_bitset;
   /**
    * @brief bitset of labelset value for the orders
    */
-  LabelsetValueBitset::UPtr order_labelset_value_bitset;
+  LabelsetValueBitset order_labelset_value_bitset;
   /**
    * @brief bitset of available vehicles
    */
-  Bitset::UPtr available_vehicle_bitset;
+  Bitset available_vehicle_bitset;
 
   int pick_node_count;
 
@@ -80,7 +80,7 @@ class LoadRouteProfile {
 
   bool get_set_dirty_mark(LoadRouteProfileField field);
 
-  bool get_dirty_mark(LoadRouteProfileField field);
+  bool get_dirty_mark(LoadRouteProfileField field) const;
 
   void set_dirty_mark(LoadRouteProfileField field);
 

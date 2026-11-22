@@ -130,20 +130,20 @@ std::int64_t Load::get_total_travel_time() const {
 
 double Load::get_obj_val() const { return this->constr_profile->obj_val; }
 
-Bitset* Load::get_available_vehicle_bitset() const {
+Bitset& Load::get_available_vehicle_bitset() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::AVAILABLE_VEHICLE_BITSET)) {
-    return this->route_profile->available_vehicle_bitset.get();
+    return this->route_profile->available_vehicle_bitset;
   }
   this->route_profile->available_vehicle_bitset =
       this->context->scenario->carrier_manager->full_vehicle_bitset();
   Node* tail_node = this->last_node->prev;
   while (tail_node->hase_prev()) {
-    this->route_profile->available_vehicle_bitset->call_intersection(
+    this->route_profile->available_vehicle_bitset.call_intersection(
         tail_node->loc->available_vehicle->vehicle_bitset);
     tail_node = tail_node->prev;
   }
 
-  return this->route_profile->available_vehicle_bitset.get();
+  return this->route_profile->available_vehicle_bitset;
 }
 
 bool Load::is_infeasible() const { return this->constr_profile->is_infeasible(); }

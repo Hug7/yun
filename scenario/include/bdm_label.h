@@ -58,18 +58,7 @@ class LabelValue {
   LabelValue(std::string value, const int ind) : value(std::move(value)), ind(ind) {};
 };
 
-/**
- * @brief 标签集合值位图类
- */
-class LabelValueBitset : public Bitset {
- public:
-  using UPtr = std::unique_ptr<LabelValueBitset>;
-  using VecUPtr = std::vector<UPtr>;
-
-  LabelValueBitset(const size_t n) : Bitset(n) {};
-
-  explicit LabelValueBitset(const LabelValueBitset::UPtr& other) : Bitset(*other) {}
-};
+class Labelset;
 
 /**
  * @brief 标签类
@@ -114,7 +103,7 @@ class Label : public Item {
    * @param value 标签属性值
    * @return 标签属性值，若不存在则返回nullptr
    */
-  LabelValue* get_label_value(const std::string& value) const;
+  [[nodiscard]] LabelValue* get_label_value(const std::string& value) const;
 };
 
 /**
@@ -148,18 +137,27 @@ class LabelsetValue {
 
 /**
  * @brief 标签集合值位图类
+ * @details 所有标签的位连续存放在同一个 word 数组里（arena），一个 labelset 的位图
+ * 只有一块内存；每个标签的 word 偏移由 Labelset 统一维护。
  */
 class LabelsetValueBitset {
  public:
   using UPtr = std::unique_ptr<LabelsetValueBitset>;
+
+ private:
   /**
-   * @brief 标签集合值位图
+   * @brief 位图布局所属的标签集合
    */
-  LabelValueBitset::VecUPtr bitsets;
+  const Labelset* labelset_;
+  /**
+   * @brief 所有标签的位，按 Labelset 中的标签顺序连续存放
+   */
+  std::vector<uint64_t> words_;
 
-  explicit LabelsetValueBitset(const size_t n) : bitsets(LabelValueBitset::VecUPtr(n)) {};
+ public:
+  explicit LabelsetValueBitset(const Labelset* labelset);
 
-  explicit LabelsetValueBitset(const LabelsetValueBitset::UPtr& other);
+  [[nodiscard]] const Labelset* labelset() const { return this->labelset_; }
 
   /**
    * @brief 添加标签属性值到标签集合值位图
@@ -169,10 +167,30 @@ class LabelsetValueBitset {
   void add_label_value(int label_ind, LabelValue* label_value);
 
   /**
-   * @brief 合并标签集合值位图
-   * @param labelset_value_bitset 标签集合值位图对象指针
+   * @brief 测试某标签的某取值位是否为1
+   * @param label_ind 标签索引
+   * @param value_ind 标签属性值索引
    */
-  void merge(const LabelsetValueBitset::UPtr& labelset_value_bitset);
+  [[nodiscard]] bool test(int label_ind, int value_ind) const;
+
+  /**
+   * @brief 设置某标签的某取值位为1
+   * @param label_ind 标签索引
+   * @param value_ind 标签属性值索引
+   */
+  void set(int label_ind, int value_ind);
+
+  /**
+   * @brief 统计某标签中被置位的取值数量
+   * @param label_ind 标签索引
+   */
+  [[nodiscard]] int sum(int label_ind) const;
+
+  /**
+   * @brief 合并标签集合值位图
+   * @param other 标签集合值位图，布局必须与本位图相同
+   */
+  void merge(const LabelsetValueBitset& other);
 
   /**
    * @brief 重置标签集合值位图
@@ -199,7 +217,39 @@ class Labelset {
    */
   int len;
 
+ private:
+  /**
+   * @brief 每个标签在 arena 中的起始 word 偏移，长度 len + 1，最后一项是总 word 数
+   */
+  mutable std::vector<uint32_t> label_word_offsets_;
+  /**
+   * @brief arena 的总 word 数
+   */
+  mutable size_t words_len_ = 0;
+  /**
+   * @brief 布局是否已经生成
+   */
+  mutable bool layout_built_ = false;
+
+  /**
+   * @brief 按当前的标签和取值数量生成 arena 布局
+   * @details 必须在所有 LabelValue 加载完成后调用；布局生成后不再支持追加 LabelValue
+   */
+  void build_layout() const;
+
+ public:
   explicit Labelset() : labels(), label_ind_map(), len(0) {};
+
+  /**
+   * @brief arena 的总 word 数
+   */
+  [[nodiscard]] size_t labelset_words_len() const;
+
+  /**
+   * @brief 某标签在 arena 中的起始 word 偏移
+   * @param label_ind 标签索引
+   */
+  [[nodiscard]] size_t label_word_offset(int label_ind) const;
 
   ~Labelset();
 

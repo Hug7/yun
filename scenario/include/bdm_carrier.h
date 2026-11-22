@@ -59,7 +59,7 @@ class Carrier : public Item {
    * @param label_ind4labelset index of label in labelset
    * @param label_value label value
    */
-  void update_labelset_value(const int label_ind4labelset, LabelValue* label_value);
+  void update_labelset_value(const int label_ind4labelset, LabelValue* label_value) const;
 };
 
 /**
@@ -136,25 +136,25 @@ class CarrierManager {
 
   /**
    * @brief 创建空的车辆位图
-   * @return 车辆位图指针
+   * @return 车辆位图
    */
-  Bitset::UPtr empty_vehicle_bitset();
+  Bitset empty_vehicle_bitset() const;
 
   /**
    * @brief 创建全为真的车辆位图
-   * @return 全为真的车辆位图指针
+   * @return 全为真的车辆位图
    */
-  Bitset::UPtr full_vehicle_bitset();
+  Bitset full_vehicle_bitset() const;
 
   /**
    * @brief 创建空的可用车辆对象
    * @return 可用车辆对象指针
    */
-  AvailableVehicle* empty_available_vehicle();
+  AvailableVehicle* empty_available_vehicle() const;
 
   /**
    * @brief 创建全为真的可用车辆对象
    * @return 可用车辆对象指针
    */
-  AvailableVehicle* full_available_vehicle();
+  AvailableVehicle* full_available_vehicle() const;
 };

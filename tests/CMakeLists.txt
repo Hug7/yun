@@ -41,6 +41,10 @@ add_executable(bd_time_window_utils_test scenario/bd_time_window_utils_test.cpp)
 target_link_libraries(bd_time_window_utils_test PRIVATE yun_scenario GTest::gtest_main)
 add_test(NAME bd_time_window_utils_test COMMAND bd_time_window_utils_test)
 
+add_executable(bd_bitset_test scenario/bd_bitset_test.cpp)
+target_link_libraries(bd_bitset_test PRIVATE yun_scenario GTest::gtest_main)
+add_test(NAME bd_bitset_test COMMAND bd_bitset_test)
+
 add_executable(c_log_test common/c_log_test.cpp)
 target_link_libraries(c_log_test PRIVATE yun_common GTest::gtest_main)
 add_test(NAME c_log_test COMMAND c_log_test)

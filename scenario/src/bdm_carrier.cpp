@@ -21,7 +21,7 @@ Vehicle* Carrier::get_vehicle(const std::string& vehicle_model_code) {
   return iter->second;
 }
 
-void Carrier::update_labelset_value(const int label_ind4labelset, LabelValue* label_value) {
+void Carrier::update_labelset_value(const int label_ind4labelset, LabelValue* label_value) const {
   this->labelset_value->add_label_value(label_ind4labelset, label_value);
   this->labelset_value_bitset->add_label_value(label_ind4labelset, label_value);
 }
@@ -77,22 +77,20 @@ Vehicle* CarrierManager::create_vehicle(const std::string& carrier_code,
   return vehicle;
 }
 
-Bitset::UPtr CarrierManager::empty_vehicle_bitset() {
-  return std::make_unique<Bitset>(this->vehicle_len);
-}
+Bitset CarrierManager::empty_vehicle_bitset() const { return Bitset(this->vehicle_len); }
 
-Bitset::UPtr CarrierManager::full_vehicle_bitset() {
-  auto bitset = std::make_unique<Bitset>(this->vehicle_len);
-  bitset->set_all();
+Bitset CarrierManager::full_vehicle_bitset() const {
+  Bitset bitset(this->vehicle_len);
+  bitset.set_all();
   return bitset;
 }
 
-AvailableVehicle* CarrierManager::empty_available_vehicle() {
-  std::vector<Vehicle*> cur_vehicles = std::vector<Vehicle*>();
+AvailableVehicle* CarrierManager::empty_available_vehicle() const {
+  const std::vector<Vehicle*> cur_vehicles = std::vector<Vehicle*>();
   return new AvailableVehicle(cur_vehicles, this->empty_vehicle_bitset());
 }
 
-AvailableVehicle* CarrierManager::full_available_vehicle() {
-  std::vector<Vehicle*> cur_vehicles = this->vehicles;
+AvailableVehicle* CarrierManager::full_available_vehicle() const {
+  const std::vector<Vehicle*> cur_vehicles = this->vehicles;
   return new AvailableVehicle(cur_vehicles, this->full_vehicle_bitset());
 }

@@ -37,7 +37,7 @@ std::vector<TimeWindow> intersect_windows(const std::vector<TimeWindow>& base,
 Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
              std::vector<CargoOrder*>& cargo_orders, std::vector<std::int64_t>& dim_vals,
              LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
-             Bitset::UPtr available_vehicle_bitset, TimeWindowPatternRegistry* pattern_registry)
+             Bitset available_vehicle_bitset, TimeWindowPatternRegistry* pattern_registry)
     : ind(ind) {
   this->cargo_orders = cargo_orders;
   this->pick_loc = cargo_orders[0]->pick_loc;
@@ -100,7 +100,9 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
       }
       // accumulate labelset value
       this->labelset_value->merge(sub_order->labelset_value);
-      this->labelset_value_bitset->merge(sub_order->labelset_value_bitset);
+      if (sub_order->labelset_value_bitset != nullptr) {
+        this->labelset_value_bitset->merge(*sub_order->labelset_value_bitset);
+      }
     }
   }
 
@@ -112,9 +114,9 @@ Order::Order(const PlanDatetimeRange* plan_datetime_range, int ind,
 
   // intersection available vehicle bitset
   for (const auto cargo_order : cargo_orders) {
-    this->available_vehicle_bitset->call_intersection(
+    this->available_vehicle_bitset.call_intersection(
         cargo_order->pick_loc->available_vehicle->vehicle_bitset);
-    this->available_vehicle_bitset->call_intersection(
+    this->available_vehicle_bitset.call_intersection(
         cargo_order->drop_loc->available_vehicle->vehicle_bitset);
   }
 }

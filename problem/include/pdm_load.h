@@ -101,7 +101,7 @@ class Load {
 
   [[nodiscard]] double get_obj_val() const;
 
-  [[nodiscard]] Bitset* get_available_vehicle_bitset() const;
+  [[nodiscard]] Bitset& get_available_vehicle_bitset() const;
 
   [[nodiscard]] bool is_infeasible() const;
 

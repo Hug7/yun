@@ -81,10 +81,10 @@ void fill_labels(const LabelManager* label_manager, VisualLoad& visual_load, Loa
     std::vector<std::string> cur_pick_loc_label_values;
     std::vector<std::string> cur_drop_loc_label_values;
     for (int t = 0; t < loc_label->len; ++t) {
-      if (pick_loc_labelset_value_bitset->bitsets[la]->test(t)) {
+      if (pick_loc_labelset_value_bitset->test(la, t)) {
         cur_pick_loc_label_values.emplace_back(loc_label->values[t]->value);
       }
-      if (drop_loc_labelset_value_bitset->bitsets[la]->test(t)) {
+      if (drop_loc_labelset_value_bitset->test(la, t)) {
         cur_drop_loc_label_values.emplace_back(loc_label->values[t]->value);
       }
     }
@@ -98,7 +98,7 @@ void fill_labels(const LabelManager* label_manager, VisualLoad& visual_load, Loa
     const auto order_label = order_labelset->labels[la];
     std::vector<std::string> cur_order_label_values;
     for (int t = 0; t < order_label->len; ++t) {
-      if (order_labelset_value_bitset->bitsets[la]->test(t)) {
+      if (order_labelset_value_bitset->test(la, t)) {
         cur_order_label_values.emplace_back(order_label->values[t]->value);
       }
     }

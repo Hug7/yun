@@ -92,19 +92,19 @@ OrderRelationshipGraph::UPtr build_order_relationship_graph(
       const auto available_vehicle_bitset = BitsetUtils::call_intersection(
           from_order->available_vehicle_bitset, to_order->available_vehicle_bitset);
 
-      if (available_vehicle_bitset->sum() == 0) {
+      if (available_vehicle_bitset.sum() == 0) {
         continue;
       }
       // 构造订单列表
       const auto orders_a_b = std::vector<const Order*>{from_order, to_order};
       const auto orders_b_a = std::vector<const Order*>{to_order, from_order};
       // 遍历车型
-      const size_t bitset_len = available_vehicle_bitset->len();
+      const size_t bitset_len = available_vehicle_bitset.len();
       std::int64_t total_drop_dist = 0;
       std::int64_t total_pick_dist = 0;
       int eval_available_vehicle_count = 0;
       for (size_t v = 0; v < bitset_len; ++v) {
-        if (available_vehicle_bitset->test(v)) {
+        if (available_vehicle_bitset.test(v)) {
           const auto cur_vehicle = carrier_manager->vehicles[v];
           if (!vehicle_resource->has_available(cur_vehicle)) {
             continue;

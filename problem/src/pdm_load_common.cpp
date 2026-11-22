@@ -126,110 +126,110 @@ int Load::get_drop_node_count_md() const {
 LabelsetValueBitset* Load::get_pick_loc_labelset_value_bitset_sp() const {
   if (this->route_profile->get_set_dirty_mark(
           LoadRouteProfileField::PICK_LOC_LABELSET_VALUE_BITSET)) {
-    return this->route_profile->pick_loc_labelset_value_bitset.get();
+    return &this->route_profile->pick_loc_labelset_value_bitset;
   }
-  this->route_profile->pick_loc_labelset_value_bitset->clear_bitsets();
+  this->route_profile->pick_loc_labelset_value_bitset.clear_bitsets();
   Node* head_node = this->first_node->next.get();
   if (head_node->activity_type == ActivityType::PICK) {
-    this->route_profile->pick_loc_labelset_value_bitset->merge(
-        head_node->loc->labelset_value_bitset);
+    this->route_profile->pick_loc_labelset_value_bitset.merge(
+        *head_node->loc->labelset_value_bitset);
   }
-  return this->route_profile->pick_loc_labelset_value_bitset.get();
+  return &this->route_profile->pick_loc_labelset_value_bitset;
 }
 
 LabelsetValueBitset* Load::get_pick_loc_labelset_value_bitset_mp() const {
   if (this->route_profile->get_set_dirty_mark(
           LoadRouteProfileField::PICK_LOC_LABELSET_VALUE_BITSET)) {
-    return this->route_profile->pick_loc_labelset_value_bitset.get();
+    return &this->route_profile->pick_loc_labelset_value_bitset;
   }
-  this->route_profile->pick_loc_labelset_value_bitset->clear_bitsets();
+  this->route_profile->pick_loc_labelset_value_bitset.clear_bitsets();
   Node* head_node = this->first_node->next.get();
   while (head_node->activity_type == ActivityType::PICK) {
-    this->route_profile->pick_loc_labelset_value_bitset->merge(
-        head_node->loc->labelset_value_bitset);
+    this->route_profile->pick_loc_labelset_value_bitset.merge(
+        *head_node->loc->labelset_value_bitset);
     head_node = head_node->next.get();
   }
-  return this->route_profile->pick_loc_labelset_value_bitset.get();
+  return &this->route_profile->pick_loc_labelset_value_bitset;
 }
 
 LabelsetValueBitset* Load::get_drop_loc_labelset_value_bitset_sd() const {
   if (this->route_profile->get_set_dirty_mark(
           LoadRouteProfileField::DROP_LOC_LABELSET_VALUE_BITSET)) {
-    return this->route_profile->drop_loc_labelset_value_bitset.get();
+    return &this->route_profile->drop_loc_labelset_value_bitset;
   }
-  this->route_profile->drop_loc_labelset_value_bitset->clear_bitsets();
+  this->route_profile->drop_loc_labelset_value_bitset.clear_bitsets();
   Node* tail_node = this->last_node->prev;
   if (tail_node->activity_type == ActivityType::DROP) {
-    this->route_profile->drop_loc_labelset_value_bitset->merge(
-        tail_node->loc->labelset_value_bitset);
+    this->route_profile->drop_loc_labelset_value_bitset.merge(
+        *tail_node->loc->labelset_value_bitset);
   }
-  return this->route_profile->drop_loc_labelset_value_bitset.get();
+  return &this->route_profile->drop_loc_labelset_value_bitset;
 }
 
 LabelsetValueBitset* Load::get_drop_loc_labelset_value_bitset_md() const {
   if (this->route_profile->get_set_dirty_mark(
           LoadRouteProfileField::DROP_LOC_LABELSET_VALUE_BITSET)) {
-    return this->route_profile->drop_loc_labelset_value_bitset.get();
+    return &this->route_profile->drop_loc_labelset_value_bitset;
   }
-  this->route_profile->drop_loc_labelset_value_bitset->clear_bitsets();
+  this->route_profile->drop_loc_labelset_value_bitset.clear_bitsets();
   Node* tail_node = this->last_node->prev;
   while (tail_node->activity_type == ActivityType::DROP) {
-    this->route_profile->drop_loc_labelset_value_bitset->merge(
-        tail_node->loc->labelset_value_bitset);
+    this->route_profile->drop_loc_labelset_value_bitset.merge(
+        *tail_node->loc->labelset_value_bitset);
     tail_node = tail_node->prev;
   }
-  return this->route_profile->drop_loc_labelset_value_bitset.get();
+  return &this->route_profile->drop_loc_labelset_value_bitset;
 }
 
 LabelsetValueBitset* Load::get_order_labelset_value_bitset_sp() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::ORDER_LABELSET_VALUE_BITSET)) {
-    return this->route_profile->order_labelset_value_bitset.get();
+    return &this->route_profile->order_labelset_value_bitset;
   }
-  this->route_profile->order_labelset_value_bitset->clear_bitsets();
+  this->route_profile->order_labelset_value_bitset.clear_bitsets();
   Node* head_node = this->first_node->next.get();
   if (head_node->activity_type == ActivityType::PICK) {
     auto tail_activity = head_node->last;
     while (tail_activity != nullptr) {
-      this->route_profile->order_labelset_value_bitset->merge(
-          tail_activity->order->labelset_value_bitset);
+      this->route_profile->order_labelset_value_bitset.merge(
+          *tail_activity->order->labelset_value_bitset);
       tail_activity = tail_activity->prev;
     }
   }
-  return this->route_profile->order_labelset_value_bitset.get();
+  return &this->route_profile->order_labelset_value_bitset;
 }
 
 LabelsetValueBitset* Load::get_order_labelset_value_bitset_sd() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::ORDER_LABELSET_VALUE_BITSET)) {
-    return this->route_profile->order_labelset_value_bitset.get();
+    return &this->route_profile->order_labelset_value_bitset;
   }
-  this->route_profile->order_labelset_value_bitset->clear_bitsets();
+  this->route_profile->order_labelset_value_bitset.clear_bitsets();
   Node* tail_node = this->last_node->prev;
   if (tail_node->activity_type == ActivityType::DROP) {
     auto tail_activity = tail_node->last;
     while (tail_activity != nullptr) {
-      this->route_profile->order_labelset_value_bitset->merge(
-          tail_activity->order->labelset_value_bitset);
+      this->route_profile->order_labelset_value_bitset.merge(
+          *tail_activity->order->labelset_value_bitset);
       tail_activity = tail_activity->prev;
     }
     tail_node = tail_node->prev;
   }
-  return this->route_profile->order_labelset_value_bitset.get();
+  return &this->route_profile->order_labelset_value_bitset;
 }
 
 LabelsetValueBitset* Load::get_order_labelset_value_bitset_mp() const {
   if (this->route_profile->get_set_dirty_mark(LoadRouteProfileField::ORDER_LABELSET_VALUE_BITSET)) {
-    return this->route_profile->order_labelset_value_bitset.get();
+    return &this->route_profile->order_labelset_value_bitset;
   }
-  this->route_profile->order_labelset_value_bitset->clear_bitsets();
+  this->route_profile->order_labelset_value_bitset.clear_bitsets();
   Node* head_node = this->first_node->next.get();
   while (head_node->activity_type == ActivityType::PICK) {
     auto tail_activity = head_node->last;
     while (tail_activity != nullptr) {
-      this->route_profile->order_labelset_value_bitset->merge(
-          tail_activity->order->labelset_value_bitset);
+      this->route_profile->order_labelset_value_bitset.merge(
+          *tail_activity->order->labelset_value_bitset);
       tail_activity = tail_activity->prev;
     }
     head_node = head_node->next.get();
   }
-  return this->route_profile->order_labelset_value_bitset.get();
+  return &this->route_profile->order_labelset_value_bitset;
 }

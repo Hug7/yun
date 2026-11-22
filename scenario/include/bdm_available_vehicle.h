@@ -19,9 +19,9 @@ class AvailableVehicle {
   /**
    * @brief 可用车辆集合索引
    */
-  Bitset::UPtr vehicle_bitset;
+  Bitset vehicle_bitset;
 
-  AvailableVehicle(std::vector<Vehicle*>& vehicles, Bitset::UPtr vehicle_bitset)
+  AvailableVehicle(const std::vector<Vehicle*>& vehicles, Bitset vehicle_bitset)
       : vehicles(vehicles), vehicle_bitset(std::move(vehicle_bitset)) {}
 
   ~AvailableVehicle();

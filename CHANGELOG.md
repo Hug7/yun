@@ -30,6 +30,13 @@
 - alns 参数改由策略层转换为 POD，算法层脱离 Lua。 (#28)
 - 构造方法 knn 从 solver 层移动到 algorithm 层。 (#27)
 - imeWindow和TimeWindowPlan从“堆对象 + 裸指针”改成值类型。 (#39)
+- `Bitset` 从“堆对象 + `unique_ptr`”改为带小对象优化（SBO）的值类型：位宽 ≤64 时零堆分配，
+  超过 64 时退化为单块动态数组，无硬上限；移除 `Bitset::UPtr` 及指针接口，`BitsetUtils`
+  改为按值返回。`AvailableVehicle`、`Order::available_vehicle_bitset`、`LoadRouteProfile`
+  的位图字段同步改为值语义；`LabelsetValueBitset` 改为按 labelset 共享的扁平 arena，每个
+  标签占一段连续 word，位图分配从“每标签两个堆块”降为“每个 labelset 一块”。
+  `Order::labelset_value_bitset` 保留 `unique_ptr`，用于表达“无标签位图”。相关公开头文件接口
+  有变更，消费方需重新构建。 (#43)
 
 ### Fixed
 
