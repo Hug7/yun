@@ -62,11 +62,8 @@ void Load::reset_route_profile() const { this->route_profile->reset_dirty_marks(
 void Load::change_vehicle(const Vehicle* _vehicle) {
   // check if the routing network has changed
   // if change, update the distance and time between nodes
-  bool network_change_flag = false;
-  if (this->vehicle != nullptr && this->dist_matrix_code != this->vehicle->get_dist_matrix_code()) {
-    network_change_flag = true;
-  }
   this->vehicle = _vehicle;
+  const bool network_change_flag = this->dist_matrix_code != this->vehicle->get_dist_matrix_code();
   this->dist_matrix_code = this->vehicle->get_dist_matrix_code();
 
   // change start node
@@ -91,12 +88,17 @@ void Load::change_vehicle(const Vehicle* _vehicle) {
     this->route_profile->reset_dirty_mark(LoadRouteProfileField::TIME_WINDOW);
     this->route_profile->reset_dirty_mark(LoadRouteProfileField::NODE_DIST_TIME);
     this->route_profile->reset_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_DIST);
-  } else if (change_start_node_flag) {
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_TIME);
+  } else {
     this->route_profile->reset_dirty_mark(LoadRouteProfileField::TIME_WINDOW);
-    this->update_start_node_dist_time();
-  } else if (change_end_node_flag) {
-    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TIME_WINDOW);
-    this->update_end_node_dist_time();
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_DIST);
+    this->route_profile->reset_dirty_mark(LoadRouteProfileField::TOTAL_TRAVEL_TIME);
+    if (change_start_node_flag) {
+      this->update_start_node_dist_time();
+    }
+    if (change_end_node_flag) {
+      this->update_end_node_dist_time();
+    }
   }
 }
 
