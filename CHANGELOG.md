@@ -22,6 +22,12 @@
   终止）。KNN 剪枝的近邻数可用 `knn_neighbor_count` 配置（默认 10，`0` 表示不做 KNN 剪枝），图由 `LsSearch` 持有：
   首次搜索时构建一次，ALNS 内嵌搜索整个求解复用，不再每次局部搜索重建。 (#10)
 - `alns` 支持可选内嵌 local search：`alns { local_search = { ... } }`。 (#10)
+- 新增两个常规硬约束 `LabelValueExclusive`（标签值互斥）与 `LabelValueCompatible`（标签值可拼），
+  支持 `Order` 标签与 `Location` 标签；Location 可用 `side` 选择 `Pick` / `Drop` / `Both`。
+  互斥按组内两两不可同车判定，不做跨组传递合并；可拼按“不同生效组不可同车”判定，
+  未列出的取值自动归入默认组。约束在构造时预计算每个取值的不可拼位图，判定时与车次
+  标签位图求交；新增不可行原因 1012–1017。参数说明见
+  [docs/parameter_reference.md](docs/parameter_reference.md)。(#47)
 
 ### Changed
 

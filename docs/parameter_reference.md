@@ -108,6 +108,56 @@ hard_constraints:
     params: {max_drop_node_count: 6}
 ```
 
+#### LabelValueExclusive
+
+标签值互斥约束：同一车次不能同时配送指定标签下互斥的标签值。可配置参数：
+
+- `label_code`（必填）：标签编码，必须是 `Order` 或 `Location` 标签集合中已定义的标签。
+- `entity`（必填）：约束作用的实体域，取值为 `Order` 或 `Location`。
+- `groups`（必填）：二维字符串数组，每个子数组是一组互斥的标签值。
+- `side`（可选，仅 `entity: Location`）：站点侧别，取值为 `Pick`、`Drop` 或 `Both`，默认 `Both`。
+  `Pick` 只检查提货侧，`Drop` 只检查卸货侧，`Both` 两侧各检查一次；`entity: Order` 时不允许出现该参数。
+
+`groups` 中同一组内的标签值两两不可同车；不同组之间不做传递合并，只有同时出现在某一组中的
+值对才互斥。例如 `[[A, B, C], [B, D]]` 表示 `A/B/C` 两两不可同车、`B/D` 不可同车，但 `D`
+与 `A`、`C` 可以同车。未出现在任何组中的标签值不受此约束限制。
+
+```yaml
+hard_constraints:
+  - code: LabelValueExclusive
+    params:
+      label_code: temperature
+      entity: Order
+      groups: [[cold, ambient], [ambient, dangerous]]
+```
+
+#### LabelValueCompatible
+
+标签值可拼约束：同一车次只能配送同一组内的标签值，不同组之间不可同车。可配置参数与
+`LabelValueExclusive` 相同（`label_code`、`entity`、`groups`、`side`），但 `groups` 表示“可拼组”：
+
+- 显式组必须两两不相交，同一标签值不能出现在多个显式组中；
+- 同一标签下未出现在任何显式组中的标签值会汇总成一个默认组，默认组内的标签值仍可同车；
+- 若标签的全部取值都已被显式组覆盖，则不会生成默认组。
+
+例如 `[[A, B], [C, D]]` 表示 `A/B` 可同车、`C/D` 可同车，但两组之间不可同车；未列出的
+`E/F` 会进入默认组，可彼此同车，但不能与 `A/B/C/D` 中的任意值同车。
+
+```yaml
+hard_constraints:
+  - code: LabelValueCompatible
+    params:
+      label_code: region
+      entity: Location
+      side: Pick
+      groups: [[north, south], [east, west]]
+```
+
+`entity: Location` 时，约束按 `side` 检查站点标签值集合：`Both` 分别检查提货侧与卸货侧，
+两侧都通过才可行；`Pick` 只检查提货侧；`Drop` 只检查卸货侧；省略 `side` 时默认 `Both`。
+`entity: Order` 时，约束检查车次所有订单的标签值并集，且不支持 `side` 参数。每条约束项只能选择
+`LabelValueExclusive` 或 `LabelValueCompatible` 中的一个编码，即一条约束中互斥与可拼不会同时生效。
+
 ### soft_constraints
 
 可配置的软约束列表，填写指定的约束即代表约束作用于求解。每条约束包含两个字段`code`和`params`，

@@ -7,6 +7,7 @@
 
 #include <array>
 #include <memory>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -158,6 +159,13 @@ class LabelsetValueBitset {
   explicit LabelsetValueBitset(const Labelset* labelset);
 
   [[nodiscard]] const Labelset* labelset() const { return this->labelset_; }
+
+  /**
+   * @brief 获取某标签在 arena 中的位图视图
+   * @param label_ind 标签索引
+   * @return 该标签对应的连续 word 区间，按标签内取值索引从低到高排列
+   */
+  [[nodiscard]] std::span<const uint64_t> label_words(int label_ind) const;
 
   /**
    * @brief 添加标签属性值到标签集合值位图

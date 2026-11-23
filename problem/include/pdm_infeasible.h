@@ -81,4 +81,28 @@ inline const InfeasibleReason TIME_WINDOW{"1010", "HcTimeWindow", "不满足时�
 inline const InfeasibleReason NO_CHARGE_RATE{"1011", "CcCharge", "未匹配到计费费率",
                                              "no charge rate matched"};
 
+inline const InfeasibleReason ORDER_LABEL_VALUE_EXCLUSIVE{
+    "1012", "HcLabelValueExclusive", "车次包含互斥的订单标签值",
+    "the load contains mutually exclusive order label values"};
+
+inline const InfeasibleReason PICK_LOCATION_LABEL_VALUE_EXCLUSIVE{
+    "1013", "HcLabelValueExclusive", "车次包含互斥的提货站点标签值",
+    "the load contains mutually exclusive pick location label values"};
+
+inline const InfeasibleReason DROP_LOCATION_LABEL_VALUE_EXCLUSIVE{
+    "1014", "HcLabelValueExclusive", "车次包含互斥的卸货站点标签值",
+    "the load contains mutually exclusive drop location label values"};
+
+inline const InfeasibleReason ORDER_LABEL_VALUE_COMPATIBLE{
+    "1015", "HcLabelValueCompatible", "车次包含不可拼的订单标签值",
+    "the load contains incompatible order label values"};
+
+inline const InfeasibleReason PICK_LOCATION_LABEL_VALUE_COMPATIBLE{
+    "1016", "HcLabelValueCompatible", "车次包含不可拼的提货站点标签值",
+    "the load contains incompatible location label values"};
+
+inline const InfeasibleReason DROP_LOCATION_LABEL_VALUE_COMPATIBLE{
+    "1017", "HcLabelValueCompatible", "车次包含不可拼的卸货站点标签值",
+    "the load contains incompatible location label values"};
+
 }  // namespace InfeasibleReasonCollection

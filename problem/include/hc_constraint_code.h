@@ -18,4 +18,6 @@ enum class HardConstrCode {
   MaxPickNodeCount,
   MaxDropNodeCount,
   OrderLabelValueMaxCount,
+  LabelValueExclusive,
+  LabelValueCompatible,
 };

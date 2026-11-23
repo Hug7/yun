@@ -147,6 +147,12 @@ LabelsetValueBitset::LabelsetValueBitset(const Labelset* labelset)
   assert(this->labelset_ != nullptr);
 }
 
+std::span<const uint64_t> LabelsetValueBitset::label_words(const int label_ind) const {
+  const size_t begin = this->labelset_->label_word_offset(label_ind);
+  const size_t end = this->labelset_->label_word_offset(label_ind + 1);
+  return std::span<const uint64_t>(this->words_.data() + begin, end - begin);
+}
+
 void LabelsetValueBitset::add_label_value(const int label_ind, LabelValue* label_value) {
   this->set(label_ind, label_value->ind);
 }
@@ -181,9 +187,7 @@ void LabelsetValueBitset::merge(const LabelsetValueBitset& other) {
   }
 }
 
-void LabelsetValueBitset::clear_bitsets() {
-  std::ranges::fill(this->words_, 0);
-}
+void LabelsetValueBitset::clear_bitsets() { std::ranges::fill(this->words_, 0); }
 
 // ====== implement of LabelManager ======
 LabelManager::~LabelManager() {
