@@ -15,10 +15,14 @@
 #include "hc_constraint_code.h"
 #include "hc_load_unload_policy.h"
 #include "hc_vehicle.h"
+#include "pdm_resource.h"
+#include "pdm_segment.h"
 #include "prob_policy.h"
 
 // ====== implement of HardConstraintManager ======
 HardConstraintManager::HardConstraintManager(const Scenario* scenario, const Parameter* parameter) {
+  this->precheck_enabled = parameter->hard_constr_precheck;
+
   // 基础硬约束
   this->add_constr(new HcVehicleCapacity());
   this->add_constr(new HcAvailableVehicle());
@@ -80,6 +84,29 @@ void HardConstraintManager::eval_constrs(Load* load,
     constr_profile->total_hard_penalty += hard_score->get_score();
     constr_profile->hard_constr_scores.push_back(std::move(hard_score));
   }
+}
+
+HcPrecheckVerdict HardConstraintManager::precheck(Load* load, const Segment* segment,
+                                                  const VehicleResource& vehicle_resource) const {
+  // 关闭预检、车次本身不可行时不做任何推断, 交回 eval
+  if (!this->precheck_enabled || load->is_infeasible()) {
+    return HcPrecheckVerdict::kUnknown;
+  }
+
+  const HcPrecheckInput input{
+      .load = load, .segment = segment, .vehicle_resource = &vehicle_resource};
+
+  bool all_pass = true;
+  for (const auto& constr : this->constrs) {
+    const HcPrecheckVerdict verdict = constr->precheck(input);
+    if (verdict == HcPrecheckVerdict::kInfeasible) {
+      return HcPrecheckVerdict::kInfeasible;
+    }
+    if (verdict == HcPrecheckVerdict::kUnknown) {
+      all_pass = false;
+    }
+  }
+  return all_pass ? HcPrecheckVerdict::kPass : HcPrecheckVerdict::kUnknown;
 }
 
 // ====== implement of HardConstrParser ======

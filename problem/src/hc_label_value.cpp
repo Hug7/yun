@@ -6,9 +6,12 @@
 #include "hc_label_value.h"
 
 #include <bit>
-#include <cstdint>
+#include <memory>
 #include <span>
 #include <utility>
+
+#include "bdm_location.h"
+#include "pdm_segment.h"
 
 namespace {
 
@@ -142,6 +145,42 @@ bool violates_masks(const LabelsetValueBitset* bitset, const LabelValueScope& sc
   return false;
 }
 
+/**
+ * @brief 构造插入 segment 之后的标签值位图
+ * @details 插入只会增加标签值, 因此基车次位图与 segment 涉及站点/订单的位图求并
+ * 就是插入后的完整位图, 与具体插入位置无关。
+ */
+LabelsetValueBitset::UPtr make_post_bitset(const LabelValueScope& scope, Load* load,
+                                           const Segment* segment, const bool pick) {
+  LabelsetValueBitset::UPtr post_bitset = scope.labelset->empty_labelset_value_bitset();
+  const LabelsetValueBitset* base_bitset = nullptr;
+  if (scope.entity == LabelValueEntity::Order) {
+    base_bitset = load->get_order_labelset_value_bitset();
+  } else {
+    base_bitset = pick ? load->get_pick_loc_labelset_value_bitset()
+                       : load->get_drop_loc_labelset_value_bitset();
+  }
+  if (base_bitset != nullptr) {
+    post_bitset->merge(*base_bitset);
+  }
+
+  for (const Order* order : segment->orders) {
+    const LabelsetValueBitset* order_bitset = nullptr;
+    if (scope.entity == LabelValueEntity::Order) {
+      order_bitset = order->labelset_value_bitset.get();
+    } else {
+      const Location* loc = pick ? order->pick_loc : order->drop_loc;
+      if (loc != nullptr) {
+        order_bitset = loc->labelset_value_bitset.get();
+      }
+    }
+    if (order_bitset != nullptr) {
+      post_bitset->merge(*order_bitset);
+    }
+  }
+  return post_bitset;
+}
+
 }  // namespace
 
 // ====== implement of HcLabelValueExclusive ======
@@ -185,6 +224,24 @@ HardConstrScore::UPtr HcLabelValueExclusive::eval(Load* load) {
     }
   }
   return std::make_unique<HardConstrScore>(this->code);
+}
+
+HcPrecheckVerdict HcLabelValueExclusive::precheck(const HcPrecheckInput& input) const {
+  if (this->scope.entity == LabelValueEntity::Order) {
+    return this->violates(make_post_bitset(this->scope, input.load, input.segment, true).get())
+               ? HcPrecheckVerdict::kInfeasible
+               : HcPrecheckVerdict::kPass;
+  }
+  // Location: 按侧别分别检查提货侧与卸货侧, Both 时两侧都要检查
+  if (this->scope.side != LabelValueSide::Drop &&
+      this->violates(make_post_bitset(this->scope, input.load, input.segment, true).get())) {
+    return HcPrecheckVerdict::kInfeasible;
+  }
+  if (this->scope.side != LabelValueSide::Pick &&
+      this->violates(make_post_bitset(this->scope, input.load, input.segment, false).get())) {
+    return HcPrecheckVerdict::kInfeasible;
+  }
+  return HcPrecheckVerdict::kPass;
 }
 
 // ====== implement of HcLabelValueCompatible ======
@@ -252,6 +309,23 @@ HardConstrScore::UPtr HcLabelValueCompatible::eval(Load* load) {
     }
   }
   return std::make_unique<HardConstrScore>(this->code);
+}
+
+HcPrecheckVerdict HcLabelValueCompatible::precheck(const HcPrecheckInput& input) const {
+  if (this->scope.entity == LabelValueEntity::Order) {
+    return this->violates(make_post_bitset(this->scope, input.load, input.segment, true).get())
+               ? HcPrecheckVerdict::kInfeasible
+               : HcPrecheckVerdict::kPass;
+  }
+  if (this->scope.side != LabelValueSide::Drop &&
+      this->violates(make_post_bitset(this->scope, input.load, input.segment, true).get())) {
+    return HcPrecheckVerdict::kInfeasible;
+  }
+  if (this->scope.side != LabelValueSide::Pick &&
+      this->violates(make_post_bitset(this->scope, input.load, input.segment, false).get())) {
+    return HcPrecheckVerdict::kInfeasible;
+  }
+  return HcPrecheckVerdict::kPass;
 }
 
 // ====== implement of HcLabelValueMaxCount ======
@@ -323,4 +397,23 @@ HardConstrScore::UPtr HcLabelValueMaxCount::eval(Load* load) {
     }
   }
   return std::make_unique<HardConstrScore>(this->code);
+}
+
+HcPrecheckVerdict HcLabelValueMaxCount::precheck(const HcPrecheckInput& input) const {
+  if (this->scope.entity == LabelValueEntity::Order) {
+    return this->violates(make_post_bitset(this->scope, input.load, input.segment, true).get())
+               ? HcPrecheckVerdict::kInfeasible
+               : HcPrecheckVerdict::kPass;
+  }
+  if (this->scope.side == LabelValueSide::Both) {
+    // 提货侧与卸货侧合并去重后计数, 与 eval 的判定口径一致
+    const auto post_pick = make_post_bitset(this->scope, input.load, input.segment, true);
+    const auto post_drop = make_post_bitset(this->scope, input.load, input.segment, false);
+    return this->violates_union(post_pick.get(), post_drop.get()) ? HcPrecheckVerdict::kInfeasible
+                                                                  : HcPrecheckVerdict::kPass;
+  }
+  const bool pick = this->scope.side == LabelValueSide::Pick;
+  return this->violates(make_post_bitset(this->scope, input.load, input.segment, pick).get())
+             ? HcPrecheckVerdict::kInfeasible
+             : HcPrecheckVerdict::kPass;
 }

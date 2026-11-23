@@ -19,4 +19,9 @@ class HcVehicleCapacity : public HardConstraint {
    * @brief calculate the score of the hard constraint
    */
   HardConstrScore::UPtr eval(Load* load) override;
+
+  /**
+   * @brief 预检: 插入后峰值装不下任何可用车型时剪枝
+   */
+  [[nodiscard]] HcPrecheckVerdict precheck(const HcPrecheckInput& input) const override;
 };

@@ -69,6 +69,10 @@ add_executable(hc_label_value_test problem/hc_label_value_test.cpp)
 target_link_libraries(hc_label_value_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME hc_label_value_test COMMAND hc_label_value_test)
 
+add_executable(hc_precheck_test problem/hc_precheck_test.cpp)
+target_link_libraries(hc_precheck_test PRIVATE yun_problem GTest::gtest_main)
+add_test(NAME hc_precheck_test COMMAND hc_precheck_test)
+
 add_executable(prob_pattern_spmd_test problem/prob_pattern_spmd_test.cpp)
 target_link_libraries(prob_pattern_spmd_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME prob_pattern_spmd_test COMMAND prob_pattern_spmd_test)

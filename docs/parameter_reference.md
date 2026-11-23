@@ -188,6 +188,28 @@ hard_constraints:
     params: {label_code: region, entity: Location, max_count: 2}
 ```
 
+### hard_constr_precheck
+
+硬约束预检开关，默认 `false`。开启后，插入订单片段前会先用**与插入位置无关**的硬约束做预检：
+只要有一条约束能确定"插入后必然违背"，就直接剪掉这个 (车次, 订单片段) 组合，省去枚举插入位置与逐槽求值。
+
+预检结论是保守的：只有能证明必然违背时才剪枝，无法证明时回退到完整求值，因此**不改变可行性判定结果与目标值**，
+只是减少无效求值。当前支持预检的约束：
+
+- `VehicleCapacity`：单提货节点模式下，插入后的峰值装载等于基线峰值加片段维度之和；当前车型与所有可切换的
+  可用车型都装不下时剪枝。
+- `AvailableVehicle`：基线可用车型位图与片段涉及站点的可用车型位图求交为空时剪枝。
+- `MaxPickNodeCount` / `MaxDropNodeCount`：用"每个站点连续段至多新增一个节点"的上界与"站点不在车次链上
+  必定新增一个节点"的下界判定，只有下界已超限时才剪枝。
+- `LabelValueExclusive` / `LabelValueCompatible` / `LabelValueMaxCount`：插入只增不减，用基车次位图与片段
+  位图求并后按原判定规则重算，结论精确。
+
+`TimeWindow` 与装卸顺序约束（`FILO`/`FIFO`）等依赖具体插入位置，不参与预检。
+
+```yaml
+hard_constr_precheck: true
+```
+
 ### soft_constraints
 
 可配置的软约束列表，填写指定的约束即代表约束作用于求解。每条约束包含两个字段`code`和`params`，

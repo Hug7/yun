@@ -114,6 +114,12 @@ Load* LoadEditor::greedy_insert(const Load* ori_load, const Segment* segment,
   // 挂载任务私有写缓冲: 副本内的重复查找(逐槽试插同一个 node 的键)落在这里, 不触碰冻结表
   load->store_buffer = store_buffer;
   const Vehicle* ori_vehicle = load->vehicle;
+  // 硬约束预检: 与插入位置无关的约束若已确定违背, 直接剪掉整个 (load, segment) 组合,
+  // 省去枚举槽位与逐槽 eval
+  if (problem->hc_manager->precheck(load.get(), segment, vehicle_resource) ==
+      HcPrecheckVerdict::kInfeasible) {
+    return nullptr;
+  }
   const std::vector<InsertSlot> slots =
       problem->pd_pattern->enumerate_insert_slots(load.get(), segment);
   const int slot_len = static_cast<int>(slots.size());

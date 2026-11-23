@@ -58,6 +58,8 @@ class HcLabelValueExclusive : public HardConstraint {
 
   HardConstrScore::UPtr eval(Load* load) override;
 
+  [[nodiscard]] HcPrecheckVerdict precheck(const HcPrecheckInput& input) const override;
+
  private:
   [[nodiscard]] bool violates(const LabelsetValueBitset* bitset) const;
 
@@ -93,6 +95,8 @@ class HcLabelValueCompatible : public HardConstraint {
                          const std::vector<std::vector<int>>& compatible_groups);
 
   HardConstrScore::UPtr eval(Load* load) override;
+
+  [[nodiscard]] HcPrecheckVerdict precheck(const HcPrecheckInput& input) const override;
 
  private:
   [[nodiscard]] bool violates(const LabelsetValueBitset* bitset) const;
@@ -131,6 +135,8 @@ class HcLabelValueMaxCount : public HardConstraint {
   HcLabelValueMaxCount(LabelValueScope scope, int max_count);
 
   HardConstrScore::UPtr eval(Load* load) override;
+
+  [[nodiscard]] HcPrecheckVerdict precheck(const HcPrecheckInput& input) const override;
 
  private:
   [[nodiscard]] bool violates(const LabelsetValueBitset* bitset) const;

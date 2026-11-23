@@ -7,6 +7,12 @@
 
 ### Added
 
+- 新增硬约束预检开关 `hard_constr_precheck`（默认关闭）：插入订单片段前，先用与插入位置无关的
+  硬约束（`VehicleCapacity`、`AvailableVehicle`、`MaxPickNodeCount`、`MaxDropNodeCount`、
+  `LabelValueExclusive`、`LabelValueCompatible`、`LabelValueMaxCount`）做保守判定，能确定
+  "插入后必然违背"时直接剪掉该（车次, 订单片段）组合，省去枚举插入位置与逐槽求值。预检只剪
+  确定违背的组合、无法判定时回退完整求值，因此不改变可行性判定结果与目标值。 (#32)
+
 - 新增邻域搜索（local search）：独立策略步 `local_search(cfg)`，支持 relocate / or-opt /
   exchange 三类邻域，且每类都按作用域拆成路线内部（intra-route）与跨路线（inter-route）两个
   独立算子（`LsIntraRouteRelocate`、`LsInterRouteRelocate`、`LsIntraRouteExchange`、
