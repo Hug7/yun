@@ -3,7 +3,7 @@
 记录对外可见的变更；版本号格式与发布流程见
 [docs/versioning.md](docs/versioning.md)。
 
-## [Unreleased]
+## [0.4.0] - 2026-11-23
 
 ### Added
 
