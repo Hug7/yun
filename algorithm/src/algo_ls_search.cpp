@@ -80,7 +80,8 @@ struct LsPlan {
 struct LsSearch::Impl {
   const SolverContext* context;
   LsParameter parameter;
-  const std::vector<LsOperatorParam>& operator_params;
+  ///< 算子参数按值持有，构造后与调用方实参的生命周期解耦
+  std::vector<LsOperatorParam> operator_params;
   const OrderRelationshipGraph* order_relationship_graph;
   std::unique_ptr<LsNeighborhood> neighborhood;
   std::chrono::steady_clock::time_point started_at;
