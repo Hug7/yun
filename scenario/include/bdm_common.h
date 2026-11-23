@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include <memory>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -57,36 +58,51 @@ class GenerateIndex {
 
 /**
  * @brief 位图类
- * @details 位图类用于存储一组布尔值，支持按位操作
+ * @details 值类型位图。长度不超过 64 时所有位内联存放在对象里，不产生堆分配；
+ * 长度超过 64 时才退化到堆上的 word 数组。长度没有硬上限。
  */
 class Bitset {
  private:
   /**
-   * @brief 位图存储的数组
+   * @brief 内联存放的第一个 word，n_ <= 64 时使用
    */
-  std::vector<uint64_t> w;
+  uint64_t inline_ = 0;
+  /**
+   * @brief n_ > 64 时使用的 word 数组
+   */
+  std::vector<uint64_t> overflow_;
   /**
    * @brief 位图的大小
    */
-  size_t n;
+  size_t n_ = 0;
+
+  [[nodiscard]] size_t words_len() const;
+
+  [[nodiscard]] uint64_t* words();
+
+  [[nodiscard]] const uint64_t* words() const;
 
  public:
-  using UPtr = std::unique_ptr<Bitset>;
-
   /**
    * @brief 构造函数
    * @param n 位图的大小
    */
-  explicit Bitset(const size_t n) : w((n + 63) / 64, 0), n(n) {}
+  explicit Bitset(size_t n = 0);
 
-  explicit Bitset(const UPtr& other);
+  Bitset(const Bitset&) = default;
+
+  Bitset(Bitset&& other) noexcept;
+
+  Bitset& operator=(const Bitset&) = default;
+
+  Bitset& operator=(Bitset&& other) noexcept;
 
   ~Bitset() = default;
 
   /**
    * @brief 位图长度
    */
-  [[nodiscard]] size_t len() const { return n; };
+  [[nodiscard]] size_t len() const { return n_; }
 
   /**
    * @brief 设置位图中第u位为1
@@ -119,30 +135,26 @@ class Bitset {
 
   /**
    * @brief 取并集
-   * @param o 另一个位图
+   * @param o 另一个位图，长度必须与本位图相同
    */
-  void call_union(const Bitset* o);
+  void call_union(const Bitset& o);
 
   /**
    * @brief 取交集
-   * @param o 另一个位图
+   * @param o 另一个位图，长度必须与本位图相同
    */
-  void call_intersection(const Bitset* o);
-
-  /**
-   * @brief 取并集
-   * @param o 另一个位图
-   */
-  void call_union(const Bitset::UPtr& o);
-
-  /**
-   * @brief 取交集
-   * @param o 另一个位图
-   */
-  void call_intersection(const Bitset::UPtr& o);
+  void call_intersection(const Bitset& o);
 
   /**
    * @brief 计算位图中1的个数
    */
   [[nodiscard]] int sum() const;
 };
+
+namespace BitsetUtils {
+
+Bitset call_intersection(const Bitset& a, const Bitset& b);
+
+Bitset call_union(const Bitset& a, const Bitset& b);
+
+}  // namespace BitsetUtils

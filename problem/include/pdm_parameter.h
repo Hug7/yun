@@ -46,7 +46,7 @@ class PlanDatetimeRange {
    * @brief 创建默认的时间窗口
    * @details 根据计划时间范围创建一个时间窗口
    */
-  [[nodiscard]] TimeWindow* create_default_time_window() const;
+  [[nodiscard]] TimeWindow create_default_time_window() const;
 };
 
 /**
@@ -126,6 +126,11 @@ class Parameter {
    */
   std::vector<HardConstrItem> hard_constr_items{};
   /**
+   * @brief 硬约束预检开关
+   * @details 默认关闭; 开启后在插入前用与插入位置无关的硬约束剪枝, 不改变可行性判定结果
+   */
+  bool hard_constr_precheck{false};
+  /**
    * @brief 硬约束条目列表
    */
   std::vector<SoftConstrItem> soft_constr_items{};
@@ -145,6 +150,11 @@ class Parameter {
   void parse_cargo_order_group_rule(const YamlNode& param_node, const Labelset* order_labelset);
 
   void parse_hard_constraints(const YamlNode& param_node);
+
+  /**
+   * @brief 解析硬约束预检开关
+   */
+  void parse_hard_constr_precheck(const YamlNode& param_node);
 
   void parse_soft_constraints(const YamlNode& param_node);
   /**

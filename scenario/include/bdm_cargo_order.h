@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -84,12 +85,14 @@ class CargoOrder : public Item {
   const Location* drop_loc;
   /**
    * @brief pick time window
+   * @details 为空表示未设置提货时间窗
    */
-  TimeWindow* pick_time_window;
+  std::optional<TimeWindow> pick_time_window;
   /**
    * @brief drop time window
+   * @details 为空表示未设置卸货时间窗
    */
-  TimeWindow* drop_time_window;
+  std::optional<TimeWindow> drop_time_window;
   /**
    * @brief 订单明细
    */
@@ -105,8 +108,6 @@ class CargoOrder : public Item {
         generate_index(std::make_unique<GenerateIndex>()),
         pick_loc(pick_loc),
         drop_loc(drop_loc),
-        pick_time_window(nullptr),
-        drop_time_window(nullptr),
         sub_orders(),
         sub_order_map() {}
 
@@ -114,11 +115,11 @@ class CargoOrder : public Item {
   /**
    * @brief 设置提货时间窗
    */
-  void set_pick_time_window(TimeWindow* _pick_time_window);
+  void set_pick_time_window(const TimeWindow& _pick_time_window);
   /**
    * @brief 设置卸货时间窗
    */
-  void set_drop_time_window(TimeWindow* _drop_time_window);
+  void set_drop_time_window(const TimeWindow& _drop_time_window);
   /**
    * @brief 创建子订单
    * @param code 子订单编码

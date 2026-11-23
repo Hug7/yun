@@ -11,8 +11,9 @@
 
 #include "pdm_context.h"
 #include "pdm_func_timing.h"
+#include "pdm_graph_order.h"
 #include "pdm_load.h"
-#include "pdm_order_pool.h"
+#include "pdm_order.h"
 #include "pdm_resource.h"
 #include "pdm_solution.h"
 
@@ -50,6 +51,10 @@ class Workspace {
    */
   VehicleResource::UPtr vehicle_resource;
   /**
+   * @brief 订单集合
+   */
+  std::vector<Order*> orders;
+  /**
    * @brief 车次列表
    */
   std::vector<Load*> loads;
@@ -57,6 +62,10 @@ class Workspace {
    * @brief 未指派的订单集合
    */
   std::unordered_map<int, const Order*> unassigned_orders;
+  /**
+   * @brief 订单关系图
+   */
+  OrderRelationshipGraph::UPtr order_relationship_graph;
   /**
    * @brief 车次和订单的存储栈
    */
@@ -66,7 +75,11 @@ class Workspace {
    */
   FuncTiming::VecUPtr func_timings;
 
-  explicit Workspace(const SolverContext* _context, const OrderPool* order_pool);
+  /**
+   * @brief 构造工作空间
+   * @param _context solver上下文
+   */
+  explicit Workspace(const SolverContext* _context);
 
   ~Workspace();
 

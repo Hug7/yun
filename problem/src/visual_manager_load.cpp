@@ -81,10 +81,10 @@ void fill_labels(const LabelManager* label_manager, VisualLoad& visual_load, Loa
     std::vector<std::string> cur_pick_loc_label_values;
     std::vector<std::string> cur_drop_loc_label_values;
     for (int t = 0; t < loc_label->len; ++t) {
-      if (pick_loc_labelset_value_bitset->bitsets[la]->test(t)) {
+      if (pick_loc_labelset_value_bitset->test(la, t)) {
         cur_pick_loc_label_values.emplace_back(loc_label->values[t]->value);
       }
-      if (drop_loc_labelset_value_bitset->bitsets[la]->test(t)) {
+      if (drop_loc_labelset_value_bitset->test(la, t)) {
         cur_drop_loc_label_values.emplace_back(loc_label->values[t]->value);
       }
     }
@@ -98,7 +98,7 @@ void fill_labels(const LabelManager* label_manager, VisualLoad& visual_load, Loa
     const auto order_label = order_labelset->labels[la];
     std::vector<std::string> cur_order_label_values;
     for (int t = 0; t < order_label->len; ++t) {
-      if (order_labelset_value_bitset->bitsets[la]->test(t)) {
+      if (order_labelset_value_bitset->test(la, t)) {
         cur_order_label_values.emplace_back(order_label->values[t]->value);
       }
     }
@@ -115,22 +115,22 @@ void fill_plan_time(VisualLoad& visual_load, const Load* load) {
   const int node_len = static_cast<int>(time_window_plans.size());
 
   for (const auto& twp : time_window_plans) {
-    visual_load.total_wait_time_second += twp->wait_time;
+    visual_load.total_wait_time_second += twp.wait_time;
   }
 
-  visual_load.plan_earliest_start_timestamp = time_window_plans[0]->early_arr;
+  visual_load.plan_earliest_start_timestamp = time_window_plans[0].early_arr;
   visual_load.plan_earliest_start_time = TimeParse::format_sec_to_tm(
       visual_load.plan_earliest_start_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
 
-  visual_load.plan_earliest_end_timestamp = time_window_plans[node_len - 1]->early_depart;
+  visual_load.plan_earliest_end_timestamp = time_window_plans[node_len - 1].early_depart;
   visual_load.plan_earliest_end_time = TimeParse::format_sec_to_tm(
       visual_load.plan_earliest_end_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
 
-  visual_load.plan_latest_start_timestamp = time_window_plans[0]->late_arr;
+  visual_load.plan_latest_start_timestamp = time_window_plans[0].late_arr;
   visual_load.plan_latest_start_time = TimeParse::format_sec_to_tm(
       visual_load.plan_latest_start_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
 
-  visual_load.plan_latest_end_timestamp = time_window_plans[node_len - 1]->late_depart;
+  visual_load.plan_latest_end_timestamp = time_window_plans[node_len - 1].late_depart;
   visual_load.plan_latest_end_time = TimeParse::format_sec_to_tm(
       visual_load.plan_latest_end_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
 }

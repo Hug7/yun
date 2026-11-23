@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -67,6 +68,19 @@ class PickDropPattern {
   virtual std::vector<Activity*> insert_segment_at(Load* load, const Segment* segment,
                                                    const InsertSlot& slot) const = 0;
 
+  /**
+   * @brief 估算 segment 插入各槽位后连接处的距离变化
+   * @details 只依据插入位置与当前车型的距离矩阵估算, 不修改 load, 不检查任何约束, 也不创建
+   * node/activity。不模拟同站点合并: 直接把 segment 当成夹在 anchor 与 successor 之间的整块,
+   * 只取 segment 首/尾 drop 站点的两条连接边, 作为槽位排序用的启发式值。
+   * @param load 要操作的车次
+   * @param segment 要插入的segment
+   * @param slots 由 enumerate_insert_slots 返回的槽位集合
+   * @return 与 slots 一一对应的距离变化
+   */
+  virtual std::vector<std::int64_t> estimate_insert_delta_dists(
+      Load* load, const Segment* segment, const std::vector<InsertSlot>& slots) const = 0;
+
   PickDropPattern() = default;
 };
 
@@ -92,4 +106,20 @@ class PatternSPMD : public PickDropPattern {
 
   std::vector<Activity*> insert_segment_at(Load* load, const Segment* segment,
                                            const InsertSlot& slot) const override;
+
+  std::vector<std::int64_t> estimate_insert_delta_dists(
+      Load* load, const Segment* segment, const std::vector<InsertSlot>& slots) const override;
+
+  /**
+   * @brief 估算把 segment 整块插入 anchor 之后, 两端连接处的距离变化
+   * @details 不模拟同站点合并, 直接用 segment 首/尾 drop 站点与 anchor、successor 算两条连接边,
+   * 作为槽位排序用的启发式值。全程只读, 不创建 node/activity。
+   * @param dist_matrix 当前车型的距离矩阵
+   * @param anchor 新片段插在 anchor 之后
+   * @param first_drop_loc segment 内第一个 drop 站点
+   * @param last_drop_loc segment 内最后一个 drop 站点
+   */
+  static std::int64_t estimate_drop_delta_dist(const DistMatrix& dist_matrix, const Node* anchor,
+                                               const Location* first_drop_loc,
+                                               const Location* last_drop_loc);
 };

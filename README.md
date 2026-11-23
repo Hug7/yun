@@ -77,55 +77,7 @@ end
 
 ## 项目框架简介
 
-箭头方向表示依赖或使用关系，即 `A --> B` 表示 `A` 依赖或使用 `B`。实线表示当前代码可验证的生命周期关系或主调用链，虚线表示尚未实现的设计目标。
-
-```mermaid
-flowchart LR
-solver[Solver]
-precheck[SolverPrecheck]
-context[SolverContext]
-order_pool[OrderPool]
-workspace[Workspace]
-solution[Solution]
-dsl["DSL<br/>StrategyManager"]
-funcs["Registered Functions<br/>C++ callbacks"]
-algorithm["Algorithm"]
-function["Function"]
-scenario[Scenario]
-parameter[Parameter]
-problem[Problem]
-constraints["Constraint Managers<br/>Hc / Sc / Cc"]
-visual[VisualManager]
-
-solver -->|构造并调用| precheck
-solver -->|构造| context
-solver -->|构造| order_pool
-solver -->|构造| workspace
-solver -->|构造并执行| dsl
-
-order_pool -->|读取| context
-workspace -->|引用| context
-workspace -->|创建 / 应用| solution
-
-dsl -->|使用| workspace
-dsl -->|注册并回调| funcs
-funcs -->|使用| function
-funcs -->|使用| algorithm
-function -->|使用| workspace
-algorithm -->|使用| workspace
-
-context -->|持有| scenario
-context -->|持有| parameter
-context -->|持有| problem
-context -->|持有| visual
-
-problem -->|使用| scenario
-problem -->|使用| parameter
-problem -->|管理| constraints
-
-classDef planned stroke-dasharray: 5 5
-```
-
+项目关键类的关联关系见 [framework.md](docs/framework.md)。
 
 ### 1. 本地运行入口
 
@@ -186,9 +138,9 @@ ctest --test-dir build/ci --output-on-failure
 5. **执行策略**：调用 Lua 全局函数 `solve()`。C++ 当前向脚本暴露以下能力：
     - `log_info`、`log_debug`、`log_warn`、`log_error`：写入请求日志。
     - `snapshot(target_dir)`：把当前 Workspace 快照写入本次输出目录下的子目录。
-    - `KnnParameter`：构造 KNN 参数对象。
-    - `construct_knn()` 或 `construct_knn(KnnParameter)`：执行 K 近邻构造启发式。
+    - `construct_knn()` 或 `construct_knn(cfg)`：执行 K 近邻构造启发式；`cfg` 支持 `neighbor_count` 字段。
     - `alns()`：执行 alns 算法优化路由。
+    - `local_search()` 或 `local_search(cfg)`：对当前解做邻域搜索（同车/跨车的 relocate、or-opt、exchange，加 2-opt），只重排已指派订单；`cfg` 支持 `epsilon`、`improvement`（`"best"`/`"first"`）、`operators` 字段（全量搜索 + 订单 KNN 图与里程增量剪枝，无预算/候选上限），见 [dsl_user_guide.md](docs/dsl_user_guide.md)。
 6. **导出最终结果**：Lua 脚本正常结束后，读取 Workspace 的 `loads_view()` 和 `unassigned_orders_view()`，转换为可视化对象并写入 JSON。
 
 使用手册见: [dsl_user_guide.md](docs/dsl_user_guide.md)
@@ -208,7 +160,7 @@ ctest --test-dir build/ci --output-on-failure
 
 如果预检发现不可解订单，则当前实现只写 `InfeasibleCargoOrders.json` 和日志，不生成 `Loads.json`、`LoadLocations.json`、`UnassignedCargoOrders.json`。如果 Lua 脚本调用 `snapshot(target_dir)`，对应子目录下会额外保留当时的计划结果快照。
 
-`Solver` 析构时释放 `context`、`order_pool` 和 `workspace`；`SolverContext` 析构时先刷新 logger，再释放 `Scenario`、`Parameter`、`VisualManager` 和 `Problem`。
+`Solver` 析构时先释放 `workspace`（连带释放其持有的订单与车次），再释放 `context`；`SolverContext` 析构时先刷新 logger，再释放 `Scenario`、`Parameter`、`VisualManager` 和 `Problem`。
 
 ### 5. Python 绑定与预编译 SDK
 

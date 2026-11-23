@@ -5,9 +5,13 @@
 
 #pragma once
 
+#include <optional>
+
 #include "algo_alns_operator.h"
 #include "algo_alns_parameter.h"
 #include "algo_alns_solution_manager.h"
+#include "algo_ls.h"
+#include "algo_ls_search.h"
 #include "algo_segment_builder.h"
 #include "pdm_solution.h"
 #include "pdm_workspace.h"
@@ -34,9 +38,15 @@ class AlnsModel {
    * @brief segment 生成器
    */
   SegmentBuilder* segment_builder;
+  /**
+   * @brief 内嵌邻域搜索器, 首次使用时创建
+   * @details 搜索器持有 KNN 剪枝图, 整个 solve() 里只建一次图并复用
+   */
+  mutable std::optional<LsSearch> ls_search;
 
   explicit AlnsModel(const Workspace* _workspace, const AlnsParameter* _parameter,
-                     AlnsOperatorManager* operator_manager);
+                     AlnsOperatorManager* operator_manager,
+                     std::optional<LsSearchConfig> ls_config);
 
   ~AlnsModel();
 

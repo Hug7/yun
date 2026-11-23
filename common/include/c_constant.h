@@ -74,14 +74,14 @@ inline const std::string TIME_WINDOW = ";";
 namespace DistMatrixParameter {
 /**
  * @brief maximum driving distance, unit: m
- * @details representative 6000 km
+ * @details representative 60000 km
  */
-constexpr std::int64_t MAX_DISTANCE = 6000000;
+constexpr std::int64_t MAX_DISTANCE = 60000000;
 /**
  * @brief maximum driving time, unit: s
- * @details representative 100 h
+ * @details representative 1000 h
  */
-constexpr std::int64_t MAX_TIME = 360000;
+constexpr std::int64_t MAX_TIME = 3600000;
 }  // namespace DistMatrixParameter
 
 namespace LocationParameter {
@@ -172,7 +172,19 @@ constexpr double INIT_LOAD_OBJ_VAL = 1000000000.0;
 
 namespace CacheParameter {
 /**
- * @brief 构造时预分配的桶位数与 arena 槽位数, 与容量上限无关(缓存不淘汰)
+ * @brief 构造时预分配的桶位数, 与容量上限无关(上限见 PICK_DROP_MAX_ENTRY_COUNT)
  */
-static constexpr int PICK_DROP_RESERVED_ENTRY_COUNT = 20000;
+static constexpr int PICK_DROP_RESERVED_ENTRY_COUNT = 50000;
+/**
+ * @brief 时间窗冻结表 pick/drop 的条目上限, 达到后按水位回收
+ * @details 键已收窄为时间窗模式 id 集合, 条目数只与时间窗内容组合相关; 该上限仅兜底
+ * 退化输入, 保证任何算例下内存都有硬边界。回收只会让后续查询重新计算, 不影响结果。
+ */
+static constexpr int PICK_DROP_MAX_ENTRY_COUNT = 50000;
+/**
+ * @brief 达到上限后回收到的目标条目数(上限的 3/4)
+ * @details 每次只淘汰约 1/4, 而不是整表清空: 热点条目大概率保留, 重算被摊薄到多轮回收,
+ * 避免清空瞬间集中重算造成的耗时毛刺。目标值必须小于上限。
+ */
+static constexpr int PICK_DROP_RECYCLE_TARGET_COUNT = 37500;
 }  // namespace CacheParameter

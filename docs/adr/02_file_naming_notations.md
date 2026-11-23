@@ -13,7 +13,7 @@
 | sc_     | soft constraint     | problem | 软约束              |
 | cc_     | cost constraint     | problem | 成本约束             |
 | pdm_    | problem domain      | problem | 问题层的领域对象         |
-| pr_     | problem             | problem | 问题               |
+| prob_   | problem             | problem | 问题层服务（求值、构造、插入） |
 | visual_ | visual              | problem | 可视化(结果、过程等数据可视化) |
 | bdm_    | base domain         | scenario | 基本的领域对象          |
 | se_     | scenario            | scenario | 场景               |

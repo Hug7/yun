@@ -75,19 +75,18 @@ RegretScore evaluate(const std::vector<double>& deltas_asc, const int k) {
 
 // ====== implement of AlnsRepairRegretK ======
 AlnsRepairRegretK::AlnsRepairRegretK(const SolverContext* _context,
-                                     ParallelExecutor* _parallel_executor, const sol::table& cfg)
-    : AlnsRepairOperator(AlnsRepairOperatorCode::RepairRegretK, _context, _parallel_executor) {
-  if (cfg[AlnsRepairRegretKLuaField::REGRET_K].valid()) {
-    this->regret_k = static_cast<int>(cfg[AlnsRepairRegretKLuaField::REGRET_K]);
-  }
-  if (this->regret_k < 1) {
+                                     ParallelExecutor* _parallel_executor,
+                                     const AlnsRepairRegretKParam& _parameter)
+    : AlnsRepairOperator(AlnsRepairOperatorCode::RepairRegretK, _context, _parallel_executor),
+      parameter(_parameter) {
+  if (this->parameter.regret_k < 1) {
     throw std::invalid_argument(this->code + ": `regret_k` must be >= 1, got " +
-                                std::to_string(this->regret_k));
+                                std::to_string(this->parameter.regret_k));
   }
 }
 
 std::string AlnsRepairRegretK::format_parameters() const {
-  return std::format("regret_k={}", this->regret_k);
+  return std::format("regret_k={}", this->parameter.regret_k);
 }
 
 void AlnsRepairRegretK::execute(RepairMatrix* repair_matrix) {
@@ -102,7 +101,7 @@ void AlnsRepairRegretK::execute(RepairMatrix* repair_matrix) {
       for (const int segment_ind : repair_matrix->idle_segment_indices) {
         // 该 segment 行的 top-k 候选, 按 delta 降序(back() 为最优)
         const std::vector<RepairLoad*> top_loads =
-            repair_matrix->unfold_segment_top_k(segment_ind, this->regret_k);
+            repair_matrix->unfold_segment_top_k(segment_ind, this->parameter.regret_k);
         if (top_loads.empty()) {
           continue;
         }
@@ -113,7 +112,7 @@ void AlnsRepairRegretK::execute(RepairMatrix* repair_matrix) {
           deltas_asc.emplace_back(top_load->delta);
         }
 
-        const RegretScore regret_score = evaluate(deltas_asc, this->regret_k);
+        const RegretScore regret_score = evaluate(deltas_asc, this->parameter.regret_k);
         const double best_delta = deltas_asc.front();
         const bool better =
             select_repair_load == nullptr || regret_score.priority < select_priority ||

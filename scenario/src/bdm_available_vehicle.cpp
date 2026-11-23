@@ -15,13 +15,13 @@
 AvailableVehicle::~AvailableVehicle() { this->vehicles.clear(); }
 
 void AvailableVehicle::add_vehicle(Vehicle* vehicle) {
-  if (this->vehicle_bitset->test(vehicle->ind)) {
+  if (this->vehicle_bitset.test(vehicle->ind)) {
     throw std::invalid_argument(std::format(
         "a vehicle with the carrier {} and the vehicle model {} is duplicated in available vehicle",
         vehicle->carrier->code, vehicle->vehicle_model->code));
   }
   this->vehicles.push_back(vehicle);
   // sorting vehicles by vehilce index
-  std::sort(this->vehicles.begin(), this->vehicles.end(), CompareByVehicleInd());
-  this->vehicle_bitset->set(vehicle->ind);
+  std::ranges::sort(this->vehicles, CompareByVehicleInd());
+  this->vehicle_bitset.set(vehicle->ind);
 }

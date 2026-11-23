@@ -7,10 +7,8 @@
 
 #include <functional>
 #include <magic_enum/magic_enum.hpp>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "algo_parallel_executor.h"
@@ -26,16 +24,6 @@ enum class AlnsRepairOperatorCode {
   RepairGreedy,
   RepairRegretK,
 };
-
-constexpr AlnsRepairOperatorCode parse_alns_repair_operator_code(const std::string& code) {
-  if (code == "RepairGreedy") {
-    return AlnsRepairOperatorCode::RepairGreedy;
-  } else if (code == "RepairRegretK") {
-    return AlnsRepairOperatorCode::RepairRegretK;
-  } else {
-    throw std::invalid_argument("Invalid AlnsRepairOperatorCode = " + code);
-  }
-}
 
 class RepairLoad {
  public:

@@ -38,7 +38,7 @@ std::vector<VisualLabel> decode_labels(const Labelset* labelset,
     const auto label = labelset->labels[la];
     std::vector<std::string> label_values;
     for (int t = 0; t < label->len; ++t) {
-      if (labelset_value_bitset->bitsets[la]->test(t)) {
+      if (labelset_value_bitset->test(la, t)) {
         label_values.emplace_back(label->values[t]->value);
       }
     }
@@ -60,8 +60,7 @@ std::vector<VisualLabel> decode_orders_labels(const Labelset* labelset,
     std::vector<std::string> label_values;
     for (int t = 0; t < label->len; ++t) {
       for (const auto order : orders) {
-        if (order->labelset_value_bitset != nullptr &&
-            order->labelset_value_bitset->bitsets[la]->test(t)) {
+        if (order->labelset_value_bitset != nullptr && order->labelset_value_bitset->test(la, t)) {
           label_values.emplace_back(label->values[t]->value);
           break;
         }
@@ -142,22 +141,22 @@ void fill_labels(const Scenario* scenario, VisualLoadLocation& visual_load_locat
  * @param time_window_plan 计划时间
  */
 void fill_plan_time(VisualLoadLocation& visual_load_location, const Node* node,
-                    const TimeWindowPlan::UPtr& time_window_plan) {
+                    const TimeWindowPlan& time_window_plan) {
   visual_load_location.prev_driving_distance_meter = node->travel_dist;
   visual_load_location.prev_driving_time_second = node->travel_time;
   visual_load_location.work_time_second = node->get_work_time();
   if (node->ptws.empty()) {
     return;
   }
-  visual_load_location.wait_time_second = time_window_plan->wait_time;
-  visual_load_location.plan_earliest_arrive_timestamp = time_window_plan->early_arr;
-  visual_load_location.plan_earliest_depart_timestamp = time_window_plan->early_depart;
+  visual_load_location.wait_time_second = time_window_plan.wait_time;
+  visual_load_location.plan_earliest_arrive_timestamp = time_window_plan.early_arr;
+  visual_load_location.plan_earliest_depart_timestamp = time_window_plan.early_depart;
   visual_load_location.plan_earliest_start_work_timestamp =
-      time_window_plan->early_depart - visual_load_location.work_time_second;
-  visual_load_location.plan_latest_arrive_timestamp = time_window_plan->late_arr;
-  visual_load_location.plan_latest_depart_timestamp = time_window_plan->late_depart;
+      time_window_plan.early_depart - visual_load_location.work_time_second;
+  visual_load_location.plan_latest_arrive_timestamp = time_window_plan.late_arr;
+  visual_load_location.plan_latest_depart_timestamp = time_window_plan.late_depart;
   visual_load_location.plan_latest_start_work_timestamp =
-      time_window_plan->late_depart - visual_load_location.work_time_second;
+      time_window_plan.late_depart - visual_load_location.work_time_second;
 
   visual_load_location.plan_earliest_arrive_time = TimeParse::format_sec_to_tm(
       visual_load_location.plan_earliest_arrive_timestamp, TimeParse::fmt_yyyymmddhhmm_3);
@@ -182,7 +181,7 @@ void fill_plan_time(VisualLoadLocation& visual_load_location, const Node* node,
  */
 VisualLoadLocation build_visual_load_location(const Scenario* scenario,
                                               const VisualLoad& visual_load,
-                                              const TimeWindowPlan::UPtr& time_window_plan,
+                                              const TimeWindowPlan& time_window_plan,
                                               const Node* node) {
   VisualLoadLocation visual_load_location;
   visual_load_location.load_code = visual_load.load_code;
@@ -210,7 +209,7 @@ std::vector<VisualLoadLocation> VisualManager::loads_to_visual_load_locations(
     const int node_len = static_cast<int>(nodes.size());
     visual_load_locations.reserve(visual_load_locations.size() + nodes.size());
     // 计划时间列表
-    TimeWindowPlan::VecUPtr time_window_plans = load->infer_time_window_plans();
+    std::vector<TimeWindowPlan> time_window_plans = load->infer_time_window_plans();
     for (int u = 0; u < node_len; ++u) {
       const auto& node = nodes[u];
       if (node->loc->is_default()) {

@@ -101,7 +101,7 @@ class Load {
 
   [[nodiscard]] double get_obj_val() const;
 
-  [[nodiscard]] Bitset* get_available_vehicle_bitset() const;
+  [[nodiscard]] Bitset& get_available_vehicle_bitset() const;
 
   [[nodiscard]] bool is_infeasible() const;
 
@@ -113,7 +113,7 @@ class Load {
 
   void update_node_dist_time() const;
 
-  void update_start_node_dist_time();
+  void update_start_node_dist_time() const;
 
   void update_end_node_dist_time() const;
 
@@ -128,7 +128,7 @@ class Load {
 
   [[nodiscard]] std::vector<Node*> unfold_node_linked() const;
 
-  [[nodiscard]] TimeWindowPlan::VecUPtr infer_time_window_plans() const;
+  [[nodiscard]] std::vector<TimeWindowPlan> infer_time_window_plans() const;
 
   void fill_locations(std::vector<const Location*>& locations) const;
 

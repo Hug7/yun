@@ -5,17 +5,17 @@
 
 #pragma once
 
-#include <sol/sol.hpp>
-
 #include "algo_alns_repair.h"
 #include "pdm_context.h"
 
 /**
- * @brief alns repair算子`RepairRegretK`的参数在lua中的字段集合
+ * @brief alns repair算子`RepairRegretK`的参数
  */
-class AlnsRepairRegretKLuaField {
- public:
-  static constexpr const char* REGRET_K = "regret_k";
+struct AlnsRepairRegretKParam {
+  /**
+   * @brief 后悔值阶数
+   */
+  int regret_k{2};
 };
 
 /**
@@ -26,12 +26,12 @@ class AlnsRepairRegretKLuaField {
 class AlnsRepairRegretK : public AlnsRepairOperator {
  public:
   /**
-   * @brief 后悔值阶数
+   * @brief 结构化参数
    */
-  int regret_k{2};
+  const AlnsRepairRegretKParam parameter;
 
   explicit AlnsRepairRegretK(const SolverContext* _context, ParallelExecutor* _parallel_executor,
-                             const sol::table& cfg);
+                             const AlnsRepairRegretKParam& _parameter);
 
   void execute(RepairMatrix* repair_matrix) override;
 

@@ -16,6 +16,8 @@
 #include "pdm_parameter.h"
 #include "se_scenario.h"
 
+class TimeWindowPatternRegistry;
+
 /**
  * @brief 订单-problem层
  */
@@ -40,19 +42,20 @@ class Order {
   /**
    * @brief pick time windows
    */
-  std::vector<TimeWindow*> pick_time_windows;
-  /**
-   * @brief length of pick time windows
-   */
-  int pick_time_windows_len;
+  std::vector<TimeWindow> pick_time_windows;
   /**
    * @brief drop time windows
    */
-  std::vector<TimeWindow*> drop_time_windows;
+  std::vector<TimeWindow> drop_time_windows;
   /**
-   * @brief length of drop time windows
+   * @brief 提货时间窗在登记表中的模式 id
+   * @details 时间窗内容相同则 id 相同; 节点时间窗缓存用它替代订单身份构成缓存键
    */
-  int drop_time_windows_len;
+  int pick_tw_pattern_id{-1};
+  /**
+   * @brief 卸货时间窗在登记表中的模式 id
+   */
+  int drop_tw_pattern_id{-1};
   /**
    * @brief pick work time
    */
@@ -76,12 +79,12 @@ class Order {
   /**
    * @brief available vehicle bitset
    */
-  Bitset::UPtr available_vehicle_bitset;
+  Bitset available_vehicle_bitset;
 
   Order(const PlanDatetimeRange* plan_datetime_range, int ind,
         std::vector<CargoOrder*>& cargo_orders, std::vector<std::int64_t>& dim_vals,
         LabelsetValue* labelset_value, LabelsetValueBitset::UPtr labelset_value_bitset,
-        Bitset::UPtr available_vehicle_bitset);
+        Bitset available_vehicle_bitset, TimeWindowPatternRegistry* pattern_registry);
 
   ~Order();
 };
@@ -93,17 +96,21 @@ namespace OrderFactory {
  * @param ind order的索引
  * @param plan_datetime_range 规划时间范围
  * @param scenario 场景
+ * @param pattern_registry 时间窗模式登记表
  * @return order对象指针
  */
 Order* creat_order(std::vector<CargoOrder*>& cargo_orders, int ind,
-                   const PlanDatetimeRange* plan_datetime_range, const Scenario* scenario);
+                   const PlanDatetimeRange* plan_datetime_range, const Scenario* scenario,
+                   TimeWindowPatternRegistry* pattern_registry);
 /**
  * @brief 创建临时order
  * @param cargo_orders cargo order列表
  * @param plan_datetime_range 规划时间范围
  * @param scenario 场景
+ * @param pattern_registry 时间窗模式登记表
  * @return 临时order对象指针
  */
 Order* creat_tmp_order(std::vector<CargoOrder*>& cargo_orders,
-                       const PlanDatetimeRange* plan_datetime_range, const Scenario* scenario);
+                       const PlanDatetimeRange* plan_datetime_range, const Scenario* scenario,
+                       TimeWindowPatternRegistry* pattern_registry);
 }  // namespace OrderFactory

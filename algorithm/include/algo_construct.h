@@ -17,10 +17,6 @@ struct KnnParameter {
    * @brief 近邻数量
    */
   int neighbor_count{8};
-
-  KnnParameter() = default;
-
-  explicit KnnParameter(const int neighbor_count) : neighbor_count(neighbor_count) {}
 };
 
 /**

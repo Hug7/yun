@@ -5,6 +5,9 @@
 
 #include "bdm_label.h"
 
+#include <algorithm>
+#include <bit>
+#include <cassert>
 #include <stdexcept>
 
 // ====== implement of Label ======
@@ -59,32 +62,6 @@ void LabelsetValue::merge(LabelsetValue* labelset_value) {
   }
 }
 
-// ====== implement of LabelsetValueBitset ======
-LabelsetValueBitset::LabelsetValueBitset(const LabelsetValueBitset::UPtr& other) {
-  const size_t bitsets_len = other->bitsets.size();
-  this->bitsets = LabelValueBitset::VecUPtr(bitsets_len);
-  for (size_t u = 0; u < bitsets_len; ++u) {
-    this->bitsets[u] = std::make_unique<LabelValueBitset>(other->bitsets[u]);
-  }
-}
-
-void LabelsetValueBitset::add_label_value(int label_ind, LabelValue* label_value) {
-  this->bitsets[label_ind]->set(label_value->ind);
-}
-
-void LabelsetValueBitset::merge(const LabelsetValueBitset::UPtr& labelset_value_bitset) {
-  const size_t len = this->bitsets.size();
-  for (size_t u = 0; u < len; ++u) {
-    this->bitsets[u]->call_union(labelset_value_bitset->bitsets[u].get());
-  }
-}
-
-void LabelsetValueBitset::clear_bitsets() {
-  for (const auto& cur_bitset : this->bitsets) {
-    cur_bitset->clear_all();
-  }
-}
-
 // ====== implement of Labelset ======
 Labelset::~Labelset() {
   this->labels.clear();
@@ -98,6 +75,10 @@ void Labelset::add_label(Label* label) {
     this->labels.push_back(label);
     this->label_ind_map[label->code] = this->len;
     ++this->len;
+    // 标签集合变化后旧的 arena 布局不再有效
+    this->label_word_offsets_.clear();
+    this->words_len_ = 0;
+    this->layout_built_ = false;
   }
 }
 
@@ -130,13 +111,83 @@ LabelsetValue* Labelset::empty_labelset_value() const {
   return labelset_value;
 }
 
-LabelsetValueBitset::UPtr Labelset::empty_labelset_value_bitset() const {
-  auto labelset_value_bitset = std::make_unique<LabelsetValueBitset>(this->len);
-  for (int u = 0; u < this->len; ++u) {
-    labelset_value_bitset->bitsets[u] = std::make_unique<LabelValueBitset>(this->labels[u]->len);
+void Labelset::build_layout() const {
+  if (this->layout_built_) {
+    return;
   }
-  return labelset_value_bitset;
+  this->label_word_offsets_.resize(static_cast<size_t>(this->len) + 1);
+  size_t offset = 0;
+  for (int u = 0; u < this->len; ++u) {
+    this->label_word_offsets_[u] = static_cast<uint32_t>(offset);
+    offset += (static_cast<size_t>(this->labels[u]->len) + 63) / 64;
+  }
+  this->label_word_offsets_[this->len] = static_cast<uint32_t>(offset);
+  this->words_len_ = offset;
+  this->layout_built_ = true;
 }
+
+size_t Labelset::labelset_words_len() const {
+  this->build_layout();
+  return this->words_len_;
+}
+
+size_t Labelset::label_word_offset(const int label_ind) const {
+  this->build_layout();
+  assert(label_ind >= 0 && label_ind <= this->len);
+  return this->label_word_offsets_[label_ind];
+}
+
+LabelsetValueBitset::UPtr Labelset::empty_labelset_value_bitset() const {
+  return std::make_unique<LabelsetValueBitset>(this);
+}
+
+// ====== implement of LabelsetValueBitset ======
+LabelsetValueBitset::LabelsetValueBitset(const Labelset* labelset)
+    : labelset_(labelset), words_(labelset == nullptr ? 0 : labelset->labelset_words_len(), 0) {
+  assert(this->labelset_ != nullptr);
+}
+
+std::span<const uint64_t> LabelsetValueBitset::label_words(const int label_ind) const {
+  const size_t begin = this->labelset_->label_word_offset(label_ind);
+  const size_t end = this->labelset_->label_word_offset(label_ind + 1);
+  return std::span<const uint64_t>(this->words_.data() + begin, end - begin);
+}
+
+void LabelsetValueBitset::add_label_value(const int label_ind, LabelValue* label_value) {
+  this->set(label_ind, label_value->ind);
+}
+
+bool LabelsetValueBitset::test(const int label_ind, const int value_ind) const {
+  const size_t offset = this->labelset_->label_word_offset(label_ind);
+  // 操作等价于: words_[offset + value_ind / 64] & (1ULL << (value_ind % 64))
+  return this->words_[offset + (static_cast<size_t>(value_ind) >> 6)] & (1ULL << (value_ind & 63));
+}
+
+void LabelsetValueBitset::set(const int label_ind, const int value_ind) {
+  const size_t offset = this->labelset_->label_word_offset(label_ind);
+  // 操作等价于: words_[offset + value_ind / 64] & (1ULL << (value_ind % 64))
+  this->words_[offset + (static_cast<size_t>(value_ind) >> 6)] |= (1ULL << (value_ind & 63));
+}
+
+int LabelsetValueBitset::sum(const int label_ind) const {
+  const size_t begin = this->labelset_->label_word_offset(label_ind);
+  const size_t end = this->labelset_->label_word_offset(label_ind + 1);
+  int count = 0;
+  for (size_t u = begin; u < end; ++u) {
+    count += std::popcount(this->words_[u]);
+  }
+  return count;
+}
+
+void LabelsetValueBitset::merge(const LabelsetValueBitset& other) {
+  assert(this->labelset_ == other.labelset_);
+  assert(this->words_.size() == other.words_.size());
+  for (size_t u = 0; u < this->words_.size(); ++u) {
+    this->words_[u] |= other.words_[u];
+  }
+}
+
+void LabelsetValueBitset::clear_bitsets() { std::ranges::fill(this->words_, 0); }
 
 // ====== implement of LabelManager ======
 LabelManager::~LabelManager() {

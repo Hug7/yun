@@ -89,8 +89,8 @@ CargoOrderManager* StandardCsvReader::loading_cargo_order(LocationManager* locat
 
     CargoOrder* cargo_order = cargo_order_manager->create_cargo_order(
         cargo_order_code, cargo_order_name, pick_location, drop_location);
-    cargo_order->set_pick_time_window(new TimeWindow(earliest_pick_time_sec, latest_pick_time_sec));
-    cargo_order->set_drop_time_window(new TimeWindow(earliest_drop_time_sec, latest_drop_time_sec));
+    cargo_order->set_pick_time_window(TimeWindow(earliest_pick_time_sec, latest_pick_time_sec));
+    cargo_order->set_drop_time_window(TimeWindow(earliest_drop_time_sec, latest_drop_time_sec));
   }
   cargo_order_doc.Clear();
   this->logger->info("Loading {} is complete. A total of {} pieces of data have been obtained.",

@@ -17,5 +17,7 @@ enum class HardConstrCode {
   LoadUnloadPolicyFIFO,
   MaxPickNodeCount,
   MaxDropNodeCount,
-  OrderLabelValueMaxCount,
+  LabelValueExclusive,
+  LabelValueCompatible,
+  LabelValueMaxCount,
 };

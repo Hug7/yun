@@ -82,6 +82,8 @@ SolverContext::SolverContext(std::string _root_dir, const std::string& log_dir,
   this->visual_manager = new VisualManager(this->output_dir, this->scenario, this->logger);
   // 创建问题
   this->problem = new Problem(this->scenario, this->parameter);
+  // 求解操作：依赖问题定义，故在其后创建
+  this->load_editor = new LoadEditor(this->problem);
 }
 
 SolverContext::~SolverContext() {
@@ -92,5 +94,7 @@ SolverContext::~SolverContext() {
   delete this->scenario;
   delete this->parameter;
   delete this->visual_manager;
+  // 求解操作持有 problem 指针，必须先于 problem 释放
+  delete this->load_editor;
   delete this->problem;
 }

@@ -5,17 +5,22 @@
 
 #pragma once
 
-#include <sol/sol.hpp>
-
 #include "algo_alns_repair.h"
 #include "c_random_utils.h"
 #include "pdm_context.h"
-#include "pdm_solution.h"
 
-class AlnsRepairGreedyLuaField {
- public:
-  static constexpr const char* RANDOM_SEED = "random_seed";
-  static constexpr const char* TOP_RATE = "top_rate";
+/**
+ * @brief alns repair算子`RepairGreedy`的参数
+ */
+struct AlnsRepairGreedyParam {
+  /**
+   * @brief 随机种子
+   */
+  int random_seed{37};
+  /**
+   * @brief 选择 segment-load 组合方案的 top 比例
+   */
+  double top_rate{0.2};
 };
 
 /**
@@ -24,20 +29,16 @@ class AlnsRepairGreedyLuaField {
 class AlnsRepairGreedy : public AlnsRepairOperator {
  public:
   /**
-   * @brief 随机种子
+   * @brief 结构化参数
    */
-  int random_seed{37};
+  const AlnsRepairGreedyParam parameter;
   /**
    * @brief 随机数
    */
   RandomUtils::UPtr random;
-  /**
-   * @brief 选择 segment-load 组合方案的 top 比例
-   */
-  double top_rate{0.2};
 
   explicit AlnsRepairGreedy(const SolverContext* _context, ParallelExecutor* _parallel_executor,
-                            const sol::table& cfg);
+                            const AlnsRepairGreedyParam& _parameter);
 
   void execute(RepairMatrix* repair_matrix) override;
 

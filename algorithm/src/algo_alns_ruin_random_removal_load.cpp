@@ -10,46 +10,35 @@
 #include <stdexcept>
 
 // ====== implement of AlnsRuinRandomRemovalLoad ======
-AlnsRuinRandomRemovalLoad::AlnsRuinRandomRemovalLoad(const SolverContext* _context,
-                                                     const sol::table& cfg)
-    : AlnsRuinOperator(AlnsRuinOperatorCode::RuinRandomRemovalLoad, _context) {
-  if (cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MIN_RATE].valid()) {
-    this->select_load_min_rate =
-        static_cast<double>(cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MIN_RATE]);
-  }
-  if (cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MAX_RATE].valid()) {
-    this->select_load_max_rate =
-        static_cast<double>(cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_MAX_RATE]);
-  }
-  if (cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_RANDOM_SEED].valid()) {
-    this->select_load_random_seed =
-        static_cast<int>(cfg[AlnsRuinRandomRemovalLoadLuaField::SELECT_LOAD_RANDOM_SEED]);
-  }
-  this->select_load_random = std::make_unique<RandomUtils>(this->select_load_random_seed);
+AlnsRuinRandomRemovalLoad::AlnsRuinRandomRemovalLoad(
+    const SolverContext* _context, const AlnsRuinRandomRemovalLoadParam& _parameter)
+    : AlnsRuinOperator(AlnsRuinOperatorCode::RuinRandomRemovalLoad, _context),
+      parameter(_parameter) {
+  this->select_load_random = std::make_unique<RandomUtils>(this->parameter.select_load_random_seed);
 
   // 校验参数
-  if (this->select_load_min_rate < 0.0 || this->select_load_min_rate > 1.0) {
+  if (this->parameter.select_load_min_rate < 0.0 || this->parameter.select_load_min_rate > 1.0) {
     throw std::invalid_argument(this->code + ": `select_load_min_rate` must be in [0, 1], got " +
-                                std::to_string(this->select_load_min_rate));
+                                std::to_string(this->parameter.select_load_min_rate));
   }
 
-  if (this->select_load_max_rate < 0.0 || this->select_load_max_rate > 1.0) {
+  if (this->parameter.select_load_max_rate < 0.0 || this->parameter.select_load_max_rate > 1.0) {
     throw std::runtime_error(this->code + ": `select_load_max_rate` must be in [0, 1], got " +
-                             std::to_string(this->select_load_max_rate));
+                             std::to_string(this->parameter.select_load_max_rate));
   }
 
-  if (this->select_load_min_rate > this->select_load_max_rate) {
+  if (this->parameter.select_load_min_rate > this->parameter.select_load_max_rate) {
     throw std::runtime_error(this->code + ": `select_load_min_rate` (" +
-                             std::to_string(this->select_load_min_rate) +
+                             std::to_string(this->parameter.select_load_min_rate) +
                              ") must not exceed select_load_max_rate (" +
-                             std::to_string(this->select_load_max_rate) + ")");
+                             std::to_string(this->parameter.select_load_max_rate) + ")");
   }
 }
 
 std::string AlnsRuinRandomRemovalLoad::format_parameters() const {
   return std::format("select_load_random_seed={}, select_load_min_rate={}, select_load_max_rate={}",
-                     this->select_load_random_seed, this->select_load_min_rate,
-                     this->select_load_max_rate);
+                     this->parameter.select_load_random_seed, this->parameter.select_load_min_rate,
+                     this->parameter.select_load_max_rate);
 }
 
 std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalLoad::execute(
@@ -57,9 +46,9 @@ std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalLoad::e
   // 当前解空间
   const int load_count = static_cast<int>(sol->loads.size());
   // ruin的load数量
-  const int select_load_count =
-      std::max(1, this->select_load_random->random_int(load_count, this->select_load_min_rate,
-                                                       this->select_load_max_rate));
+  const int select_load_count = std::max(
+      1, this->select_load_random->random_int(load_count, this->parameter.select_load_min_rate,
+                                              this->parameter.select_load_max_rate));
   // load索引的随机排序
   auto random_load_indices = this->select_load_random->shuffled_range(load_count);
   // 选中指定数量的load

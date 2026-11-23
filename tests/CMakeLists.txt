@@ -8,21 +8,46 @@ add_executable(vrp_exec vrp_main.cpp)
 target_link_libraries(vrp_exec PRIVATE yun_solver)
 
 add_executable(algo_alns_sa_test algorithm/algo_alns_sa_test.cpp)
-target_link_libraries(algo_alns_sa_test PRIVATE yun_algorithm sol2::sol2 GTest::gtest_main)
+target_link_libraries(algo_alns_sa_test PRIVATE yun_algorithm GTest::gtest_main)
 add_test(NAME algo_alns_sa_test COMMAND algo_alns_sa_test)
 
 add_executable(algo_alns_operator_test algorithm/algo_alns_operator_test.cpp)
-target_link_libraries(algo_alns_operator_test PRIVATE yun_algorithm sol2::sol2 GTest::gtest_main)
+target_link_libraries(algo_alns_operator_test PRIVATE yun_algorithm GTest::gtest_main)
 add_test(NAME algo_alns_operator_test COMMAND algo_alns_operator_test)
 
 add_executable(algo_alns_ruin_worst_removal_test algorithm/algo_alns_ruin_worst_removal_test.cpp)
 target_link_libraries(algo_alns_ruin_worst_removal_test PRIVATE
-    yun_algorithm sol2::sol2 GTest::gtest_main)
+    yun_algorithm GTest::gtest_main)
 add_test(NAME algo_alns_ruin_worst_removal_test COMMAND algo_alns_ruin_worst_removal_test)
+
+add_executable(algo_ls_knn_prune_test algorithm/algo_ls_knn_prune_test.cpp)
+target_link_libraries(algo_ls_knn_prune_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME algo_ls_knn_prune_test COMMAND algo_ls_knn_prune_test)
+
+add_executable(algo_ls_operator_test algorithm/algo_ls_operator_test.cpp)
+target_link_libraries(algo_ls_operator_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME algo_ls_operator_test COMMAND algo_ls_operator_test)
+
+add_executable(algo_ls_dist_prune_test algorithm/algo_ls_dist_prune_test.cpp)
+target_link_libraries(algo_ls_dist_prune_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME algo_ls_dist_prune_test COMMAND algo_ls_dist_prune_test)
+
+add_executable(stra_construct_config_test solver/stra_construct_config_test.cpp)
+target_link_libraries(stra_construct_config_test PRIVATE
+    yun_solver sol2::sol2 GTest::gtest_main)
+add_test(NAME stra_construct_config_test COMMAND stra_construct_config_test)
 
 add_executable(bd_time_window_utils_test scenario/bd_time_window_utils_test.cpp)
 target_link_libraries(bd_time_window_utils_test PRIVATE yun_scenario GTest::gtest_main)
 add_test(NAME bd_time_window_utils_test COMMAND bd_time_window_utils_test)
+
+add_executable(bd_bitset_test scenario/bd_bitset_test.cpp)
+target_link_libraries(bd_bitset_test PRIVATE yun_scenario GTest::gtest_main)
+add_test(NAME bd_bitset_test COMMAND bd_bitset_test)
+
+add_executable(bd_dist_matrix_test scenario/bd_dist_matrix_test.cpp)
+target_link_libraries(bd_dist_matrix_test PRIVATE yun_scenario GTest::gtest_main)
+add_test(NAME bd_dist_matrix_test COMMAND bd_dist_matrix_test)
 
 add_executable(c_log_test common/c_log_test.cpp)
 target_link_libraries(c_log_test PRIVATE yun_common GTest::gtest_main)
@@ -35,6 +60,22 @@ add_test(NAME c_time_utils_test COMMAND c_time_utils_test)
 add_executable(pdm_node_test problem/pdm_node_test.cpp)
 target_link_libraries(pdm_node_test PRIVATE yun_problem GTest::gtest_main)
 add_test(NAME pdm_node_test COMMAND pdm_node_test)
+
+add_executable(pdm_time_window_cache_test problem/pdm_time_window_cache_test.cpp)
+target_link_libraries(pdm_time_window_cache_test PRIVATE yun_problem GTest::gtest_main)
+add_test(NAME pdm_time_window_cache_test COMMAND pdm_time_window_cache_test)
+
+add_executable(hc_label_value_test problem/hc_label_value_test.cpp)
+target_link_libraries(hc_label_value_test PRIVATE yun_problem GTest::gtest_main)
+add_test(NAME hc_label_value_test COMMAND hc_label_value_test)
+
+add_executable(hc_precheck_test problem/hc_precheck_test.cpp)
+target_link_libraries(hc_precheck_test PRIVATE yun_problem GTest::gtest_main)
+add_test(NAME hc_precheck_test COMMAND hc_precheck_test)
+
+add_executable(prob_pattern_spmd_test problem/prob_pattern_spmd_test.cpp)
+target_link_libraries(prob_pattern_spmd_test PRIVATE yun_problem GTest::gtest_main)
+add_test(NAME prob_pattern_spmd_test COMMAND prob_pattern_spmd_test)
 
 add_executable(visual_manager_test problem/visual_manager_test.cpp)
 target_link_libraries(visual_manager_test PRIVATE yun_problem GTest::gtest_main)

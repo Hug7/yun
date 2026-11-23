@@ -25,6 +25,7 @@ constexpr char KEY_CARGO_ORDER_GROUP_RULE[] = "cargo_order_group_rule";
 constexpr char KEY_CARGO_ORDER_GROUP_RULE_LABEL_CODE[] = "label_code";
 constexpr char KEY_CARGO_ORDER_GROUP_RULE_LABEL_VALUE_GROUP[] = "label_value_group";
 constexpr char KEY_HARD_CONSTRAINTS[] = "hard_constraints";
+constexpr char KEY_HARD_CONSTR_PRECHECK[] = "hard_constr_precheck";
 constexpr char KEY_SOFT_CONSTRAINTS[] = "soft_constraints";
 
 [[noreturn]] void fail(const std::string& path, const std::string& reason,
@@ -44,8 +45,8 @@ void PlanDatetimeRange::set_end_datetime(const std::string& end_datetime) {
   this->end_time = TimeParse::parse_tm_to_sec(end_datetime, TimeParse::fmt_yyyymmddhhmm_1);
 }
 
-TimeWindow* PlanDatetimeRange::create_default_time_window() const {
-  return new TimeWindow(this->start_time, this->end_time);
+TimeWindow PlanDatetimeRange::create_default_time_window() const {
+  return {this->start_time, this->end_time};
 }
 
 // ====== implement of CargoOrderGroupRule ======
@@ -150,6 +151,18 @@ void Parameter::parse_hard_constraints(const YamlNode& param_node) {
   this->hard_constr_items = parse_hard_constr_items(hard_constr_nodes);
 }
 
+void Parameter::parse_hard_constr_precheck(const YamlNode& param_node) {
+  if (!param_node.contains_key(KEY_HARD_CONSTR_PRECHECK)) {
+    return;
+  }
+  const auto node = param_node.get_node(KEY_HARD_CONSTR_PRECHECK);
+  try {
+    this->hard_constr_precheck = node.as<bool>();
+  } catch (const YAML::Exception&) {
+    fail(KEY_HARD_CONSTR_PRECHECK, "数据类型不符合预期`bool`", this->logger);
+  }
+}
+
 void Parameter::parse_soft_constraints(const YamlNode& param_node) {
   if (!param_node.contains_key(KEY_SOFT_CONSTRAINTS)) {
     return;
@@ -174,6 +187,7 @@ Parameter* load_parameter(const std::string& root_dir, const Scenario* scenario,
   parameter->parse_cargo_order_group_rule(param_node, scenario->label_manager->order_labelset);
   // 解析-硬约束项
   parameter->parse_hard_constraints(param_node);
+  parameter->parse_hard_constr_precheck(param_node);
   // 解析-软约束项
   parameter->parse_soft_constraints(param_node);
   // 参数后处理

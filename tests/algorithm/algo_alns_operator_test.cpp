@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <initializer_list>
 #include <memory>
-#include <sol/sol.hpp>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -317,28 +316,19 @@ TEST(AlnsOperatorManagerTest, FormatStatisticsPrintsMatrixAndMarginals) {
 
 // ====== 求解前打印算子 ======
 TEST(AlnsOperatorManagerTest, FormatOperatorsPrintsCodesAndParameters) {
-  sol::state lua;
-  lua.open_libraries(sol::lib::base);
-  lua.script(R"(
-    cfg = {
-      ruin_operator_params = {
-        {
-          code = "RuinRandomRemovalLoad",
-          params = {
-            select_load_min_rate = 0.2,
-            select_load_max_rate = 0.5,
-            select_load_random_seed = 7,
-          },
-        },
-      },
-      repair_operator_params = {
-        { code = "RepairRegretK", params = { regret_k = 3 } },
-      },
-    }
-  )");
-  const sol::table cfg = lua["cfg"];
   AlnsParameter parameter;
-  const auto manager = create_alns_operator(cfg, &parameter, nullptr, nullptr);
+  const std::vector<AlnsRuinOperatorParam> ruin_operator_params{
+      AlnsRuinRandomRemovalLoadParam{
+          .select_load_random_seed = 7,
+          .select_load_min_rate = 0.2,
+          .select_load_max_rate = 0.5,
+      },
+  };
+  const std::vector<AlnsRepairOperatorParam> repair_operator_params{
+      AlnsRepairRegretKParam{.regret_k = 3},
+  };
+  const auto manager = create_alns_operator(ruin_operator_params, repair_operator_params,
+                                            &parameter, nullptr, nullptr);
 
   const std::string text = manager->format_operators();
   EXPECT_NE(text.find("alns operators: ruin_count=1 repair_count=1"), std::string::npos);
@@ -350,12 +340,8 @@ TEST(AlnsOperatorManagerTest, FormatOperatorsPrintsCodesAndParameters) {
 
 // ====== 空算子兜底 ======
 TEST(AlnsOperatorManagerTest, CreateAlnsOperatorUsesDefaultsWhenOperatorArraysMissing) {
-  sol::state lua;
-  lua.open_libraries(sol::lib::base);
-  lua.script("cfg = {}");
-  const sol::table cfg = lua["cfg"];
   AlnsParameter parameter;
-  const auto manager = create_alns_operator(cfg, &parameter, nullptr, nullptr);
+  const auto manager = create_alns_operator({}, {}, &parameter, nullptr, nullptr);
 
   ASSERT_EQ(manager->ruin_operator_count, 3);
   ASSERT_EQ(manager->repair_operator_count, 2);
@@ -389,19 +375,12 @@ TEST(AlnsOperatorManagerTest, CreateAlnsOperatorUsesDefaultsWhenOperatorArraysMi
 }
 
 TEST(AlnsOperatorManagerTest, CreateAlnsOperatorFallsBackPerEmptyOperatorArray) {
-  sol::state lua;
-  lua.open_libraries(sol::lib::base);
-  lua.script(R"(
-    cfg = {
-      ruin_operator_params = {},
-      repair_operator_params = {
-        { code = "RepairRegretK", params = { regret_k = 3 } },
-      },
-    }
-  )");
-  const sol::table cfg = lua["cfg"];
   AlnsParameter parameter;
-  const auto manager = create_alns_operator(cfg, &parameter, nullptr, nullptr);
+  const std::vector<AlnsRepairOperatorParam> repair_operator_params{
+      AlnsRepairRegretKParam{.regret_k = 3},
+  };
+  const auto manager =
+      create_alns_operator({}, repair_operator_params, &parameter, nullptr, nullptr);
 
   // 只有空的 ruin 数组回退到默认算子, 用户自定义的 repair 保留
   EXPECT_EQ(manager->ruin_operator_count, 3);

@@ -22,6 +22,8 @@ class HcMaxPickNodeCount : public HardConstraint {
         max_pick_node_count(max_pick_node_count) {};
 
   HardConstrScore::UPtr eval(Load* load) override;
+
+  [[nodiscard]] HcPrecheckVerdict precheck(const HcPrecheckInput& input) const override;
 };
 
 /**
@@ -39,6 +41,8 @@ class HcMaxDropNodeCount : public HardConstraint {
         max_drop_node_count(max_drop_node_count) {};
 
   HardConstrScore::UPtr eval(Load* load) override;
+
+  [[nodiscard]] HcPrecheckVerdict precheck(const HcPrecheckInput& input) const override;
 };
 
 /**
@@ -49,6 +53,8 @@ class HcAvailableVehicle : public HardConstraint {
   HcAvailableVehicle() : HardConstraint(HardConstrCode::AvailableVehicle, 0, false, true) {};
 
   HardConstrScore::UPtr eval(Load* load) override;
+
+  [[nodiscard]] HcPrecheckVerdict precheck(const HcPrecheckInput& input) const override;
 };
 
 /**

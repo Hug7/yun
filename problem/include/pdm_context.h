@@ -11,6 +11,7 @@
 #include <string>
 
 #include "pdm_parameter.h"
+#include "prob_load_editor.h"
 #include "prob_problem.h"
 #include "se_scenario.h"
 #include "visual_manager.h"
@@ -52,6 +53,10 @@ class SolverContext {
    * @brief 问题
    */
   Problem* problem;
+  /**
+   * @brief 车次编辑器（构造车次、改派车型、插入订单片段等）
+   */
+  LoadEditor* load_editor;
 
   /**
    * @brief 构造solver上下文

@@ -5,6 +5,7 @@
 
 #include "pdm_node.h"
 
+#include <stdexcept>
 #include <unordered_map>
 
 #include "bdm_time_window.h"
@@ -14,7 +15,6 @@
 
 Node::Node(const ActivityType activity_type, const Location* loc)
     : activity_type(activity_type), loc(loc) {
-  this->ptws = std::vector<std::unique_ptr<TimeWindowPlan>>();
   this->first = nullptr;
   this->last = nullptr;
   this->next = nullptr;
@@ -26,7 +26,6 @@ Node::Node(const ActivityType activity_type, const Location* loc)
 Node::Node(const ActivityType activity_type, const Location* loc,
            std::unique_ptr<Activity> activity)
     : activity_type(activity_type), loc(loc) {
-  this->ptws = std::vector<std::unique_ptr<TimeWindowPlan>>();
   this->first = std::move(activity);
   this->last = this->first.get();
   this->first->owner_node = this;
@@ -36,9 +35,9 @@ Node::Node(const ActivityType activity_type, const Location* loc,
   this->travel_time = 0;
 }
 
-void Node::set_travel_dist(std::int64_t travel_dist) { this->travel_dist = travel_dist; }
+void Node::set_travel_dist(const std::int64_t _travel_dist) { this->travel_dist = _travel_dist; }
 
-void Node::set_travel_time(std::int64_t travel_time) { this->travel_time = travel_time; }
+void Node::set_travel_time(const std::int64_t _travel_time) { this->travel_time = _travel_time; }
 
 void Node::add_front_activity(Activity::UPtr activity) {
   activity->owner_node = this;
@@ -85,21 +84,28 @@ bool Node::remove_activity(Activity* activity) {
   return this->first == nullptr;
 }
 
-std::vector<TimeWindow*> Node::intersection_time_windows() const {
+std::vector<TimeWindow> Node::intersection_time_windows() const {
   if (this->first == nullptr) {
     return {};
   }
-  std::vector<const std::vector<TimeWindow*>*> ori_tws_arr;
+  int pre_tw_pattern_id = -1;
+  std::vector<const std::vector<TimeWindow>*> ori_tws_arr;
   if (this->activity_type == ActivityType::PICK) {
     auto tail_activity = this->last;
     while (tail_activity) {
-      ori_tws_arr.push_back(&tail_activity->order->pick_time_windows);
+      if (tail_activity->order->pick_tw_pattern_id != pre_tw_pattern_id) {
+        ori_tws_arr.push_back(&tail_activity->order->pick_time_windows);
+        pre_tw_pattern_id = tail_activity->order->pick_tw_pattern_id;
+      }
       tail_activity = tail_activity->prev;
     }
   } else if (this->activity_type == ActivityType::DROP) {
     auto tail_activity = this->last;
     while (tail_activity) {
-      ori_tws_arr.push_back(&tail_activity->order->drop_time_windows);
+      if (tail_activity->order->drop_tw_pattern_id != pre_tw_pattern_id) {
+        ori_tws_arr.push_back(&tail_activity->order->drop_time_windows);
+        pre_tw_pattern_id = tail_activity->order->drop_tw_pattern_id;
+      }
       tail_activity = tail_activity->prev;
     }
   }
@@ -111,6 +117,23 @@ void Node::get_orders(std::vector<const Order*>& out) const {
   auto tail_activity = this->last;
   while (tail_activity) {
     out.push_back(tail_activity->order);
+    tail_activity = tail_activity->prev;
+  }
+}
+
+void Node::get_time_window_pattern_ids(bool is_pick, std::vector<int>& out) const {
+  out.clear();
+  auto tail_activity = this->last;
+  while (tail_activity) {
+    const int pattern_id = is_pick ? tail_activity->order->pick_tw_pattern_id
+                                   : tail_activity->order->drop_tw_pattern_id;
+    if (pattern_id < 0) {
+      throw std::logic_error("Node: 订单缺少时间窗模式 id");
+    }
+    // 相邻订单常共享同一时间窗模式, 跳过可少写一次缓冲
+    if (out.empty() || out.back() != pattern_id) {
+      out.push_back(pattern_id);
+    }
     tail_activity = tail_activity->prev;
   }
 }
@@ -242,9 +265,7 @@ Node::UPtr NodeOps::deep_copy_chain(const Node* head) {
   Node* copy_tail = nullptr;
   for (const Node* src_node = head; src_node != nullptr; src_node = src_node->next.get()) {
     auto copy_node = std::make_unique<Node>(src_node->activity_type, src_node->loc);
-    for (const auto& src_ptw : src_node->ptws) {
-      copy_node->ptws.push_back(src_ptw->deep_copy());
-    }
+    copy_node->ptws = src_node->ptws;
     for (const Activity* src_activity = src_node->first.get(); src_activity != nullptr;
          src_activity = src_activity->next.get()) {
       auto copy_activity =

@@ -43,6 +43,10 @@ void VehicleResource::release(const Vehicle* vehicle) const {
   this->vehicle_usages[vehicle->ind]->release_vehicle();
 }
 
+bool VehicleResource::has_available(const Vehicle* vehicle) const {
+  return this->vehicle_usages[vehicle->ind]->has_available_vehicle();
+}
+
 // ====== implement of ResourceFactory ======
 VehicleResource::UPtr ResourceFactory::create_vehicle_resource(
     const CarrierManager* carrier_manager) {

@@ -26,10 +26,6 @@ target_include_directories(yun_algorithm
 # 4. linked dependencies
 target_link_libraries(yun_algorithm PUBLIC yun_common yun_problem)
 
-find_package(lua CONFIG REQUIRED)
-find_package(sol2 CONFIG REQUIRED)
-target_link_libraries(yun_algorithm PRIVATE sol2::sol2 lua::lua)
-
 # libfork: header-only 的 C++20 协程 fork-join 调度器, 供 ParallelExecutor 使用
 find_package(libfork CONFIG REQUIRED)
 target_link_libraries(yun_algorithm PUBLIC libfork::libfork)

@@ -10,46 +10,37 @@
 #include <stdexcept>
 
 // ====== implement of AlnsRuinRandomRemovalOrder ======
-AlnsRuinRandomRemovalOrder::AlnsRuinRandomRemovalOrder(const SolverContext* _context,
-                                                       const sol::table& cfg)
-    : AlnsRuinOperator(AlnsRuinOperatorCode::RuinRandomRemovalOrder, _context) {
-  if (cfg[AlnsRuinRandomRemovalOrderLuaField::SELECT_ORDER_MIN_RATE].valid()) {
-    this->select_order_min_rate =
-        static_cast<double>(cfg[AlnsRuinRandomRemovalOrderLuaField::SELECT_ORDER_MIN_RATE]);
-  }
-  if (cfg[AlnsRuinRandomRemovalOrderLuaField::SELECT_ORDER_MAX_RATE].valid()) {
-    this->select_order_max_rate =
-        static_cast<double>(cfg[AlnsRuinRandomRemovalOrderLuaField::SELECT_ORDER_MAX_RATE]);
-  }
-  if (cfg[AlnsRuinRandomRemovalOrderLuaField::SELECT_ORDER_RANDOM_SEED].valid()) {
-    this->select_order_random_seed =
-        static_cast<int>(cfg[AlnsRuinRandomRemovalOrderLuaField::SELECT_ORDER_RANDOM_SEED]);
-  }
-  this->select_order_random = std::make_unique<RandomUtils>(this->select_order_random_seed);
+AlnsRuinRandomRemovalOrder::AlnsRuinRandomRemovalOrder(
+    const SolverContext* _context, const AlnsRuinRandomRemovalOrderParam& _parameter)
+    : AlnsRuinOperator(AlnsRuinOperatorCode::RuinRandomRemovalOrder, _context),
+      parameter(_parameter) {
+  this->select_order_random =
+      std::make_unique<RandomUtils>(this->parameter.select_order_random_seed);
 
   // 校验参数
-  if (this->select_order_min_rate < 0.0 || this->select_order_min_rate > 1.0) {
+  if (this->parameter.select_order_min_rate < 0.0 || this->parameter.select_order_min_rate > 1.0) {
     throw std::invalid_argument(this->code + ": `select_order_min_rate` must be in [0, 1], got " +
-                                std::to_string(this->select_order_min_rate));
+                                std::to_string(this->parameter.select_order_min_rate));
   }
 
-  if (this->select_order_max_rate < 0.0 || this->select_order_max_rate > 1.0) {
+  if (this->parameter.select_order_max_rate < 0.0 || this->parameter.select_order_max_rate > 1.0) {
     throw std::runtime_error(this->code + ": `select_order_max_rate` must be in [0, 1], got " +
-                             std::to_string(this->select_order_max_rate));
+                             std::to_string(this->parameter.select_order_max_rate));
   }
 
-  if (this->select_order_min_rate > this->select_order_max_rate) {
+  if (this->parameter.select_order_min_rate > this->parameter.select_order_max_rate) {
     throw std::runtime_error(this->code + ": `select_order_min_rate` (" +
-                             std::to_string(this->select_order_min_rate) +
+                             std::to_string(this->parameter.select_order_min_rate) +
                              ") must not exceed select_order_max_rate (" +
-                             std::to_string(this->select_order_max_rate) + ")");
+                             std::to_string(this->parameter.select_order_max_rate) + ")");
   }
 }
 
 std::string AlnsRuinRandomRemovalOrder::format_parameters() const {
   return std::format(
       "select_order_random_seed={}, select_order_min_rate={}, select_order_max_rate={}",
-      this->select_order_random_seed, this->select_order_min_rate, this->select_order_max_rate);
+      this->parameter.select_order_random_seed, this->parameter.select_order_min_rate,
+      this->parameter.select_order_max_rate);
 }
 
 std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalOrder::execute(
@@ -70,9 +61,9 @@ std::unordered_map<int, AlnsRuinLoadActivity::UPtr> AlnsRuinRandomRemovalOrder::
     return select_order_res;
   }
   // 随机确定要移除的订单数
-  const int select_order_count =
-      std::max(1, this->select_order_random->random_int(order_count, this->select_order_min_rate,
-                                                        this->select_order_max_rate));
+  const int select_order_count = std::max(
+      1, this->select_order_random->random_int(order_count, this->parameter.select_order_min_rate,
+                                               this->parameter.select_order_max_rate));
   // 随机打乱后取前 select_order_count 个订单, 按所属load归集待移除的activity
   this->select_order_random->shuffle(pick_activities);
   for (int u = 0; u < select_order_count; ++u) {

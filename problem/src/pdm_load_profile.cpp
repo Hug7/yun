@@ -6,65 +6,56 @@
 #include "pdm_load_profile.h"
 
 // ====== implement of LoadAttrBase ======
-LoadRouteProfile::LoadRouteProfile(const Scenario* scenario) {
-  this->dirty_marks =
-      std::make_unique<Bitset>(static_cast<size_t>(LoadRouteProfileField::FIELDS_COUNT));
-  this->peak_load_dims = scenario->dim_manager->empty_dim_values();
-  this->total_load_dims = scenario->dim_manager->empty_dim_values();
-  this->pick_loc_labelset_value_bitset =
-      scenario->label_manager->location_labelset->empty_labelset_value_bitset();
-  this->drop_loc_labelset_value_bitset =
-      scenario->label_manager->location_labelset->empty_labelset_value_bitset();
-  this->order_labelset_value_bitset =
-      scenario->label_manager->order_labelset->empty_labelset_value_bitset();
-  this->available_vehicle_bitset = scenario->carrier_manager->empty_vehicle_bitset();
-  this->pick_node_count = 0;
-  this->drop_node_count = 0;
-  this->total_travel_dist = 0;
-  this->total_travel_time = 0;
-}
+LoadRouteProfile::LoadRouteProfile(const Scenario* scenario)
+    : dirty_marks(static_cast<size_t>(LoadRouteProfileField::FIELDS_COUNT)),
+      peak_load_dims(scenario->dim_manager->empty_dim_values()),
+      total_load_dims(scenario->dim_manager->empty_dim_values()),
+      pick_loc_labelset_value_bitset(scenario->label_manager->location_labelset),
+      drop_loc_labelset_value_bitset(scenario->label_manager->location_labelset),
+      order_labelset_value_bitset(scenario->label_manager->order_labelset),
+      available_vehicle_bitset(scenario->carrier_manager->empty_vehicle_bitset()),
+      pick_node_count(0),
+      drop_node_count(0),
+      total_travel_dist(0),
+      total_travel_time(0) {}
 
-LoadRouteProfile::LoadRouteProfile(const LoadRouteProfile::UPtr& other) {
-  this->dirty_marks = std::make_unique<Bitset>(other->dirty_marks);
-  this->peak_load_dims = other->peak_load_dims;
-  this->total_load_dims = other->total_load_dims;
-  this->pick_loc_labelset_value_bitset =
-      std::make_unique<LabelsetValueBitset>(other->pick_loc_labelset_value_bitset);
-  this->drop_loc_labelset_value_bitset =
-      std::make_unique<LabelsetValueBitset>(other->drop_loc_labelset_value_bitset);
-  this->order_labelset_value_bitset =
-      std::make_unique<LabelsetValueBitset>(other->order_labelset_value_bitset);
-  this->available_vehicle_bitset = std::make_unique<Bitset>(other->available_vehicle_bitset);
-  this->pick_node_count = other->pick_node_count;
-  this->drop_node_count = other->drop_node_count;
-  this->total_travel_dist = other->total_travel_dist;
-  this->total_travel_time = other->total_travel_time;
-}
+LoadRouteProfile::LoadRouteProfile(const LoadRouteProfile::UPtr& other)
+    : dirty_marks(other->dirty_marks),
+      peak_load_dims(other->peak_load_dims),
+      total_load_dims(other->total_load_dims),
+      pick_loc_labelset_value_bitset(other->pick_loc_labelset_value_bitset),
+      drop_loc_labelset_value_bitset(other->drop_loc_labelset_value_bitset),
+      order_labelset_value_bitset(other->order_labelset_value_bitset),
+      available_vehicle_bitset(other->available_vehicle_bitset),
+      pick_node_count(other->pick_node_count),
+      drop_node_count(other->drop_node_count),
+      total_travel_dist(other->total_travel_dist),
+      total_travel_time(other->total_travel_time) {}
 
 bool LoadRouteProfile::get_set_dirty_mark(LoadRouteProfileField field) {
   const int field_ind = static_cast<int>(field);
-  if (this->dirty_marks->test(field_ind)) {
+  if (this->dirty_marks.test(field_ind)) {
     return true;
   }
-  this->dirty_marks->set(field_ind);
+  this->dirty_marks.set(field_ind);
   return false;
 }
 
-bool LoadRouteProfile::get_dirty_mark(LoadRouteProfileField field) {
+bool LoadRouteProfile::get_dirty_mark(LoadRouteProfileField field) const {
   const int field_ind = static_cast<int>(field);
-  return this->dirty_marks->test(field_ind);
+  return this->dirty_marks.test(field_ind);
 }
 
 void LoadRouteProfile::set_dirty_mark(LoadRouteProfileField field) {
   const int field_ind = static_cast<int>(field);
-  this->dirty_marks->set(field_ind);
+  this->dirty_marks.set(field_ind);
 }
 
-void LoadRouteProfile::reset_dirty_marks() { this->dirty_marks->clear_all(); }
+void LoadRouteProfile::reset_dirty_marks() { this->dirty_marks.clear_all(); }
 
 void LoadRouteProfile::reset_dirty_mark(LoadRouteProfileField field) {
   const int field_ind = static_cast<int>(field);
-  this->dirty_marks->clear(field_ind);
+  this->dirty_marks.clear(field_ind);
 }
 
 // ====== implement of LoadConstraintProfile ======
@@ -102,7 +93,7 @@ void LoadConstrProfile::update_obj_val() {
   this->obj_val = this->total_hard_penalty + this->total_soft_penalty + this->total_cost;
 }
 
-bool LoadConstrProfile::dominate(LoadConstrProfile::UPtr& other) {
+bool LoadConstrProfile::dominate(const LoadConstrProfile::UPtr& other) const {
   if (this->infeasible ^ other->infeasible) {
     return other->infeasible;
   } else {
