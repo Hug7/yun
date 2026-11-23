@@ -225,7 +225,8 @@ LsReport LsSearch::run(Solution* sol) const {
     throw std::invalid_argument("LsSearch::run: `sol` must not be null");
   }
 
-  std::vector<std::unique_ptr<LsOperator>> operators = create_ls_operators(this->impl_->operator_params);
+  std::vector<std::unique_ptr<LsOperator>> operators =
+      create_ls_operators(this->impl_->operator_params);
   if (operators.empty()) {
     throw std::invalid_argument("LsSearch::run: no local search operators configured");
   }

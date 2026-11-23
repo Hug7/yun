@@ -23,12 +23,8 @@ TEST(LsOperatorTest, DefaultSetSplitsIntraAndInterRoute) {
 
   ASSERT_EQ(operators.size(), 6U);
   const std::vector<std::string> expected{
-      "LsIntraRouteRelocate",
-      "LsIntraRouteRelocate",
-      "LsIntraRouteExchange",
-      "LsInterRouteRelocate",
-      "LsInterRouteRelocate",
-      "LsInterRouteExchange",
+      "LsIntraRouteRelocate", "LsIntraRouteRelocate", "LsIntraRouteExchange",
+      "LsInterRouteRelocate", "LsInterRouteRelocate", "LsInterRouteExchange",
   };
   for (std::size_t ind = 0; ind < expected.size(); ++ind) {
     EXPECT_EQ(operators[ind]->code, expected[ind]) << "instance " << ind;

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "stra_ls_config.h"
+
 #include <cmath>
 #include <cstdint>
 #include <format>
@@ -19,7 +21,6 @@
 #include "algo_ls_operator.h"
 #include "algo_ls_segment_relocate.h"
 #include "algo_ls_two_opt.h"
-#include "stra_ls_config.h"
 
 namespace {
 /**

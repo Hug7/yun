@@ -30,8 +30,9 @@ Calendar::Calendar(CalendarTimeRangeType time_range_type) {
 
 void Calendar::set_one_day_time_ranges(const int day_ind,
                                        std::vector<std::pair<int, int>>& time_ranges) {
-  std::ranges::sort(time_ranges,
-      [](const std::pair<int, int>& a, const std::pair<int, int>& b) { return a.first < b.first; });
+  std::ranges::sort(time_ranges, [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+    return a.first < b.first;
+  });
 
   if (!time_ranges.empty()) {
     this->day_time_ranges[day_ind] = time_ranges;
