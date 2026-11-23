@@ -24,7 +24,7 @@ class LsSearch {
    * @brief 构造搜索器
    * @param context 求解上下文，不允许为空
    * @param parameter 搜索参数
-   * @param operators 算子列表
+   * @param operators 算子列表，构造时拷贝一份，不要求调用方延长其生命周期
    * @param order_relationship_graph 订单关系图，用于构建 KNN 剪枝图；传 nullptr 表示不剪枝
    * @details KNN 图由搜索器持有：首次 `run` 时按当时解构建一次，之后的 pass 与
    *          同一搜索器上的后续 `run` 都复用该图。
