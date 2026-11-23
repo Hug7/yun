@@ -26,11 +26,17 @@
   支持 `Order` 标签与 `Location` 标签；Location 可用 `side` 选择 `Pick` / `Drop` / `Both`。
   互斥按组内两两不可同车判定，不做跨组传递合并；可拼按“不同生效组不可同车”判定，
   未列出的取值自动归入默认组。约束在构造时预计算每个取值的不可拼位图，判定时与车次
-  标签位图求交；新增不可行原因 1012–1017。参数说明见
+  标签位图求交；新增不可行原因 1011–1016。参数说明见
   [docs/parameter_reference.md](docs/parameter_reference.md)。(#47)
+- 新增常规硬约束 `LabelValueMaxCount`（标签值种类数上限），支持 `Order` 与 `Location` 标签；
+  Location 可用 `side` 选择 `Pick` / `Drop` / `Both`，`Both`（默认）按提货侧与卸货侧合并去重统计。
+  新增不可行原因 1017–1020；同时移除未使用的 1007，原 1008–1017 前移一位为 1007–1016，保持编码连续。
+  参数说明见 [docs/parameter_reference.md](docs/parameter_reference.md)。 (#48)
 
 ### Changed
 
+- 不可解原因码重排：移除未使用的 1007 `DISTINCT_LABEL_VALUE_MAX_COUNT`，原 1008–1017 前移一位；
+  对外输出的 `ReasonCode` 数值随之变化。 (#48)
 - alns repair 公用插入方法改为 delta insert，用于缓解全量的无效插入动作。 (#31)
 - Problem 职责简化，将 insert 和 check order 功能移出。 (#33)
 - alns 参数改由策略层转换为 POD，算法层脱离 Lua。 (#28)

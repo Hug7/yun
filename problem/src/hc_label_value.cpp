@@ -7,6 +7,7 @@
 
 #include <bit>
 #include <cstdint>
+#include <span>
 #include <utility>
 
 namespace {
@@ -248,6 +249,77 @@ HardConstrScore::UPtr HcLabelValueCompatible::eval(Load* load) {
     }
     if (this->violates(load->get_drop_loc_labelset_value_bitset())) {
       return violation(InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_COMPATIBLE);
+    }
+  }
+  return std::make_unique<HardConstrScore>(this->code);
+}
+
+// ====== implement of HcLabelValueMaxCount ======
+HcLabelValueMaxCount::HcLabelValueMaxCount(const LabelValueScope label_value_scope,
+                                           const int max_count)
+    : HardConstraint(HardConstrCode::LabelValueMaxCount, 0, false, false),
+      scope(label_value_scope),
+      max_count(max_count),
+      label_words_len_((label_value_scope.labelset->labels[label_value_scope.label_ind]->len + 63) /
+                       64) {}
+
+bool HcLabelValueMaxCount::violates(const LabelsetValueBitset* bitset) const {
+  if (bitset == nullptr) {
+    return false;
+  }
+  return bitset->sum(this->scope.label_ind) > this->max_count;
+}
+
+bool HcLabelValueMaxCount::violates_union(const LabelsetValueBitset* pick_bitset,
+                                          const LabelsetValueBitset* drop_bitset) const {
+  const std::span<const std::uint64_t> pick_words =
+      pick_bitset == nullptr ? std::span<const std::uint64_t>{}
+                             : pick_bitset->label_words(this->scope.label_ind);
+  const std::span<const std::uint64_t> drop_words =
+      drop_bitset == nullptr ? std::span<const std::uint64_t>{}
+                             : drop_bitset->label_words(this->scope.label_ind);
+  // 位图与约束来自不同 labelset（word 布局不一致）时不做判定，按可行处理；
+  // 与 HcLabelValueExclusive/HcLabelValueCompatible 的布局校验保持一致。
+  const auto expected_words = static_cast<size_t>(this->label_words_len_);
+  if ((pick_bitset != nullptr && pick_words.size() != expected_words) ||
+      (drop_bitset != nullptr && drop_words.size() != expected_words)) {
+    return false;
+  }
+
+  // 合并去重：两侧逐 word 求并后统计置位数，同一个取值在两侧出现只计一次。
+  int count = 0;
+  for (size_t w = 0; w < expected_words; ++w) {
+    const std::uint64_t pick = w < pick_words.size() ? pick_words[w] : 0;
+    const std::uint64_t drop = w < drop_words.size() ? drop_words[w] : 0;
+    count += std::popcount(pick | drop);
+    if (count > this->max_count) {
+      return true;
+    }
+  }
+  return false;
+}
+
+HardConstrScore::UPtr HcLabelValueMaxCount::eval(Load* load) {
+  const auto violation = [this](const InfeasibleReason& infeasible_reason) {
+    return std::make_unique<HardConstrScore>(this->code, false, 1, 1, this->seq_type,
+                                             this->vehicle_type, infeasible_reason);
+  };
+  if (this->scope.entity == LabelValueEntity::Order) {
+    if (this->violates(load->get_order_labelset_value_bitset())) {
+      return violation(InfeasibleReasonCollection::ORDER_LABEL_VALUE_MAX_COUNT);
+    }
+  } else if (this->scope.side == LabelValueSide::Pick) {
+    if (this->violates(load->get_pick_loc_labelset_value_bitset())) {
+      return violation(InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_MAX_COUNT);
+    }
+  } else if (this->scope.side == LabelValueSide::Drop) {
+    if (this->violates(load->get_drop_loc_labelset_value_bitset())) {
+      return violation(InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_MAX_COUNT);
+    }
+  } else {
+    if (this->violates_union(load->get_pick_loc_labelset_value_bitset(),
+                             load->get_drop_loc_labelset_value_bitset())) {
+      return violation(InfeasibleReasonCollection::LOCATION_LABEL_VALUE_MAX_COUNT);
     }
   }
   return std::make_unique<HardConstrScore>(this->code);

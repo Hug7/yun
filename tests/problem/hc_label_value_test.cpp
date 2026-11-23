@@ -182,6 +182,28 @@ HardConstrScore::UPtr EvalCompatibleLocation(const std::vector<std::vector<int>>
   return constraint.eval(&load);
 }
 
+HardConstrScore::UPtr EvalMaxCountOrder(const std::vector<int>& values, const int max_count) {
+  auto labelset = MakeTemperatureLabelset();
+  auto bitset = labelset->empty_labelset_value_bitset();
+  SetValues(*bitset, 0, values);
+  HcLabelValueMaxCount constraint({labelset.get(), 0, LabelValueEntity::Order}, max_count);
+  FakeLoad load(std::move(bitset));
+  return constraint.eval(&load);
+}
+
+HardConstrScore::UPtr EvalMaxCountLocation(const std::vector<int>& pick_values,
+                                           const std::vector<int>& drop_values, const int max_count,
+                                           LabelValueSide side = LabelValueSide::Both) {
+  auto labelset = MakeRegionLabelset();
+  auto pick_bitset = labelset->empty_labelset_value_bitset();
+  auto drop_bitset = labelset->empty_labelset_value_bitset();
+  SetValues(*pick_bitset, 0, pick_values);
+  SetValues(*drop_bitset, 0, drop_values);
+  HcLabelValueMaxCount constraint({labelset.get(), 0, LabelValueEntity::Location, side}, max_count);
+  FakeLoad load(nullptr, std::move(pick_bitset), std::move(drop_bitset));
+  return constraint.eval(&load);
+}
+
 // Scenario has raw owning pointers with no initializers; zero-init with {} before use.
 std::unique_ptr<Scenario> MakeScenarioWithLabels() {
   auto scenario = std::unique_ptr<Scenario>(new Scenario{});
@@ -217,7 +239,6 @@ TEST(HcLabelValueReasonTest, ReasonCodesAreUnique) {
       &InfeasibleReasonCollection::MAX_DROP_NODE_COUNT,
       &InfeasibleReasonCollection::VEHICLE_CAPACITY,
       &InfeasibleReasonCollection::AVAILABLE_VEHICLE,
-      &InfeasibleReasonCollection::DISTINCT_LABEL_VALUE_MAX_COUNT,
       &InfeasibleReasonCollection::FILO_LOAD_UNLOAD_POLICY,
       &InfeasibleReasonCollection::FIFO_LOAD_UNLOAD_POLICY,
       &InfeasibleReasonCollection::TIME_WINDOW,
@@ -228,22 +249,34 @@ TEST(HcLabelValueReasonTest, ReasonCodesAreUnique) {
       &InfeasibleReasonCollection::ORDER_LABEL_VALUE_COMPATIBLE,
       &InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_COMPATIBLE,
       &InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_COMPATIBLE,
+      &InfeasibleReasonCollection::ORDER_LABEL_VALUE_MAX_COUNT,
+      &InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_MAX_COUNT,
+      &InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_MAX_COUNT,
+      &InfeasibleReasonCollection::LOCATION_LABEL_VALUE_MAX_COUNT,
   };
   std::unordered_set<std::string> codes;
   codes.reserve(reasons.size());
   for (const auto* reason : reasons) {
     EXPECT_TRUE(codes.insert(reason->code).second) << "duplicate code " << reason->code;
   }
-  EXPECT_EQ(InfeasibleReasonCollection::ORDER_LABEL_VALUE_EXCLUSIVE.code, "1012");
-  EXPECT_EQ(InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_EXCLUSIVE.code, "1013");
-  EXPECT_EQ(InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_EXCLUSIVE.code, "1014");
-  EXPECT_EQ(InfeasibleReasonCollection::ORDER_LABEL_VALUE_COMPATIBLE.code, "1015");
-  EXPECT_EQ(InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_COMPATIBLE.code, "1016");
-  EXPECT_EQ(InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_COMPATIBLE.code, "1017");
+  EXPECT_EQ(InfeasibleReasonCollection::FILO_LOAD_UNLOAD_POLICY.code, "1007");
+  EXPECT_EQ(InfeasibleReasonCollection::FIFO_LOAD_UNLOAD_POLICY.code, "1008");
+  EXPECT_EQ(InfeasibleReasonCollection::TIME_WINDOW.code, "1009");
+  EXPECT_EQ(InfeasibleReasonCollection::NO_CHARGE_RATE.code, "1010");
+  EXPECT_EQ(InfeasibleReasonCollection::ORDER_LABEL_VALUE_EXCLUSIVE.code, "1011");
+  EXPECT_EQ(InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_EXCLUSIVE.code, "1012");
+  EXPECT_EQ(InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_EXCLUSIVE.code, "1013");
+  EXPECT_EQ(InfeasibleReasonCollection::ORDER_LABEL_VALUE_COMPATIBLE.code, "1014");
+  EXPECT_EQ(InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_COMPATIBLE.code, "1015");
+  EXPECT_EQ(InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_COMPATIBLE.code, "1016");
+  EXPECT_EQ(InfeasibleReasonCollection::ORDER_LABEL_VALUE_MAX_COUNT.code, "1017");
+  EXPECT_EQ(InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_MAX_COUNT.code, "1018");
+  EXPECT_EQ(InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_MAX_COUNT.code, "1019");
+  EXPECT_EQ(InfeasibleReasonCollection::LOCATION_LABEL_VALUE_MAX_COUNT.code, "1020");
 }
 
 TEST(HcLabelValueCodeTest, EnumRoundTrip) {
-  for (const char* name : {"LabelValueExclusive", "LabelValueCompatible"}) {
+  for (const char* name : {"LabelValueExclusive", "LabelValueCompatible", "LabelValueMaxCount"}) {
     const auto code = magic_enum::enum_cast<HardConstrCode>(name);
     ASSERT_TRUE(code.has_value()) << name;
     EXPECT_EQ(magic_enum::enum_name(*code), name);
@@ -435,6 +468,89 @@ TEST(HcLabelValueCompatibleTest, LocationDropSideChecksDropViolation) {
             InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_COMPATIBLE.code);
 }
 
+TEST(HcLabelValueMaxCountTest, OrderCountAtLimitIsFeasible) {
+  const auto score = EvalMaxCountOrder({0, 1, 2}, 3);
+  EXPECT_TRUE(score->is_feasible());
+  EXPECT_EQ(score->code, HardConstrCode::LabelValueMaxCount);
+}
+
+TEST(HcLabelValueMaxCountTest, OrderCountOverLimitIsInfeasible) {
+  const auto score = EvalMaxCountOrder({0, 1, 2, 3}, 3);
+  EXPECT_TRUE(score->is_infeasible());
+  EXPECT_EQ(score->reason.code, InfeasibleReasonCollection::ORDER_LABEL_VALUE_MAX_COUNT.code);
+  EXPECT_DOUBLE_EQ(score->get_score(), 1.0);
+}
+
+TEST(HcLabelValueMaxCountTest, OrderEmptyIsFeasible) {
+  EXPECT_TRUE(EvalMaxCountOrder({}, 0)->is_feasible());
+}
+
+TEST(HcLabelValueMaxCountTest, OrderZeroLimitRejectsAnyValue) {
+  EXPECT_TRUE(EvalMaxCountOrder({0}, 0)->is_infeasible());
+}
+
+TEST(HcLabelValueMaxCountTest, LocationPickSideOnlyCountsPick) {
+  const auto score = EvalMaxCountLocation({0, 1}, {2, 3}, 2, LabelValueSide::Pick);
+  EXPECT_TRUE(score->is_feasible());
+}
+
+TEST(HcLabelValueMaxCountTest, LocationPickSideViolation) {
+  const auto score = EvalMaxCountLocation({0, 1, 2}, {}, 2, LabelValueSide::Pick);
+  EXPECT_TRUE(score->is_infeasible());
+  EXPECT_EQ(score->reason.code,
+            InfeasibleReasonCollection::PICK_LOCATION_LABEL_VALUE_MAX_COUNT.code);
+}
+
+TEST(HcLabelValueMaxCountTest, LocationDropSideOnlyCountsDrop) {
+  const auto score = EvalMaxCountLocation({0, 1}, {2, 3}, 2, LabelValueSide::Drop);
+  EXPECT_TRUE(score->is_feasible());
+}
+
+TEST(HcLabelValueMaxCountTest, LocationDropSideViolation) {
+  const auto score = EvalMaxCountLocation({}, {0, 1, 2}, 2, LabelValueSide::Drop);
+  EXPECT_TRUE(score->is_infeasible());
+  EXPECT_EQ(score->reason.code,
+            InfeasibleReasonCollection::DROP_LOCATION_LABEL_VALUE_MAX_COUNT.code);
+}
+
+TEST(HcLabelValueMaxCountTest, LocationBothMergesSidesAndDeduplicates) {
+  // 提货 {north, south} 与卸货 {south, east}：单侧都是 2 种，合并去重后是 3 种。
+  EXPECT_TRUE(EvalMaxCountLocation({0, 1}, {1, 2}, 3)->is_feasible());
+  const auto score = EvalMaxCountLocation({0, 1}, {1, 2}, 2);
+  EXPECT_TRUE(score->is_infeasible());
+  EXPECT_EQ(score->reason.code, InfeasibleReasonCollection::LOCATION_LABEL_VALUE_MAX_COUNT.code);
+}
+
+TEST(HcLabelValueMaxCountTest, LocationBothIsNotTwoSeparateChecks) {
+  // 每侧各 2 种（都在上限 2 内），但合并后共 4 种，必须判为不可行。
+  EXPECT_TRUE(EvalMaxCountLocation({0, 1}, {2, 3}, 2)->is_infeasible());
+}
+
+TEST(HcLabelValueMaxCountTest, LocationCrossSideSameValueCountsOnce) {
+  // north 同时出现在两侧，合并后只有 {north, south} 两种。
+  EXPECT_TRUE(EvalMaxCountLocation({0}, {0, 1}, 2)->is_feasible());
+  EXPECT_TRUE(EvalMaxCountLocation({0}, {0, 1}, 1)->is_infeasible());
+}
+
+TEST(HcLabelValueMaxCountTest, CrossWordUnion) {
+  auto labelset = MakeBigLabelset();
+  const auto eval = [&](const std::vector<int>& pick_values, const std::vector<int>& drop_values,
+                        const int max_count) {
+    auto pick_bitset = labelset->empty_labelset_value_bitset();
+    auto drop_bitset = labelset->empty_labelset_value_bitset();
+    SetValues(*pick_bitset, 0, pick_values);
+    SetValues(*drop_bitset, 0, drop_values);
+    HcLabelValueMaxCount constraint({labelset.get(), 0, LabelValueEntity::Location}, max_count);
+    FakeLoad load(nullptr, std::move(pick_bitset), std::move(drop_bitset));
+    return constraint.eval(&load);
+  };
+
+  EXPECT_TRUE(eval({0, 128}, {64}, 3)->is_feasible());
+  EXPECT_TRUE(eval({0, 128}, {64}, 2)->is_infeasible());
+  EXPECT_TRUE(eval({128}, {128}, 1)->is_feasible());
+  EXPECT_TRUE(eval({129}, {129}, 0)->is_infeasible());
+}
+
 TEST(HcLabelValueParserTest, ExclusiveParsesGroups) {
   auto scenario = MakeScenarioWithLabels();
   auto item = MakeItem(HardConstrCode::LabelValueExclusive,
@@ -595,6 +711,84 @@ TEST(HcLabelValueParserTest, ThrowsOnMissingEntity) {
   EXPECT_THROW(HardConstrParser::label_value_exclusive(scenario.get(), item), std::runtime_error);
 }
 
+TEST(HcLabelValueParserTest, MaxCountParsesScopeAndLimit) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item = MakeItem(HardConstrCode::LabelValueMaxCount,
+                       "label_code: region\nentity: Location\nside: Pick\nmax_count: 2");
+  std::unique_ptr<HcLabelValueMaxCount> constraint(
+      HardConstrParser::label_value_max_count(scenario.get(), item));
+  ASSERT_NE(constraint, nullptr);
+  EXPECT_EQ(constraint->scope.label_ind, 0);
+  EXPECT_EQ(constraint->scope.entity, LabelValueEntity::Location);
+  EXPECT_EQ(constraint->scope.side, LabelValueSide::Pick);
+  EXPECT_EQ(constraint->scope.labelset, scenario->label_manager->location_labelset);
+  EXPECT_EQ(constraint->max_count, 2);
+}
+
+TEST(HcLabelValueParserTest, MaxCountDefaultsToBothSide) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item = MakeItem(HardConstrCode::LabelValueMaxCount,
+                       "label_code: region\nentity: Location\nmax_count: 1");
+  std::unique_ptr<HcLabelValueMaxCount> constraint(
+      HardConstrParser::label_value_max_count(scenario.get(), item));
+  ASSERT_NE(constraint, nullptr);
+  EXPECT_EQ(constraint->scope.side, LabelValueSide::Both);
+}
+
+TEST(HcLabelValueParserTest, MaxCountOrderUsesOrderLabelset) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item = MakeItem(HardConstrCode::LabelValueMaxCount,
+                       "label_code: temperature\nentity: Order\nmax_count: 0");
+  std::unique_ptr<HcLabelValueMaxCount> constraint(
+      HardConstrParser::label_value_max_count(scenario.get(), item));
+  ASSERT_NE(constraint, nullptr);
+  EXPECT_EQ(constraint->scope.entity, LabelValueEntity::Order);
+  EXPECT_EQ(constraint->scope.labelset, scenario->label_manager->order_labelset);
+  EXPECT_EQ(constraint->max_count, 0);
+}
+
+TEST(HcLabelValueParserTest, MaxCountThrowsOnNegativeLimit) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item = MakeItem(HardConstrCode::LabelValueMaxCount,
+                       "label_code: temperature\nentity: Order\nmax_count: -1");
+  EXPECT_THROW(HardConstrParser::label_value_max_count(scenario.get(), item), std::runtime_error);
+}
+
+TEST(HcLabelValueParserTest, MaxCountThrowsOnMissingLimit) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item =
+      MakeItem(HardConstrCode::LabelValueMaxCount, "label_code: temperature\nentity: Order");
+  EXPECT_THROW(HardConstrParser::label_value_max_count(scenario.get(), item), std::runtime_error);
+}
+
+TEST(HcLabelValueParserTest, MaxCountThrowsOnNonIntegerLimit) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item = MakeItem(HardConstrCode::LabelValueMaxCount,
+                       "label_code: temperature\nentity: Order\nmax_count: two");
+  EXPECT_THROW(HardConstrParser::label_value_max_count(scenario.get(), item), std::runtime_error);
+}
+
+TEST(HcLabelValueParserTest, MaxCountThrowsOnSideForOrder) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item = MakeItem(HardConstrCode::LabelValueMaxCount,
+                       "label_code: temperature\nentity: Order\nside: Pick\nmax_count: 2");
+  EXPECT_THROW(HardConstrParser::label_value_max_count(scenario.get(), item), std::runtime_error);
+}
+
+TEST(HcLabelValueParserTest, MaxCountThrowsOnUnknownLabelCode) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item = MakeItem(HardConstrCode::LabelValueMaxCount,
+                       "label_code: nonexistent\nentity: Order\nmax_count: 2");
+  EXPECT_THROW(HardConstrParser::label_value_max_count(scenario.get(), item), std::runtime_error);
+}
+
+TEST(HcLabelValueParserTest, MaxCountThrowsOnUnknownEntity) {
+  auto scenario = MakeScenarioWithLabels();
+  auto item = MakeItem(HardConstrCode::LabelValueMaxCount,
+                       "label_code: temperature\nentity: Vehicle\nmax_count: 2");
+  EXPECT_THROW(HardConstrParser::label_value_max_count(scenario.get(), item), std::runtime_error);
+}
+
 TEST(HcLabelValueManagerTest, RegistersConfiguredConstraints) {
   auto scenario = MakeScenarioWithLabels();
   auto logger =
@@ -606,14 +800,20 @@ TEST(HcLabelValueManagerTest, RegistersConfiguredConstraints) {
   parameter.hard_constr_items.emplace_back(
       HardConstrCode::LabelValueCompatible,
       YamlNode(YAML::Load("label_code: region\nentity: Location\ngroups: [[north, south]]")));
+  parameter.hard_constr_items.emplace_back(
+      HardConstrCode::LabelValueMaxCount,
+      YamlNode(YAML::Load("label_code: region\nentity: Location\nside: Drop\nmax_count: 2")));
 
   HardConstraintManager manager(scenario.get(), &parameter);
   bool has_exclusive = false;
   bool has_compatible = false;
+  bool has_max_count = false;
   for (const HardConstraint* constraint : manager.constrs) {
     has_exclusive |= constraint->code == HardConstrCode::LabelValueExclusive;
     has_compatible |= constraint->code == HardConstrCode::LabelValueCompatible;
+    has_max_count |= constraint->code == HardConstrCode::LabelValueMaxCount;
   }
   EXPECT_TRUE(has_exclusive);
   EXPECT_TRUE(has_compatible);
+  EXPECT_TRUE(has_max_count);
 }

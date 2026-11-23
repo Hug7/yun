@@ -158,6 +158,36 @@ hard_constraints:
 `entity: Order` 时，约束检查车次所有订单的标签值并集，且不支持 `side` 参数。每条约束项只能选择
 `LabelValueExclusive` 或 `LabelValueCompatible` 中的一个编码，即一条约束中互斥与可拼不会同时生效。
 
+#### LabelValueMaxCount
+
+标签值种类数上限约束：同一车次内指定标签出现过的不同取值个数不能超过 `max_count`。
+可配置参数：
+
+- `label_code`（必填）：标签编码，必须是 `Order` 或 `Location` 标签集合中已定义的标签。
+- `entity`（必填）：约束作用的实体域，取值为 `Order` 或 `Location`。
+- `max_count`（必填）：允许的标签值种类数上限，必须是非负整数；`0` 表示车次内不允许出现该标签的任何取值。
+- `side`（可选，仅 `entity: Location`）：站点侧别，取值为 `Pick`、`Drop` 或 `Both`，默认 `Both`；
+  `entity: Order` 时不允许出现该参数。
+
+`entity: Order` 时统计车次全部订单的标签值并集；`entity: Location` 时按 `side` 统计站点标签值：
+
+- `Pick` 只统计提货侧，`Drop` 只统计卸货侧；
+- `Both`（含省略 `side`）把提货侧与卸货侧的取值**合并去重**后统计。注意这与
+  `LabelValueExclusive` / `LabelValueCompatible` 的 `Both`（两侧各检查一次）不同：例如提货侧有
+  `north/south`、卸货侧有 `south/east`，`Both` 口径下共 `north/south/east` 3 种。
+
+```yaml
+hard_constraints:
+  - code: LabelValueMaxCount
+    params: {label_code: temperature, entity: Order, max_count: 3}
+
+  - code: LabelValueMaxCount
+    params: {label_code: region, entity: Location, side: Pick, max_count: 2}
+
+  - code: LabelValueMaxCount
+    params: {label_code: region, entity: Location, max_count: 2}
+```
+
 ### soft_constraints
 
 可配置的软约束列表，填写指定的约束即代表约束作用于求解。每条约束包含两个字段`code`和`params`，

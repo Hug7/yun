@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "hc_constraint.h"
-#include "hc_label.h"
 #include "hc_label_value.h"
 #include "hc_location.h"
 #include "pdm_load.h"
@@ -52,13 +51,13 @@ HcMaxPickNodeCount* max_pick_node_count(const HardConstrItem& hard_constr_item);
 
 HcMaxDropNodeCount* max_drop_node_count(const HardConstrItem& hard_constr_item);
 
-HcOrderLabelValueMaxCount* order_label_value_max_count(const Scenario* scenario,
-                                                       const HardConstrItem& hard_constr_item);
-
 HcLabelValueExclusive* label_value_exclusive(const Scenario* scenario,
                                              const HardConstrItem& hard_constr_item);
 
 HcLabelValueCompatible* label_value_compatible(const Scenario* scenario,
                                                const HardConstrItem& hard_constr_item);
+
+HcLabelValueMaxCount* label_value_max_count(const Scenario* scenario,
+                                            const HardConstrItem& hard_constr_item);
 
 }  // namespace HardConstrParser

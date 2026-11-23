@@ -3,7 +3,7 @@
     "CargoOrderCodes": ["O001"],
     "CommonInfeasibleReasons": [
       {
-        "ReasonCode": "1008",
+        "ReasonCode": "1007",
         "ConstraintCode": "HcLoadUnloadPolicyFILO",
         "MessageCN": "订单提卸货顺序不满足先入后出(FILO)",
         "MessageEN": "the order pickup/drop sequence violates the FILO policy"

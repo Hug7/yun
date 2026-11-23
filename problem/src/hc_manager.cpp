@@ -40,14 +40,14 @@ HardConstraintManager::HardConstraintManager(const Scenario* scenario, const Par
       case HardConstrCode::MaxDropNodeCount:
         this->add_constr(HardConstrParser::max_drop_node_count(hard_constr_item));
         break;
-      case HardConstrCode::OrderLabelValueMaxCount:
-        this->add_constr(HardConstrParser::order_label_value_max_count(scenario, hard_constr_item));
-        break;
       case HardConstrCode::LabelValueExclusive:
         this->add_constr(HardConstrParser::label_value_exclusive(scenario, hard_constr_item));
         break;
       case HardConstrCode::LabelValueCompatible:
         this->add_constr(HardConstrParser::label_value_compatible(scenario, hard_constr_item));
+        break;
+      case HardConstrCode::LabelValueMaxCount:
+        this->add_constr(HardConstrParser::label_value_max_count(scenario, hard_constr_item));
         break;
       default:
         throw std::invalid_argument(std::format("unknown hard constraint code={}",
@@ -91,26 +91,6 @@ HcMaxPickNodeCount* HardConstrParser::max_pick_node_count(const HardConstrItem& 
 HcMaxDropNodeCount* HardConstrParser::max_drop_node_count(const HardConstrItem& hard_constr_item) {
   const int max_drop_node_count = hard_constr_item.params.parse_int("max_drop_node_count");
   return new HcMaxDropNodeCount(max_drop_node_count);
-}
-
-HcOrderLabelValueMaxCount* HardConstrParser::order_label_value_max_count(
-    const Scenario* scenario, const HardConstrItem& hard_constr_item) {
-  // hard_constr_item.params.parse_list()
-  // const auto node = hard_constr_item.params.require_map(KEY_MAX_COUNTS);
-  // std::unordered_map<int, int> counts;
-  // for (const auto& entry : node) {
-  //   const auto label_code = entry.first.as<std::string>();
-  //   const int label_ind = scenario->label_manager->order_labelset->get_label_ind(label_code);
-  //   if (label_ind < 0) {
-  //     fail(std::format("{}.{}.{}", params.path(), KEY_MAX_COUNTS, label_code), "未知 label
-  //     code");
-  //   }
-  //   counts[label_ind] = entry.second.as<int>();
-  // }
-  // return counts;
-
-  std::unordered_map<int, int> distinct_label_value_max_counts;
-  return new HcOrderLabelValueMaxCount(distinct_label_value_max_counts);
 }
 
 namespace {
@@ -173,9 +153,8 @@ struct ParsedLabelValueGroups {
   std::vector<std::vector<int>> groups;
 };
 
-ParsedLabelValueGroups parse_label_value_groups(const Scenario* scenario,
-                                                const HardConstrItem& hard_constr_item,
-                                                const bool allow_cross_group_duplicate) {
+LabelValueScope parse_label_value_scope(const Scenario* scenario,
+                                        const HardConstrItem& hard_constr_item) {
   const std::string label_code = hard_constr_item.params.parse_string("label_code");
   const std::string entity_code = hard_constr_item.params.parse_string("entity");
   const LabelValueEntity entity = label_value_entity(entity_code, hard_constr_item.params);
@@ -187,7 +166,15 @@ ParsedLabelValueGroups parse_label_value_groups(const Scenario* scenario,
     hard_constr_item.params.fail(
         "label_code", std::format("标签编码 {} 不存在于 {} labelset", label_code, entity_code));
   }
-  const Label* label = labelset->labels[label_ind];
+  return {.labelset = labelset, .label_ind = label_ind, .entity = entity, .side = side};
+}
+
+ParsedLabelValueGroups parse_label_value_groups(const Scenario* scenario,
+                                                const HardConstrItem& hard_constr_item,
+                                                const bool allow_cross_group_duplicate) {
+  const LabelValueScope scope = parse_label_value_scope(scenario, hard_constr_item);
+  const Label* label = scope.labelset->labels[scope.label_ind];
+  const std::string label_code = label->code;
 
   const auto raw_groups = label_value_groups(hard_constr_item.params);
   if (raw_groups.empty()) {
@@ -225,10 +212,7 @@ ParsedLabelValueGroups parse_label_value_groups(const Scenario* scenario,
     groups.push_back(std::move(group));
   }
 
-  return {.scope =
-              LabelValueScope{
-                  .labelset = labelset, .label_ind = label_ind, .entity = entity, .side = side},
-          .groups = std::move(groups)};
+  return {.scope = scope, .groups = std::move(groups)};
 }
 
 }  // namespace
@@ -243,4 +227,14 @@ HcLabelValueCompatible* HardConstrParser::label_value_compatible(
     const Scenario* scenario, const HardConstrItem& hard_constr_item) {
   auto parsed = parse_label_value_groups(scenario, hard_constr_item, false);
   return new HcLabelValueCompatible(parsed.scope, parsed.groups);
+}
+
+HcLabelValueMaxCount* HardConstrParser::label_value_max_count(
+    const Scenario* scenario, const HardConstrItem& hard_constr_item) {
+  const LabelValueScope scope = parse_label_value_scope(scenario, hard_constr_item);
+  const int max_count = hard_constr_item.params.parse_int("max_count");
+  if (max_count < 0) {
+    hard_constr_item.params.fail("max_count", "max_count 必须是非负整数");
+  }
+  return new HcLabelValueMaxCount(scope, max_count);
 }

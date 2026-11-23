@@ -114,3 +114,35 @@ class HcLabelValueCompatible : public HardConstraint {
    */
   const std::vector<std::vector<std::uint64_t>> incompatible_masks_;
 };
+
+/**
+ * @brief 硬约束-标签值种类数上限
+ * @details 统计车次内指定标签出现过的不同取值个数，超过 max_count 即不可行。
+ * entity 为 Location 且 side 为 Both 时，按提货侧与卸货侧合并去重后计数。
+ */
+class HcLabelValueMaxCount : public HardConstraint {
+ public:
+  const LabelValueScope scope;
+  /**
+   * @brief 允许的标签值种类数上限
+   */
+  const int max_count;
+
+  HcLabelValueMaxCount(LabelValueScope scope, int max_count);
+
+  HardConstrScore::UPtr eval(Load* load) override;
+
+ private:
+  [[nodiscard]] bool violates(const LabelsetValueBitset* bitset) const;
+
+  /**
+   * @brief 提货侧与卸货侧标签值合并去重后的种类数是否超过上限
+   */
+  [[nodiscard]] bool violates_union(const LabelsetValueBitset* pick_bitset,
+                                    const LabelsetValueBitset* drop_bitset) const;
+
+  /**
+   * @brief 本标签在位图 arena 中占用的 word 数
+   */
+  const int label_words_len_;
+};
