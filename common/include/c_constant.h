@@ -74,14 +74,14 @@ inline const std::string TIME_WINDOW = ";";
 namespace DistMatrixParameter {
 /**
  * @brief maximum driving distance, unit: m
- * @details representative 6000 km
+ * @details representative 60000 km
  */
-constexpr std::int64_t MAX_DISTANCE = 6000000;
+constexpr std::int64_t MAX_DISTANCE = 60000000;
 /**
  * @brief maximum driving time, unit: s
- * @details representative 100 h
+ * @details representative 1000 h
  */
-constexpr std::int64_t MAX_TIME = 360000;
+constexpr std::int64_t MAX_TIME = 3600000;
 }  // namespace DistMatrixParameter
 
 namespace LocationParameter {
