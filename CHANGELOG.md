@@ -3,6 +3,16 @@
 记录对外可见的变更；版本号格式与发布流程见
 [docs/versioning.md](docs/versioning.md)。
 
+## [Unreleased]
+
+### Added
+
+### Changed
+
+- alns 当`repair`算子执行后判断 `temp solution`优于 best solution 时执行`local search`。 (#54)
+
+### Fixed
+
 ## [0.4.0] - 2026-11-23
 
 ### Added
