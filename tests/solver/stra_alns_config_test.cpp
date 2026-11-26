@@ -68,6 +68,16 @@ TEST_F(StraAlnsConfigTest, RuinOperatorParamsAreConvertedToTypedPods) {
           code = "RuinWorstRemovalOrder",
           params = { select_order_noise_exponent = 2.5 },
         },
+        {
+          code = "RuinShawRemovalOrder",
+          params = {
+            select_order_min_rate = 0.2,
+            select_order_max_rate = 0.5,
+            select_order_noise_exponent = 2.5,
+            select_order_spatial_weight = 0.7,
+            select_order_time_weight = 0.3,
+          },
+        },
       },
     }
   )");
@@ -75,7 +85,7 @@ TEST_F(StraAlnsConfigTest, RuinOperatorParamsAreConvertedToTypedPods) {
 
   const AlnsStrategyConfig config = parse_alns_strategy_config(cfg, this->logger);
 
-  ASSERT_EQ(config.ruin_operator_params.size(), 3U);
+  ASSERT_EQ(config.ruin_operator_params.size(), 4U);
 
   const auto& load_param = std::get<AlnsRuinRandomRemovalLoadParam>(config.ruin_operator_params[0]);
   EXPECT_EQ(load_param.select_load_random_seed, 7);
@@ -93,6 +103,15 @@ TEST_F(StraAlnsConfigTest, RuinOperatorParamsAreConvertedToTypedPods) {
   const auto& worst_param =
       std::get<AlnsRuinWorstRemovalOrderParam>(config.ruin_operator_params[2]);
   EXPECT_DOUBLE_EQ(worst_param.select_order_noise_exponent, 2.5);
+
+  const AlnsRuinShawRemovalOrderParam default_shaw_param{};
+  const auto& shaw_param = std::get<AlnsRuinShawRemovalOrderParam>(config.ruin_operator_params[3]);
+  EXPECT_EQ(shaw_param.select_order_random_seed, default_shaw_param.select_order_random_seed);
+  EXPECT_DOUBLE_EQ(shaw_param.select_order_min_rate, 0.2);
+  EXPECT_DOUBLE_EQ(shaw_param.select_order_max_rate, 0.5);
+  EXPECT_DOUBLE_EQ(shaw_param.select_order_noise_exponent, 2.5);
+  EXPECT_DOUBLE_EQ(shaw_param.select_order_spatial_weight, 0.7);
+  EXPECT_DOUBLE_EQ(shaw_param.select_order_time_weight, 0.3);
 }
 
 TEST_F(StraAlnsConfigTest, RepairOperatorParamsAreConvertedToTypedPods) {

@@ -20,6 +20,12 @@ target_link_libraries(algo_alns_ruin_worst_removal_test PRIVATE
     yun_algorithm GTest::gtest_main)
 add_test(NAME algo_alns_ruin_worst_removal_test COMMAND algo_alns_ruin_worst_removal_test)
 
+add_executable(algo_alns_ruin_shaw_removal_test
+    algorithm/algo_alns_ruin_shaw_removal_test.cpp)
+target_link_libraries(algo_alns_ruin_shaw_removal_test PRIVATE
+    yun_algorithm GTest::gtest_main)
+add_test(NAME algo_alns_ruin_shaw_removal_test COMMAND algo_alns_ruin_shaw_removal_test)
+
 add_executable(algo_ls_knn_prune_test algorithm/algo_ls_knn_prune_test.cpp)
 target_link_libraries(algo_ls_knn_prune_test PRIVATE yun_algorithm GTest::gtest_main)
 add_test(NAME algo_ls_knn_prune_test COMMAND algo_ls_knn_prune_test)

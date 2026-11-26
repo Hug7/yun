@@ -172,6 +172,50 @@ TEST(TimeWindowUntilsMergeTimeWindows, EmptyInputReturnsEmpty) {
   EXPECT_TRUE(result.empty());
 }
 
+TEST(TimeWindowUntilsGap, OverlappingWindowsReturnZero) {
+  const std::vector<TimeWindow> tws_a = {TimeWindow(100, 200)};
+  const std::vector<TimeWindow> tws_b = {TimeWindow(150, 250)};
+
+  EXPECT_EQ(TimeWindowUntils::gap(tws_a, tws_b), 0);
+}
+
+TEST(TimeWindowUntilsGap, DisjointWindowsReturnNearestEndpointGap) {
+  const std::vector<TimeWindow> tws_a = {TimeWindow(100, 200)};
+  const std::vector<TimeWindow> tws_b = {TimeWindow(300, 400)};
+
+  EXPECT_EQ(TimeWindowUntils::gap(tws_a, tws_b), 100);
+  EXPECT_EQ(TimeWindowUntils::gap(tws_b, tws_a), 100);
+}
+
+TEST(TimeWindowUntilsGap, TouchingEndpointReturnsZero) {
+  const std::vector<TimeWindow> tws_a = {TimeWindow(100, 200)};
+  const std::vector<TimeWindow> tws_b = {TimeWindow(200, 300)};
+
+  EXPECT_EQ(TimeWindowUntils::gap(tws_a, tws_b), 0);
+}
+
+TEST(TimeWindowUntilsGap, EmptySideReturnsZero) {
+  const std::vector<TimeWindow> tws_a;
+  const std::vector<TimeWindow> tws_b = {TimeWindow(100, 200)};
+
+  EXPECT_EQ(TimeWindowUntils::gap(tws_a, tws_b), 0);
+  EXPECT_EQ(TimeWindowUntils::gap(tws_b, tws_a), 0);
+}
+
+TEST(TimeWindowUntilsGap, MultipleWindowsUseNearestPair) {
+  const std::vector<TimeWindow> tws_a = {TimeWindow(0, 10), TimeWindow(100, 110)};
+  const std::vector<TimeWindow> tws_b = {TimeWindow(200, 210), TimeWindow(1000, 1010)};
+
+  EXPECT_EQ(TimeWindowUntils::gap(tws_a, tws_b), 90);
+}
+
+TEST(TimeWindowUntilsGap, AllDayWindowsReturnZero) {
+  const std::vector<TimeWindow> tws_a = {TimeWindow(-28800, 4003840810)};
+  const std::vector<TimeWindow> tws_b = {TimeWindow(1000, 2000)};
+
+  EXPECT_EQ(TimeWindowUntils::gap(tws_a, tws_b), 0);
+}
+
 // ===== TimeWindowInferForwardInferSS =====
 TEST(TimeWindowInferForwardSS, OverlapComputesArrivalAndDeparture) {
   const TimeWindowPlan pre(0, 0, 100, 200, 0, 0);

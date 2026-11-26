@@ -155,7 +155,7 @@ alns({
 统计只用于观测，不参与权重计算。
 
 ruin 或 repair 算子数组为空时，`alns` 会使用默认算子（
-ruin 为 `RuinRandomRemovalLoad`、`RuinRandomRemovalOrder`、`RuinWorstRemovalOrder`，
+ruin 为 `RuinRandomRemovalLoad`、`RuinRandomRemovalOrder`、`RuinWorstRemovalOrder`、`RuinShawRemovalOrder`，
 repair 为 `RepairGreedy`、`RepairRegretK`，参数取各自默认值）。
 每次执行算法前，`alns` 都会打印实际使用的算子及其参数，便于确认默认兜底是否生效。
 
@@ -200,6 +200,27 @@ ruin_operator_params = {
 | `select_order_max_rate` | double | `0.3` | 被移除订单数的最大比例，区间 `[0, 1]`；必须 `>= select_order_min_rate`。 |
 | `select_order_random_seed` | int | `37` | 选择订单的随机种子。 |
 | `select_order_noise_exponent` | double | `3.0` | 贪心指数 `p`，必须 `>= 1`；越大越偏向收益最高的订单。 |
+
+**RuinShawRemovalOrder（ruin）** — Shaw 相近移除。
+
+先随机选一个种子订单，再迭代地挑出「与已移除订单集合最相近」的订单，使一次移除的订单在空间区域与服务时间
+上彼此相近，从而给 repair 一次腾出可互换的订单簇。相近度由空间项与时间项组成，两个分量都在候选池内做
+min-max 归一化后按权重线性组合：
+
+- 空间项取订单关系图中两个订单的提货距离与卸货距离之和；关系图中没有记录的订单对（不可拼车）视为最远。
+- 时间项取两个订单提货时间窗的最近间隙与卸货时间窗的最近间隙之和；时间窗重叠（含端点相接）时记 `0`。
+
+每轮按组合后的相近度升序排序，按 `pos = ⌊n · y^p⌋`（`y ~ U(0,1)`）随机取位：`p` 越大越集中在最相近者，
+`p = 1` 等价于在候选池上均匀随机。
+
+| `params` 字段 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `select_order_min_rate` | double | `0.1` | 被移除订单数占当前已分配订单数的最小比例，区间 `[0, 1]`。 |
+| `select_order_max_rate` | double | `0.3` | 被移除订单数的最大比例，区间 `[0, 1]`；必须 `>= select_order_min_rate`。 |
+| `select_order_random_seed` | int | `37` | 选择订单的随机种子。 |
+| `select_order_noise_exponent` | double | `3.0` | 贪心指数 `p`，必须 `>= 1`；越大越偏向与已选集合最相近的订单。 |
+| `select_order_spatial_weight` | double | `0.5` | 空间项权重，必须 `>= 0`。 |
+| `select_order_time_weight` | double | `0.5` | 时间项权重，必须 `>= 0`；与空间项权重不可同时为 `0`。 |
 
 **RepairGreedy（repair）** — 贪心修复。
 

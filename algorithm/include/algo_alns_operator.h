@@ -17,10 +17,13 @@
 #include "algo_alns_ruin.h"
 #include "algo_alns_ruin_random_removal_load.h"
 #include "algo_alns_ruin_random_removal_order.h"
+#include "algo_alns_ruin_shaw_removal_order.h"
 #include "algo_alns_ruin_worst_removal_order.h"
 #include "algo_alns_sa.h"
 #include "c_random_utils.h"
 #include "pdm_context.h"
+
+class OrderRelationshipGraph;
 
 /**
  * @brief alns ruin×repair 组合的统计
@@ -176,7 +179,7 @@ class AlnsOperatorManager {
  */
 using AlnsRuinOperatorParam =
     std::variant<AlnsRuinRandomRemovalLoadParam, AlnsRuinRandomRemovalOrderParam,
-                 AlnsRuinWorstRemovalOrderParam>;
+                 AlnsRuinWorstRemovalOrderParam, AlnsRuinShawRemovalOrderParam>;
 
 /**
  * @brief alns repair 算子的结构化参数
@@ -190,10 +193,11 @@ using AlnsRepairOperatorParam = std::variant<AlnsRepairGreedyParam, AlnsRepairRe
  * @param alns_parameter alns参数
  * @param context solver上下文
  * @param parallel_executor 线程池, 由调用方持有, repair算子借用其并行构造修复矩阵
+ * @param order_relationship_graph 订单关系图, 由策略层从 workspace 传入, 可为空
  * @return
  */
 std::unique_ptr<AlnsOperatorManager> create_alns_operator(
     const std::vector<AlnsRuinOperatorParam>& ruin_operator_params,
     const std::vector<AlnsRepairOperatorParam>& repair_operator_params,
     const AlnsParameter* alns_parameter, const SolverContext* context,
-    ParallelExecutor* parallel_executor);
+    ParallelExecutor* parallel_executor, const OrderRelationshipGraph* order_relationship_graph);

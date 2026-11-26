@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <optional>
 #include <vector>
 
@@ -168,6 +169,24 @@ void TimeWindowUntils::append_merged(std::vector<TimeWindow>& res, const std::in
     return;
   }
   res.emplace_back(early, late);
+}
+
+std::int64_t TimeWindowUntils::gap(const std::vector<TimeWindow>& tws_a,
+                                   const std::vector<TimeWindow>& tws_b) {
+  // 任一侧为空: 视为没有时间约束, 与任何时间窗都"重叠"
+  if (tws_a.empty() || tws_b.empty()) {
+    return 0;
+  }
+  std::int64_t min_gap = std::numeric_limits<std::int64_t>::max();
+  for (const auto& tw_a : tws_a) {
+    for (const auto& tw_b : tws_b) {
+      // 区间间隙: 重叠(含端点相接)时为 0, 否则取最近端点的差
+      const std::int64_t cur_gap =
+          std::max({tw_b.early - tw_a.late, tw_a.early - tw_b.late, std::int64_t{0}});
+      min_gap = std::min(min_gap, cur_gap);
+    }
+  }
+  return min_gap;
 }
 
 std::vector<TimeWindow> TimeWindowUntils::merge_time_windows(const std::vector<TimeWindow>& tws) {

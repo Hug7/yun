@@ -7,6 +7,10 @@
 
 ### Added
 
+- 新增 ruin 算子 `RuinShawRemovalOrder`（Shaw 相近移除）：以订单对的空间距离（订单关系图的提卸距离）
+  与时间窗间隙为相近度，从随机种子出发迭代移除彼此相近的订单簇，把「空间上处于相近区域、服务时间相近」
+  的订单成批交给 repair。该算子加入默认 ruin 算子列表。 (#57)
+
 ### Changed
 
 - alns 当`repair`算子执行后判断 `temp solution`优于 best solution 时执行`local search`。 (#54)

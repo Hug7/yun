@@ -86,7 +86,8 @@ void StrategyManager::register_alns_func(Workspace* workspace) {
     // 创建alns算子
     const auto operator_manager =
         create_alns_operator(alns_config.ruin_operator_params, alns_config.repair_operator_params,
-                             alns_config.parameter.get(), workspace->context, parallel_executor);
+                             alns_config.parameter.get(), workspace->context, parallel_executor,
+                             workspace->order_relationship_graph.get());
     // 构建alns model, 内嵌 local search 配置默认为空(关闭)
     const auto alns_model = std::make_unique<AlnsModel>(
         workspace, alns_config.parameter.get(), operator_manager.get(), alns_config.local_search);

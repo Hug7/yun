@@ -272,6 +272,7 @@ const std::vector<AlnsRuinOperatorParam>& default_ruin_operator_params() {
       AlnsRuinRandomRemovalLoadParam{},
       AlnsRuinRandomRemovalOrderParam{},
       AlnsRuinWorstRemovalOrderParam{},
+      AlnsRuinShawRemovalOrderParam{},
   };
   return operator_params;
 }
@@ -293,20 +294,23 @@ const std::vector<AlnsRepairOperatorParam>& default_repair_operator_params() {
  * @param alns_operator_manager alns算子管理器
  * @param operator_param ruin算子参数
  * @param context solver上下文
+ * @param order_relationship_graph 订单关系图, 可为空
  */
 void create_ruin_operator(AlnsOperatorManager* alns_operator_manager,
-                          const AlnsRuinOperatorParam& operator_param,
-                          const SolverContext* context) {
+                          const AlnsRuinOperatorParam& operator_param, const SolverContext* context,
+                          const OrderRelationshipGraph* order_relationship_graph) {
   std::visit(
-      [alns_operator_manager, context]<typename Param>(const Param& param) {
+      [alns_operator_manager, context,
+       order_relationship_graph]<typename Param>(const Param& param) {
         if constexpr (std::is_same_v<Param, AlnsRuinRandomRemovalLoadParam>) {
           alns_operator_manager->add_ruin_operator(new AlnsRuinRandomRemovalLoad(context, param));
         } else if constexpr (std::is_same_v<Param, AlnsRuinRandomRemovalOrderParam>) {
           alns_operator_manager->add_ruin_operator(new AlnsRuinRandomRemovalOrder(context, param));
-        } else {
-          static_assert(std::is_same_v<Param, AlnsRuinWorstRemovalOrderParam>,
-                        "unhandled AlnsRuinOperatorParam alternative");
+        } else if constexpr (std::is_same_v<Param, AlnsRuinWorstRemovalOrderParam>) {
           alns_operator_manager->add_ruin_operator(new AlnsRuinWorstRemovalOrder(context, param));
+        } else {
+          alns_operator_manager->add_ruin_operator(
+              new AlnsRuinShawRemovalOrder(context, order_relationship_graph, param));
         }
       },
       operator_param);
@@ -342,13 +346,14 @@ std::unique_ptr<AlnsOperatorManager> create_alns_operator(
     const std::vector<AlnsRuinOperatorParam>& ruin_operator_params,
     const std::vector<AlnsRepairOperatorParam>& repair_operator_params,
     const AlnsParameter* alns_parameter, const SolverContext* context,
-    ParallelExecutor* parallel_executor) {
+    ParallelExecutor* parallel_executor, const OrderRelationshipGraph* order_relationship_graph) {
   auto alns_operator_manager = std::make_unique<AlnsOperatorManager>(alns_parameter);
   // 创建ruin算子, 为空时使用默认算子
   const auto& ruin_params =
       ruin_operator_params.empty() ? default_ruin_operator_params() : ruin_operator_params;
   for (const auto& operator_param : ruin_params) {
-    create_ruin_operator(alns_operator_manager.get(), operator_param, context);
+    create_ruin_operator(alns_operator_manager.get(), operator_param, context,
+                         order_relationship_graph);
   }
   // 创建repair算子, 为空时使用默认算子
   const auto& repair_params =

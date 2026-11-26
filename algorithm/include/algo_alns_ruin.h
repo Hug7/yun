@@ -19,6 +19,7 @@ enum class AlnsRuinOperatorCode {
   RuinRandomRemovalLoad,
   RuinRandomRemovalOrder,
   RuinWorstRemovalOrder,
+  RuinShawRemovalOrder,
 };
 
 class AlnsRuinLoadActivity {

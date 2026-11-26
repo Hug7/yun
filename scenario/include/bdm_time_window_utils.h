@@ -50,4 +50,12 @@ namespace TimeWindowUntils {
  * @brief 把 [early, late] 并入有序结果集, 与前一段间隔不超过阈值时合并
  */
 void append_merged(std::vector<TimeWindow>& res, std::int64_t early, std::int64_t late);
+
+/**
+ * @brief 两个有序时间窗集合之间的最近间隙
+ * @details 两个集合中距离最近的一对区间之间的间隙; 区间重叠(含端点相接)时记 0。
+ * 任一集合为空时视为该侧没有时间约束, 返回 0。
+ */
+[[nodiscard]] std::int64_t gap(const std::vector<TimeWindow>& tws_a,
+                               const std::vector<TimeWindow>& tws_b);
 }  // namespace TimeWindowUntils

@@ -91,6 +91,19 @@ class AlnsRuinWorstRemovalOrderLuaField {
 };
 
 /**
+ * @brief ruin 算子`RuinShawRemovalOrder`的参数在 Lua 中的字段集合
+ */
+class AlnsRuinShawRemovalOrderLuaField {
+ public:
+  static constexpr const char* SELECT_ORDER_RANDOM_SEED = "select_order_random_seed";
+  static constexpr const char* SELECT_ORDER_MIN_RATE = "select_order_min_rate";
+  static constexpr const char* SELECT_ORDER_MAX_RATE = "select_order_max_rate";
+  static constexpr const char* SELECT_ORDER_NOISE_EXPONENT = "select_order_noise_exponent";
+  static constexpr const char* SELECT_ORDER_SPATIAL_WEIGHT = "select_order_spatial_weight";
+  static constexpr const char* SELECT_ORDER_TIME_WEIGHT = "select_order_time_weight";
+};
+
+/**
  * @brief repair 算子`RepairGreedy`的参数在 Lua 中的字段集合
  */
 class AlnsRepairGreedyLuaField {
@@ -356,6 +369,38 @@ AlnsRuinWorstRemovalOrderParam parse_ruin_worst_removal_order_param(const sol::t
 }
 
 /**
+ * @brief 解析 ruin 算子`RuinShawRemovalOrder`的结构化参数
+ */
+AlnsRuinShawRemovalOrderParam parse_ruin_shaw_removal_order_param(const sol::table& params) {
+  AlnsRuinShawRemovalOrderParam operator_param;
+  if (params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_RANDOM_SEED].valid()) {
+    operator_param.select_order_random_seed =
+        static_cast<int>(params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_RANDOM_SEED]);
+  }
+  if (params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_MIN_RATE].valid()) {
+    operator_param.select_order_min_rate =
+        static_cast<double>(params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_MIN_RATE]);
+  }
+  if (params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_MAX_RATE].valid()) {
+    operator_param.select_order_max_rate =
+        static_cast<double>(params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_MAX_RATE]);
+  }
+  if (params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_NOISE_EXPONENT].valid()) {
+    operator_param.select_order_noise_exponent =
+        static_cast<double>(params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_NOISE_EXPONENT]);
+  }
+  if (params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_SPATIAL_WEIGHT].valid()) {
+    operator_param.select_order_spatial_weight =
+        static_cast<double>(params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_SPATIAL_WEIGHT]);
+  }
+  if (params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_TIME_WEIGHT].valid()) {
+    operator_param.select_order_time_weight =
+        static_cast<double>(params[AlnsRuinShawRemovalOrderLuaField::SELECT_ORDER_TIME_WEIGHT]);
+  }
+  return operator_param;
+}
+
+/**
  * @brief 解析 repair 算子`RepairGreedy`的结构化参数
  */
 AlnsRepairGreedyParam parse_repair_greedy_param(const sol::table& params) {
@@ -390,6 +435,8 @@ AlnsRuinOperatorParam parse_ruin_operator_param(const std::string& code, const s
     return parse_ruin_random_removal_order_param(params);
   } else if (code == "RuinWorstRemovalOrder") {
     return parse_ruin_worst_removal_order_param(params);
+  } else if (code == "RuinShawRemovalOrder") {
+    return parse_ruin_shaw_removal_order_param(params);
   }
   throw std::invalid_argument("Invalid AlnsRuinOperatorCode = " + code);
 }
