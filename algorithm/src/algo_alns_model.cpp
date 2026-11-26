@@ -50,8 +50,9 @@ Solution* AlnsModel::solve() const {
       this->operator_manager->repair_operator(operator_combinations[sub_iter])
           ->call(this->sol_manager->tmp_sol, this->segment_builder);
       // 可选: 在 repair 之后、SA 判定之前对 tmp_sol 做邻域搜索
-      if (this->ls_search.has_value() &&
-          this->sol_manager->tmp_sol->total_cost() < this->sol_manager->best_sol->total_cost()) {
+      const bool opt_suc = this->sol_manager->tmp_sol->total_obj_val() <
+                           this->sol_manager->best_sol->total_obj_val();
+      if (this->ls_search.has_value() && opt_suc) {
         try {
           const LsReport report = this->ls_search->run(this->sol_manager->tmp_sol);
           logger->debug("{}", report.format());
