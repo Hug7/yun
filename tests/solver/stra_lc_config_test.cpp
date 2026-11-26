@@ -158,6 +158,7 @@ TEST_F(StraLcConfigTest, ExplicitConfigRoundTrips) {
         { code = "LsIntraRouteExchange" },
         { code = "LsInterRouteExchange" },
         { code = "LsTwoOpt", params = { min_span_len = 3, max_span_len = 5 } },
+        { code = "LsTwoOptStar", params = { min_tail_len = 4, max_tail_len = 6 } },
       },
     }
   )");
@@ -166,7 +167,7 @@ TEST_F(StraLcConfigTest, ExplicitConfigRoundTrips) {
 
   EXPECT_DOUBLE_EQ(config.parameter.epsilon, 1e-6);
 
-  ASSERT_EQ(config.operators.size(), 5U);
+  ASSERT_EQ(config.operators.size(), 6U);
 
   ASSERT_TRUE(std::holds_alternative<LsSegmentRelocateParam>(config.operators[0]));
   const auto& relocate = std::get<LsSegmentRelocateParam>(config.operators[0]);
@@ -190,6 +191,11 @@ TEST_F(StraLcConfigTest, ExplicitConfigRoundTrips) {
   const auto& two_opt = std::get<LsTwoOptParam>(config.operators[4]);
   EXPECT_EQ(two_opt.min_span_len, 3);
   EXPECT_EQ(two_opt.max_span_len, 5);
+
+  ASSERT_TRUE(std::holds_alternative<LsTwoOptStarParam>(config.operators[5]));
+  const auto& two_opt_star = std::get<LsTwoOptStarParam>(config.operators[5]);
+  EXPECT_EQ(two_opt_star.min_tail_len, 4);
+  EXPECT_EQ(two_opt_star.max_tail_len, 6);
 }
 
 TEST_F(StraLcConfigTest, NonTableConfigThrows) {

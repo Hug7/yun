@@ -49,6 +49,7 @@ std::vector<LsOperatorParam> default_ls_operator_params() {
       LsSegmentRelocateParam{
           .min_chain_len = 2, .max_chain_len = 3, .route_scope = LsRouteScope::Inter},
       LsExchangeParam{.route_scope = LsRouteScope::Inter},
+      LsTwoOptStarParam{},
   };
 }
 
@@ -70,6 +71,8 @@ std::vector<std::unique_ptr<LsOperator>> create_ls_operators(
             operators.emplace_back(std::make_unique<LsExchangeOperator>(operator_param));
           } else if constexpr (std::is_same_v<ParamType, LsTwoOptParam>) {
             operators.emplace_back(std::make_unique<LsTwoOptOperator>(operator_param));
+          } else if constexpr (std::is_same_v<ParamType, LsTwoOptStarParam>) {
+            operators.emplace_back(std::make_unique<LsTwoOptStarOperator>(operator_param));
           }
         },
         param);

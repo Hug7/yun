@@ -31,6 +31,7 @@ enum class LsOperatorCode {
   LsIntraRouteExchange,
   LsInterRouteExchange,
   LsTwoOpt,
+  LsTwoOptStar,
 };
 
 /**

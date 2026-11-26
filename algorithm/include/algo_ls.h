@@ -15,6 +15,7 @@
 #include "algo_ls_parameter.h"
 #include "algo_ls_segment_relocate.h"
 #include "algo_ls_two_opt.h"
+#include "algo_ls_two_opt_star.h"
 #include "pdm_graph_order.h"
 
 class LsOperator;
@@ -24,7 +25,8 @@ class SolverContext;
 /**
  * @brief 邻域算子参数（每个分支对应一种算子实例）
  */
-using LsOperatorParam = std::variant<LsSegmentRelocateParam, LsExchangeParam, LsTwoOptParam>;
+using LsOperatorParam =
+    std::variant<LsSegmentRelocateParam, LsExchangeParam, LsTwoOptParam, LsTwoOptStarParam>;
 
 /**
  * @brief 一次邻域搜索的配置
@@ -87,7 +89,7 @@ struct LsReport {
 };
 
 /**
- * @brief 默认 7 个邻域实例的参数：同车/跨车的 relocate、or-opt、exchange，加 2-opt
+ * @brief 默认 7 个邻域实例的参数：同车/跨车的 relocate、or-opt、exchange，加 2-opt*
  */
 [[nodiscard]] std::vector<LsOperatorParam> default_ls_operator_params();
 

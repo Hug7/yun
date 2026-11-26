@@ -21,6 +21,7 @@
 #include "algo_ls_operator.h"
 #include "algo_ls_segment_relocate.h"
 #include "algo_ls_two_opt.h"
+#include "algo_ls_two_opt_star.h"
 
 namespace {
 /**
@@ -60,6 +61,15 @@ class LsTwoOptLuaField {
  public:
   static constexpr const char* MIN_SPAN_LEN = "min_span_len";
   static constexpr const char* MAX_SPAN_LEN = "max_span_len";
+};
+
+/**
+ * @brief 2-opt* 算子参数在 Lua 中的字段集合
+ */
+class LsTwoOptStarLuaField {
+ public:
+  static constexpr const char* MIN_TAIL_LEN = "min_tail_len";
+  static constexpr const char* MAX_TAIL_LEN = "max_tail_len";
 };
 
 /**
@@ -219,6 +229,21 @@ class LsTwoOptLuaField {
 }
 
 /**
+ * @brief 解析 2-opt* 算子的结构化参数
+ */
+[[nodiscard]] LsTwoOptStarParam parse_ls_two_opt_star_param(const sol::table& params,
+                                                            const std::string& owner) {
+  LsTwoOptStarParam operator_param;
+  if (const auto value = get_optional_int(params, LsTwoOptStarLuaField::MIN_TAIL_LEN, owner)) {
+    operator_param.min_tail_len = static_cast<int>(*value);
+  }
+  if (const auto value = get_optional_int(params, LsTwoOptStarLuaField::MAX_TAIL_LEN, owner)) {
+    operator_param.max_tail_len = static_cast<int>(*value);
+  }
+  return operator_param;
+}
+
+/**
  * @brief 按 code 分发算子的结构化参数, code 用 magic_enum 名称匹配
  */
 [[nodiscard]] LsOperatorParam parse_ls_operator_param(const std::string& code,
@@ -245,6 +270,8 @@ class LsTwoOptLuaField {
       return LsExchangeParam{.route_scope = LsRouteScope::Inter};
     case LsOperatorCode::LsTwoOpt:
       return parse_ls_two_opt_param(params, owner);
+    case LsOperatorCode::LsTwoOptStar:
+      return parse_ls_two_opt_star_param(params, owner);
   }
   throw std::invalid_argument("local_search: invalid operator `code` = " + code);
 }
