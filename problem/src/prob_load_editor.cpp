@@ -81,33 +81,68 @@ Load* LoadEditor::build(const std::vector<const Order*>& orders, const Vehicle* 
   return load;
 }
 
-void LoadEditor::select_best_vehicle(Load* load, const VehicleResource& vehicle_resource) const {
-  const Vehicle* best_vehicle = load->vehicle;
-  double best_obj_val = std::numeric_limits<double>::max();
-  if (load->is_feasible()) {
-    best_obj_val = load->constr_profile->obj_val;
+std::vector<VehicleInsertSnapshot> LoadEditor::snapshot_vehicles(
+    Load* load, const VehicleResource& vehicle_resource) const {
+  const Vehicle* const ori_vehicle = load->vehicle;
+  std::vector<VehicleInsertSnapshot> snapshots;
+  snapshots.reserve(vehicle_resource.vehicle_usages.size());
+  for (int vehicle_ind = 0; vehicle_ind < vehicle_resource.len; ++vehicle_ind) {
+    const VehicleUsage& usage =
+        *vehicle_resource.vehicle_usages[static_cast<std::size_t>(vehicle_ind)];
+    load->change_vehicle(usage.vehicle);
+    this->problem->eval_load(load);
+    const bool feasible = load->is_feasible();
+    snapshots.push_back(VehicleInsertSnapshot{
+        .vehicle = usage.vehicle,
+        .vehicle_ind = vehicle_ind,
+        .feasible = feasible,
+        .obj_val = feasible ? load->constr_profile->obj_val : std::numeric_limits<double>::max(),
+        .has_resource = usage.has_available_vehicle(),
+    });
   }
-  for (const auto& vehicle_usage : vehicle_resource.vehicle_usages) {
-    if (vehicle_usage->vehicle == best_vehicle) {
-      continue;
-    }
-    if (vehicle_usage->has_available_vehicle()) {
-      load->change_vehicle(vehicle_usage->vehicle);
-      this->problem->eval_load(load);
-      if (load->is_feasible() && load->constr_profile->obj_val < best_obj_val) {
-        best_vehicle = vehicle_usage->vehicle;
-        best_obj_val = load->constr_profile->obj_val;
-      }
-    }
-  }
-  // 切换最优车型
-  load->change_vehicle(best_vehicle);
-  this->problem->eval_load(load);
+  // 稳定排序: 同成本时保持 vehicle_usages 的原始顺序
+  std::ranges::stable_sort(snapshots,
+                           [](const VehicleInsertSnapshot& a, const VehicleInsertSnapshot& b) {
+                             if (a.obj_val == b.obj_val) {
+                               return a.vehicle->ind < b.vehicle->ind;
+                             }
+                             return a.obj_val < b.obj_val;
+                           });
+  load->change_vehicle(ori_vehicle);
+  return snapshots;
 }
 
-Load* LoadEditor::greedy_insert(const Load* ori_load, const Segment* segment,
-                                const VehicleResource& vehicle_resource,
-                                CacheStoreBuffer* store_buffer) const {
+const Vehicle* LoadEditor::select_current_best_vehicle(
+    Load* load, const VehicleResource& vehicle_resource) const {
+  const Vehicle* const ori_vehicle = load->vehicle;
+  // 原车型即使已无空位也算可用; 以它为初值, 成本打平时自然保留原车型
+  const Vehicle* best_vehicle = load->is_feasible() ? ori_vehicle : nullptr;
+  double best_obj_val =
+      load->is_feasible() ? load->constr_profile->obj_val : std::numeric_limits<double>::max();
+  for (const auto& vehicle_usage : vehicle_resource.vehicle_usages) {
+    if (vehicle_usage->vehicle == ori_vehicle || !vehicle_usage->has_available_vehicle()) {
+      continue;
+    }
+    load->change_vehicle(vehicle_usage->vehicle);
+    this->problem->eval_load(load);
+    if (load->is_feasible() && load->constr_profile->obj_val < best_obj_val) {
+      best_vehicle = vehicle_usage->vehicle;
+      best_obj_val = load->constr_profile->obj_val;
+    }
+  }
+  // 没有可用车型就退回原车型, 让调用方按 load->is_feasible() 决定是否接受
+  load->change_vehicle(best_vehicle != nullptr ? best_vehicle : ori_vehicle);
+  this->problem->eval_load(load);
+  return best_vehicle;
+}
+
+std::optional<InsertPlan> LoadEditor::evaluate_insert(const Load* ori_load, const Segment* segment,
+                                                      const VehicleResource& vehicle_resource,
+                                                      CacheStoreBuffer* store_buffer,
+                                                      std::uint64_t* watched_vehicles) const {
+  if (watched_vehicles != nullptr) {
+    *watched_vehicles = 0;
+  }
   const Problem* problem = this->problem;
   // 只拷贝一次: 后续所有试插都在这份副本上进行, 每次试插后回滚
   std::unique_ptr<Load> load(problem->pd_pattern->deep_copy_load(ori_load));
@@ -118,13 +153,13 @@ Load* LoadEditor::greedy_insert(const Load* ori_load, const Segment* segment,
   // 省去枚举槽位与逐槽 eval
   if (problem->hc_manager->precheck(load.get(), segment, vehicle_resource) ==
       HcPrecheckVerdict::kInfeasible) {
-    return nullptr;
+    return std::nullopt;
   }
   const std::vector<InsertSlot> slots =
       problem->pd_pattern->enumerate_insert_slots(load.get(), segment);
   const int slot_len = static_cast<int>(slots.size());
   if (slot_len == 0) {
-    return nullptr;
+    return std::nullopt;
   }
 
   // 先按插入位置估算两端连接处的距离变化, 再按 delta dist 升序试插: 变化越小的位置越可能成为最优解
@@ -142,6 +177,7 @@ Load* LoadEditor::greedy_insert(const Load* ori_load, const Segment* segment,
   double best_obj_val = std::numeric_limits<double>::max();
   int best_slot_ind = -1;
   int feasible_count = 0;
+  std::uint64_t watched = 0;
 
   for (const int slot_ind : slot_order) {
     // 车型每轮重置: 否则上一轮选出的车型会泄漏到本轮, 结果依赖枚举顺序
@@ -152,9 +188,26 @@ Load* LoadEditor::greedy_insert(const Load* ori_load, const Segment* segment,
       continue;
     }
     problem->eval_load(load.get());
-    // 如果是车辆导致的不可行，只挑选最优车型, 不占用车辆资源
+    // 当前车型不可行时按成本升序换车: 取第一个有空位的车型, 并记录被占满的更低成本车型
     if (load->is_infeasible()) {
-      this->select_best_vehicle(load.get(), vehicle_resource);
+      const std::vector<VehicleInsertSnapshot> snapshots =
+          this->snapshot_vehicles(load.get(), vehicle_resource);
+      const Vehicle* chosen = nullptr;
+      for (const VehicleInsertSnapshot& snapshot : snapshots) {
+        if (!snapshot.feasible) {
+          continue;
+        }
+        // 原车型即使已无空位也算可用
+        if (snapshot.has_resource || snapshot.vehicle == ori_vehicle) {
+          chosen = snapshot.vehicle;
+          break;
+        }
+        // 成本更低却因占满不可用: 记下, 该车型空出后这一格可能变可行;
+        // 位图按 vehicle_ind % 64 分桶, 车型数超过 64 时多个车型共用一位
+        watched |= std::uint64_t{1} << (snapshot.vehicle_ind & 63);
+      }
+      load->change_vehicle(chosen != nullptr ? chosen : ori_vehicle);
+      problem->eval_load(load.get());
     }
     // 同分时优先保留原车型
     if (load->is_feasible()) {
@@ -173,20 +226,51 @@ Load* LoadEditor::greedy_insert(const Load* ori_load, const Segment* segment,
     }
   }
 
+  if (watched_vehicles != nullptr) {
+    *watched_vehicles = watched;
+  }
   if (best_vehicle == nullptr) {
+    return std::nullopt;
+  }
+  return InsertPlan{best_slot_ind, best_vehicle, best_obj_val};
+}
+
+Load* LoadEditor::apply_insert(const Load* ori_load, const Segment* segment, const InsertPlan& plan,
+                               CacheStoreBuffer* store_buffer) const {
+  const Problem* problem = this->problem;
+  std::unique_ptr<Load> load(problem->pd_pattern->deep_copy_load(ori_load));
+  load->store_buffer = store_buffer;
+  // 重新枚举槽位: plan.slot_ind 索引的是同一条 ori_load + segment 的确定性枚举结果
+  const std::vector<InsertSlot> slots =
+      problem->pd_pattern->enumerate_insert_slots(load.get(), segment);
+  if (plan.slot_ind < 0 || plan.slot_ind >= static_cast<int>(slots.size())) {
     return nullptr;
   }
-  // 最优结构已在回滚中销毁: 用记录的槽位和车型重做一次插入
   load->reset_route_profile();
-  load->change_vehicle(best_vehicle);
-  if (problem->pd_pattern->insert_segment_at(load.get(), segment, slots[best_slot_ind]).empty()) {
-    throw std::runtime_error("invalid insertion scheme in function `LoadEditor::greedy_insert`");
+  load->change_vehicle(plan.vehicle);
+  if (problem->pd_pattern->insert_segment_at(load.get(), segment, slots[plan.slot_ind]).empty()) {
+    return nullptr;
   }
   problem->eval_load(load.get());
-
+  // 写缓冲的生命周期只到任务结束, 返回的 load 可能长期存活: 先解绑, 避免留下悬垂指针
+  load->store_buffer = nullptr;
   if (load->is_infeasible()) {
+    return nullptr;
+  }
+  return load.release();
+}
+
+Load* LoadEditor::greedy_insert(const Load* ori_load, const Segment* segment,
+                                const VehicleResource& vehicle_resource,
+                                CacheStoreBuffer* store_buffer) const {
+  const std::optional<InsertPlan> plan =
+      this->evaluate_insert(ori_load, segment, vehicle_resource, store_buffer);
+  if (!plan.has_value()) {
+    return nullptr;
+  }
+  Load* load = this->apply_insert(ori_load, segment, *plan, store_buffer);
+  if (load == nullptr) {
     throw std::runtime_error("插入segment后出现无解 in function `LoadEditor::greedy_insert`");
   }
-
-  return load.release();
+  return load;
 }

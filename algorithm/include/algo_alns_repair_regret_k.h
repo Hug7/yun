@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include "algo_alns_repair.h"
-#include "pdm_context.h"
+#include "algo_alns_repair_operator.h"
 
 /**
  * @brief alns repair算子`RepairRegretK`的参数

@@ -39,14 +39,14 @@ void AlnsRepairGreedy::execute(RepairMatrix* repair_matrix) {
       const int top_k =
           std::max(NumUtil::double_to_int(matrix_cell_count * this->parameter.top_rate), 1);
       // 获取 repair matrix 的 top-k 元素
-      auto repair_loads = repair_matrix->unfold_matrix_top_k(top_k);
+      auto repair_views = repair_matrix->unfold_matrix_top_k(top_k);
       // 在 top-k 元素中选取一个
-      const int repair_load_len = static_cast<int>(repair_loads.size());
-      const int select_ind = this->random->random_int(1, repair_load_len) - 1;
-      const auto select_repair_load = repair_loads[select_ind];
-      repair_loads.clear();
-      // 落实选中的 repair_load
-      repair_matrix->use_segment_schema(select_repair_load);
+      const int repair_view_len = static_cast<int>(repair_views.size());
+      const int select_ind = this->random->random_int(1, repair_view_len) - 1;
+      // 落实选中的 repair_cell
+      const RepairCellView& select_view = repair_views[static_cast<std::size_t>(select_ind)];
+      // 候选与解不同构时 commit 抛 std::logic_error(内部缺陷), 不再有静默失效分支
+      repair_matrix->commit(select_view);
     } else {
       // 将未指派的 segment 生成新的车次
       const bool suc_flag = repair_matrix->idle_segment_create_load();

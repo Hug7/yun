@@ -157,7 +157,7 @@ class HcPrecheckTest : public ::testing::Test {
   TimeWindowPatternRegistry tw_pattern_registry;
 };
 
-TEST_F(HcPrecheckTest, CapacityPrunesWhenNoUsableVehicleFits) {
+TEST_F(HcPrecheckTest, CapacityPrunesOnlyWhenNoVehicleModelFits) {
   Vehicle* small = this->MakeVehicle(this->MakeVehicleModel("small", 0, 5));
   Vehicle* big = this->MakeVehicle(this->MakeVehicleModel("big", 1, 10));
   Location* pick = this->MakeFullLocation("L0");
@@ -176,6 +176,13 @@ TEST_F(HcPrecheckTest, CapacityPrunesWhenNoUsableVehicleFits) {
   // 可切换到更大的车型时不剪枝
   VehicleResource both = this->MakeVehicleResource({small, big});
   EXPECT_EQ(capacity.precheck({load, &segment, &both}), HcPrecheckVerdict::kPass);
+
+  // 装得下的只有 big: 即使它已被占满也不剪枝(占用是动态状态, 预检只看静态容量)
+  VehicleResource big_only = this->MakeVehicleResource({big});
+  big_only.vehicle_usages[0]->occupy_vehicle();
+  EXPECT_EQ(capacity.precheck({load, &segment, &big_only}), HcPrecheckVerdict::kPass);
+  big_only.vehicle_usages[0]->release_vehicle();
+  EXPECT_EQ(capacity.precheck({load, &segment, &big_only}), HcPrecheckVerdict::kPass);
 
   delete load;
   load = this->MakeLoad({this->MakeOrder(2, pick, drop1, 3)}, big);
@@ -277,6 +284,29 @@ TEST_F(HcPrecheckTest, LabelValuePrechecksUsePostInsertionUnion) {
 
   const HcLabelValueMaxCount max_count_one(scope, 1);
   EXPECT_EQ(max_count_one.precheck({load, &compatible, &resource}), HcPrecheckVerdict::kInfeasible);
+  delete load;
+}
+
+TEST_F(HcPrecheckTest, ManagerDoesNotPruneOnVehicleOccupancy) {
+  Vehicle* small = this->MakeVehicle(this->MakeVehicleModel("small", 0, 5));
+  Vehicle* big = this->MakeVehicle(this->MakeVehicleModel("big", 1, 10));
+  Location* pick = this->MakeFullLocation("L0");
+  Location* drop = this->MakeFullLocation("L1");
+  Location* drop2 = this->MakeFullLocation("L2");
+  LoadSPMD* load = this->MakeLoad({this->MakeOrder(0, pick, drop, 3)}, small);
+  const Segment segment({this->MakeOrder(1, pick, drop2, 3)});
+  VehicleResource resource = this->MakeVehicleResource({small, big});
+
+  HardConstraintManager manager(this->scenario, this->parameter);
+  manager.precheck_enabled = true;
+  // 当前车型装不下 6, 唯一装得下的 big 已占满: 占用不再参与预检, 不能据此剪枝,
+  // 其余约束无法预检(kUnknown)就把结果交给 eval 兜底
+  resource.vehicle_usages[1]->occupy_vehicle();
+  EXPECT_EQ(manager.precheck(load, &segment, resource), HcPrecheckVerdict::kUnknown);
+
+  // 空出后结论不变: 预检对占用状态不敏感
+  resource.vehicle_usages[1]->release_vehicle();
+  EXPECT_EQ(manager.precheck(load, &segment, resource), HcPrecheckVerdict::kUnknown);
   delete load;
 }
 

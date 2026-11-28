@@ -28,7 +28,7 @@ HardConstrScore::UPtr HcVehicleCapacity::eval(Load* load) {
 }
 
 HcPrecheckVerdict HcVehicleCapacity::precheck(const HcPrecheckInput& input) const {
-  Load* load = input.load;
+  const Load* load = input.load;
   // `先提后卸` 下插入后的峰值 = 基线峰值 + segment 订单维度之和
   std::vector<std::int64_t> required = load->get_peak_load_dims();
   for (const Order* order : input.segment->orders) {
@@ -51,10 +51,14 @@ HcPrecheckVerdict HcVehicleCapacity::precheck(const HcPrecheckInput& input) cons
   if (fits(load->vehicle)) {
     return HcPrecheckVerdict::kPass;
   }
-  // 当前车型装不下: 只要还有可用车型能装下就不能剪枝, 全部装不下才判定必定违背
+  // 当前车型装不下:
+  // 只要还有任一车型装得下就不能剪枝(车型占用是动态状态，预检只判定静态的容量不可行)
   if (input.vehicle_resource != nullptr) {
     for (const auto& vehicle_usage : input.vehicle_resource->vehicle_usages) {
-      if (vehicle_usage->has_available_vehicle() && fits(vehicle_usage->vehicle)) {
+      if (load->vehicle == vehicle_usage->vehicle) {
+        continue;
+      }
+      if (fits(vehicle_usage->vehicle)) {
         return HcPrecheckVerdict::kPass;
       }
     }

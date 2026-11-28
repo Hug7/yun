@@ -139,7 +139,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
             if (problem->pd_pattern->insert_last_delivery(tmp_load, cur_order)) {
               problem->eval_load(tmp_load);
               // 找到合适的车
-              context->load_editor->select_best_vehicle(tmp_load, *sol->vehicle_resource);
+              context->load_editor->select_current_best_vehicle(tmp_load, *sol->vehicle_resource);
               if (tmp_load->is_feasible()) {
                 cur_load_can_insert = true;
                 candidate_picker.offer({.rank = cur_rank,
@@ -174,7 +174,7 @@ void ConstructHeuristic::k_nearest_neighbor(Workspace* workspace, const KnnParam
       problem->pd_pattern->insert_last_delivery(cur_load, cur_order);
       problem->eval_load(cur_load);
       sol->release_vehicle_resource(cur_load);
-      context->load_editor->select_best_vehicle(cur_load, *sol->vehicle_resource);
+      context->load_editor->select_current_best_vehicle(cur_load, *sol->vehicle_resource);
       sol->occupy_vehicle_resource(cur_load);
       // 将所有unassigned orders不能插入的candidate load归档
       for (int archived_load_ind : archived_load_indices) {

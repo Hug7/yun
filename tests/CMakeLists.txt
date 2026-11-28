@@ -109,3 +109,12 @@ add_executable(lua_dsl_demo lua/lua_dsl_demo.cpp)
 target_link_libraries(lua_dsl_demo PRIVATE sol2::sol2 lua::lua)
 # 脚本目录通过编译宏注入，避免依赖运行时的工作目录
 target_compile_definitions(lua_dsl_demo PRIVATE YUN_LUA_DEMO_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+
+# repair matrix 重构: 纯函数排序测试 + 基于内存 Problem 夹具的确定性/黄金值测试
+add_executable(algo_alns_repair_rank_test algorithm/algo_alns_repair_rank_test.cpp)
+target_link_libraries(algo_alns_repair_rank_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME algo_alns_repair_rank_test COMMAND algo_alns_repair_rank_test)
+
+add_executable(algo_alns_repair_matrix_test algorithm/algo_alns_repair_matrix_test.cpp)
+target_link_libraries(algo_alns_repair_matrix_test PRIVATE yun_algorithm GTest::gtest_main)
+add_test(NAME algo_alns_repair_matrix_test COMMAND algo_alns_repair_matrix_test)

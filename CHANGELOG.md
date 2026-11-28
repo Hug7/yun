@@ -15,6 +15,11 @@
 
 ### Changed
 
+- repair 改为一次性代价矩阵：行 = 待指派 segment、列 = 现有 load，每格只存 32 B 元数据，
+  取消逐候选深拷贝车次与全表重扫；候选按行维护有序视图，同种子下提交序列与目标值逐位不变。 (#63)
+- 车型占满即刷新受影响格，车型释放时按 watched_vehicles 位图定点重评估。 (#63)
+- 硬约束预检不再按车辆占用剪枝：`VehicleCapacity` 只判定静态容量，占用交由候选评估与
+  提交时的资源不变式处理。 (#63)
 - alns 当`repair`算子执行后判断 `temp solution`优于 best solution 时执行`local search`。 (#54)
 
 ### Fixed

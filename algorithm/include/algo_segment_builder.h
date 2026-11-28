@@ -23,5 +23,5 @@ class SegmentBuilder {
    * @param sol solution
    * @return segment 列表
    */
-  [[nodiscard]] std::vector<Segment*> call(const Solution* sol);
+  [[nodiscard]] std::vector<Segment> call(const Solution* sol);
 };

@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <format>
 #include <limits>
-#include <ranges>
 #include <stdexcept>
 #include <vector>
 
@@ -46,13 +45,14 @@ struct RegretScore {
 RegretScore evaluate(const std::vector<double>& deltas_asc, const int k) {
   const int candidate_count = static_cast<int>(deltas_asc.size());
   if (candidate_count == 0) {
-    return {RegretPriority::Standard, -std::numeric_limits<double>::infinity()};
+    return {.priority = RegretPriority::Standard,
+            .regret = -std::numeric_limits<double>::infinity()};
   }
 
   const double best_delta = deltas_asc.front();
   // 只有一个可行方案: 最高优先级, 优先保证其能落实
   if (candidate_count == 1) {
-    return {RegretPriority::OnlyOneFeasible, 0.0};
+    return {.priority = RegretPriority::OnlyOneFeasible, .regret = 0.0};
   }
 
   // 标准 Regret-K: sum_{i=2..min(n,k)} (c_i - c_1)
@@ -66,10 +66,10 @@ RegretScore evaluate(const std::vector<double>& deltas_asc, const int k) {
   if (candidate_count < k) {
     const double scarcity_unit = deltas_asc.back() - best_delta + 1.0;
     regret += static_cast<double>(k - candidate_count) * scarcity_unit;
-    return {RegretPriority::Scarce, regret};
+    return {.priority = RegretPriority::Scarce, .regret = regret};
   }
 
-  return {RegretPriority::Standard, regret};
+  return {.priority = RegretPriority::Standard, .regret = regret};
 }
 }  // namespace
 
@@ -93,29 +93,30 @@ void AlnsRepairRegretK::execute(RepairMatrix* repair_matrix) {
   const size_t raw_idle_segment_count = repair_matrix->idle_segment_indices.size();
   for (size_t r = 0; r < raw_idle_segment_count; ++r) {
     {
-      RepairLoad* select_repair_load = nullptr;
+      bool has_select = false;
+      RepairCellView select_view;
       RegretPriority select_priority = RegretPriority::Standard;
       double select_regret = -std::numeric_limits<double>::infinity();
       double select_best_delta = std::numeric_limits<double>::infinity();
 
       for (const int segment_ind : repair_matrix->idle_segment_indices) {
-        // 该 segment 行的 top-k 候选, 按 delta 降序(back() 为最优)
-        const std::vector<RepairLoad*> top_loads =
+        // 该 segment 行的 top-k 候选, 按 delta 升序(front() 为最优)
+        const std::vector<RepairCellView> top_views =
             repair_matrix->unfold_segment_top_k(segment_ind, this->parameter.regret_k);
-        if (top_loads.empty()) {
+        if (top_views.empty()) {
           continue;
         }
-        // 反转为升序, 便于按"最优在前"计算 regret
+        // 计算 regret
         std::vector<double> deltas_asc;
-        deltas_asc.reserve(top_loads.size());
-        for (const auto top_load : std::views::reverse(top_loads)) {
-          deltas_asc.emplace_back(top_load->delta);
+        deltas_asc.reserve(top_views.size());
+        for (const auto& top_view : top_views) {
+          deltas_asc.emplace_back(top_view.delta);
         }
 
         const RegretScore regret_score = evaluate(deltas_asc, this->parameter.regret_k);
         const double best_delta = deltas_asc.front();
         const bool better =
-            select_repair_load == nullptr || regret_score.priority < select_priority ||
+            !has_select || regret_score.priority < select_priority ||
             (regret_score.priority == select_priority &&
              (regret_score.regret > select_regret ||
               (regret_score.regret == select_regret && best_delta < select_best_delta)));
@@ -123,13 +124,15 @@ void AlnsRepairRegretK::execute(RepairMatrix* repair_matrix) {
           select_priority = regret_score.priority;
           select_regret = regret_score.regret;
           select_best_delta = best_delta;
-          // top_loads 降序, back() 即该 segment 的最优插入方案
-          select_repair_load = top_loads.back();
+          // top_views 升序, front() 即该 segment 的最优插入方案
+          select_view = top_views.front();
+          has_select = true;
         }
       }
 
-      if (select_repair_load != nullptr) {
-        repair_matrix->use_segment_schema(select_repair_load);
+      if (has_select) {
+        // 候选与解不同构时 commit 抛 std::logic_error(内部缺陷), 不再有静默失效分支
+        repair_matrix->commit(select_view);
       } else if (!repair_matrix->idle_segment_create_load()) {
         // 所有未指派 segment 都没有可行插入方案, 且无法新建车次
         break;

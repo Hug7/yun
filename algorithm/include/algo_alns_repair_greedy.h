@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include "algo_alns_repair.h"
+#include "algo_alns_repair_operator.h"
 #include "c_random_utils.h"
-#include "pdm_context.h"
 
 /**
  * @brief alns repair算子`RepairGreedy`的参数
